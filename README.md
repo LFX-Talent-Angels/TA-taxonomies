@@ -33,7 +33,7 @@ as a **versioned library** and may import only the contract surface.
 | `sfia` | SFIA | that taxonomy's graph |
 | `bls`  | BLS / SOC | owns its suite |
 
-A **fifth slot** is under licensing/cost review (pending data-sources ADR).
+The **fifth suite** is **Sweden JobTech** (live-postings signal, CC0) — decided in TA-workspace ADR-0006; it joins after the first four are ported. SFIA is **structure only** (codes, names, levels — never its descriptive text).
 
 ## Hard rules (licensing & provenance — see ARCHITECTURE.md)
 

@@ -102,7 +102,7 @@ silently at query time.
   us redistribution rights. We commit identifiers, our own schema/metadata,
   and hand-written fixtures — never source prose or dumps.
 - Each suite's `README` records its source's terms and what they permit.
-- The fifth suite slot is under licensing/cost review (data-sources ADR).
+- The fifth suite is Sweden JobTech (TA-workspace ADR-0006): live-postings signal, CC0; its claimed ESCO concept mappings must be verified at ingestion, not assumed. Joins after the first four suites are ported.
 
 ## Testing
 
