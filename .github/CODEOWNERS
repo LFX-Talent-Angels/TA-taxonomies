@@ -1,0 +1,11 @@
+# Code owners for TA-taxonomies.
+#
+# Mentees own their suite. These paths are different: they ripple into
+# TA-agents or they set project policy, so they need mentor review.
+# See CLAUDE.md: "changes to contract/ need mentor review".
+
+/src/ta_taxonomies/contract/   @nosoypoot
+/ARCHITECTURE.md               @nosoypoot
+/CLAUDE.md                     @nosoypoot
+/AGENTS.md                     @nosoypoot
+/.github/                      @nosoypoot

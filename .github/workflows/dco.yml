@@ -5,7 +5,7 @@ name: DCO
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   dco-check:
