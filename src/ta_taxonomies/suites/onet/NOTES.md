@@ -426,9 +426,19 @@ stays harmless; only a *conflicting* one stops the load.
 
 Codes need no separate uniqueness check here because every id is derived from
 its code (`onet:occupation:<code>`), so a duplicate code is a duplicate id and
-the constraint already covers it. That is not true of a package whose join key
-is a property rather than the id — `crosswalks/` joins on the ESCO code, which
-no constraint declares unique, and had to add its own detection.
+the constraint already covers it.
+
+Stated as a rule for whoever adds the next source, because it is a property of
+the *shape* rather than of how carefully the loader was written:
+
+> **A join key derivable from the id inherits the id's constraint. A key that
+> travels parallel to the id does not, and cannot borrow the suite schema's
+> safety — it needs its own detection.**
+
+ESCO is the parallel case: `suite_id_from_uri` derives the id from the concept
+URI, and `code` rides alongside as an ordinary property with nothing declaring
+it unique. That is why `crosswalks/`, which joins ESCO by code, had to add a
+collision check that this suite does not need.
 
 ### Where these bugs were found
 
@@ -440,8 +450,20 @@ loaded, validated clean, and reported counts that added up.
 
 Post-load validation that only ever runs against an empty graph cannot catch
 this class at all, because every one of these failures needs a pre-existing
-node to express itself. Worth treating as a repo-wide testing rule rather than
-a note in one suite's file.
+node to express itself. It is not that the tests missed them; they were
+unreachable by construction.
+
+The shortest way to put it, and the version worth keeping:
+
+> **A load against an empty graph proves the loader *writes*. It does not
+> prove the loader *coexists*. Those are different claims, and the one that
+> ships is the second.**
+
+Worth treating as a repo-wide testing rule rather than a note in one suite's
+file. It is currently written here and in `crosswalks/`, because neither
+package can decide unilaterally where a repo-wide rule lives — `TA-memory` and
+the workspace `AGENTS.md` are another repo. Duplicated in two packages is worse
+than one shared home and better than nowhere; someone should pick the home.
 
 ---
 
