@@ -158,16 +158,21 @@ class TestClaimsAreNotPublishedData:
         assert REL_ASSERTED_CORRESPONDS_TO not in TRAVERSABLE_RELS
         assert REL_CORRESPONDS_TO in TRAVERSABLE_RELS
 
-    def test_the_config_actually_governs_the_query(self) -> None:
-        """TRAVERSABLE_RELS must drive the published query, not just describe it.
+    def test_pattern_agrees_with_the_declared_set(self) -> None:
+        """The emitted pattern matches the declared set and excludes claims.
 
-        Asserting only that the constant holds what it was written to hold is
-        circular: it proves the constant contains its own contents and nothing
-        about behaviour. Until this test existed, ``tools.py`` named
-        ``CORRESPONDS_TO`` inline and nothing outside this file imported the
-        set at all — it read as a safety control while governing nothing, which
-        is worse than no constant, because a reviewer checks the config and
-        concludes something the code does not do.
+        Named for what it checks, which is *agreement* -- it cannot prove
+        governance and must not be read as doing so. Comparing the pattern
+        against the very constant it is supposed to be derived from does not
+        distinguish a derived value from a literal that happens to equal it;
+        hardcoding ``traversable_pattern`` to return ``REL_CORRESPONDS_TO``
+        leaves this test green, which was verified by mutation rather than
+        assumed.
+
+        ``test_adding_a_traversable_type_changes_what_is_traversed`` is the one
+        that establishes governance. This one still earns its place: it catches
+        a pattern hardcoded to something *different* from the declared set, and
+        it pins the claims-excluded property directly.
         """
         pattern = traversable_pattern()
         assert set(pattern.split("|")) == set(TRAVERSABLE_RELS)
