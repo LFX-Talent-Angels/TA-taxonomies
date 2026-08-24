@@ -13,8 +13,6 @@ names ``CORRESPONDS_TO`` and physically cannot traverse project claims.
 
 from __future__ import annotations
 
-SOURCE = "crosswalks"
-
 # Provenance nodes. Every correspondence edge is attributed to one of these,
 # so the citation lives once and edges stay light.
 LABEL_CROSSWALK_SOURCE = "CrosswalkSource"

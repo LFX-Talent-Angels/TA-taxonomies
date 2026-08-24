@@ -21,7 +21,7 @@ from ta_taxonomies.crosswalks.load import (
     load_crosswalk,
     merge_correspondences,
 )
-from ta_taxonomies.crosswalks.models import PublishedCorrespondence
+from ta_taxonomies.crosswalks.models import ClaimStatus, PublishedCorrespondence
 from ta_taxonomies.crosswalks.sources import ESCO_ONET_2019
 from ta_taxonomies.crosswalks.tools import Crosswalks
 
@@ -200,12 +200,16 @@ class TestProjectClaimsNeverPassAsPublishedData:
                 """
                 MATCH (a {id: $esco}), (b {id: $accepted}), (c {id: $proposed})
                 MERGE (a)-[r1:ASSERTED_CORRESPONDS_TO]->(b)
-                SET r1.status = 'accepted', r1.owner = 'mentee',
+                SET r1.status = $accepted_status, r1.owner = 'mentee',
                     r1.rationale = 'definitions overlap', r1.reviewed_by = 'mentor'
                 MERGE (a)-[r2:ASSERTED_CORRESPONDS_TO]->(c)
-                SET r2.status = 'proposed', r2.owner = 'mentee',
+                SET r2.status = $unaccepted_status, r2.owner = 'mentee',
                     r2.rationale = 'still being argued'
                 """,
+                # Derived from the enum, not spelled out, so the test asserts
+                # "only ACCEPTED surfaces" rather than "only this string does".
+                accepted_status=ClaimStatus.ACCEPTED.value,
+                unaccepted_status=ClaimStatus.PROPOSED.value,
                 esco=AIR_FORCE_OFFICER,
                 accepted="onet:occupation:11-9179.00",
                 proposed="onet:occupation:27-1014.00",

@@ -27,12 +27,19 @@ from ta_taxonomies.crosswalks.config import (
     LABEL_NO_LINK,
     REL_ASSERTED_CORRESPONDS_TO,
     REL_CORRESPONDS_TO,
+    REL_RECORDED_NO_LINK,
     TRAVERSABLE_RELS,
 )
+from ta_taxonomies.crosswalks.models import ClaimStatus
 
 # Only ACCEPTED claims speak for the project. Anything earlier is work in
 # progress and must not surface in an answer, even an opt-in one.
-_ANSWERABLE_CLAIM_STATUS = "accepted"
+#
+# Derived from the enum rather than repeating the string. A parallel literal is
+# a second source of truth: rename the enum member's value and this query would
+# filter on a status no claim carries, so every claim would silently vanish
+# from opt-in answers. Fail-closed, but silent either way.
+_ANSWERABLE_CLAIM_STATUS = ClaimStatus.ACCEPTED.value
 
 
 def traversable_pattern() -> str:
@@ -144,7 +151,7 @@ class Crosswalks:
             # and the caller deserves to be told which one they got.
             for record in session.run(
                 f"""
-                MATCH (a {{id: $node_id}})-[:RECORDED_NO_LINK]->(n:{LABEL_NO_LINK})
+                MATCH (a {{id: $node_id}})-[:{REL_RECORDED_NO_LINK}]->(n:{LABEL_NO_LINK})
                 WHERE $to_suite IS NULL OR n.to_suite = $to_suite
                 RETURN n.reason AS reason, n.checked_against AS checked_against
                 """,
