@@ -293,6 +293,19 @@ only the second one is what actually ships.
 instance of the pattern: it inserts a colliding node first, then asserts the
 loader refuses. The O*NET suite records the same rule in its `NOTES.md`.
 
+A second rule fell out of the same work, for whoever adds the next source:
+
+> A join key **derivable from the id** inherits the id's constraint. A key that
+> travels **parallel to the id** does not, and cannot borrow safety from the
+> suite's schema — it needs its own detection.
+
+O*NET is the derivable case (`onet:occupation:15-1252.00` is built from the
+code, so a duplicate code is a duplicate id). ESCO is the parallel case
+(`suite_id_from_uri` derives the id from the concept URI while `code` rides
+alongside with nothing declaring it unique). That asymmetry, not carelessness,
+is why this package needs an explicit ambiguity check and the O*NET suite does
+not.
+
 Neither package has pushed this to a shared document — `TA-memory` and the
 workspace `AGENTS.md` are another repo and outside both remits. It is written
 in both places pending someone deciding where it should actually live.
