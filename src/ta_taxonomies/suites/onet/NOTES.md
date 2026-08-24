@@ -570,6 +570,53 @@ The audit itself needed re-running: the first sweep used an unquoted `--include`
 glob, every grep matched nothing, and all fifty constants looked dead. A tool
 that reports total failure as total absence is worth distrusting on sight.
 
+### A test name that over-claimed
+
+`test_the_suite_satisfies_the_shared_contract` asserted
+`isinstance(suite, Suite)`. Against a `runtime_checkable` Protocol that checks
+**method names and nothing else** — not signatures, not return types. Verified
+rather than assumed:
+
+```
+score_paths given (self, wrong: str, arguments: int, entirely: float) -> str
+    -> the assertion stays green
+an object whose four methods take no arguments at all
+    -> isinstance(...) is True
+```
+
+So the test's name claimed conformance to the contract while establishing only
+that four attributes existed. A name that over-claims is the same failure as a
+constant that over-claims: the reader trusts it and stops looking. It is now
+`test_the_suite_exposes_the_contract_method_names`, with the limitation in its
+docstring and a pointer to what does pin the rest. It was kept, not deleted —
+it still catches a method going missing.
+
+The gap it was hiding is now covered by comparing `inspect.signature` against
+the Protocol's, per method. The mutation that shows why that is worth having is
+not the wrong-signature one (behavioural tests catch that too) but this:
+
+```
+enumerate_paths default max_depth 4 -> 3   ->  every behavioural test passes
+                                               only the signature test fails
+```
+
+A drifted default is a real break — TA-agents calling `enumerate_paths(a, b)`
+would silently search two hops shallower — and nothing else in the suite can
+see it.
+
+### Re-auditing with a second mechanism
+
+The grep sweep in the previous section was re-run by parsing the AST and
+collecting `ast.Name` / `ast.Attribute` nodes, with no shell involved: 45 of 49
+constants have readers outside `config.py`, spread over one, two or three files.
+The four without external readers each have exactly one load-use inside
+`config.py` itself, building `RATED_FILES` — legitimately internal, not dead.
+
+The *shape* of that result is the point. A varied reader distribution is
+something a broken tool cannot fake; "fifty out of fifty are dead" is what the
+first, unquoted-glob sweep produced. Agreement between two mechanisms is worth
+more than either one's output, and it is cheap.
+
 ### Where these bugs were found
 
 Three real defects came out of this work — the constraint no-op, the

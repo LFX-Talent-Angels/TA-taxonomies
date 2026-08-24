@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Iterator
 
 import pytest
@@ -31,9 +32,29 @@ def suite() -> Iterator[OnetSuite]:
         yield OnetSuite(driver, database=database)
 
 
-def test_the_suite_satisfies_the_shared_contract(suite: OnetSuite) -> None:
+def test_the_suite_exposes_the_contract_method_names(suite: OnetSuite) -> None:
+    """isinstance against a runtime_checkable Protocol checks *names only*.
+
+    It passes for an object whose methods take entirely different arguments and
+    return entirely different types — verified by mutation: giving score_paths
+    the signature ``(self, wrong: str, arguments: int, entirely: float) -> str``
+    leaves this assertion green. Signatures are pinned by the test below; this
+    one is worth keeping because it still catches a method going missing.
+    """
     assert isinstance(suite, Suite)
     assert suite.name == "onet"
+
+
+@pytest.mark.parametrize(
+    "method", ["search_nodes", "get_neighbors", "enumerate_paths", "score_paths"]
+)
+def test_the_suite_matches_the_contract_signature(method: str) -> None:
+    # The part isinstance cannot see. TA-agents calls these positionally and by
+    # keyword, so a drifted parameter name or a changed default is a break at
+    # the call site that the Protocol check would report as conformance.
+    assert inspect.signature(getattr(OnetSuite, method)) == inspect.signature(
+        getattr(Suite, method)
+    )
 
 
 def test_locate_resolves_a_code_to_exactly_one_occupation(suite: OnetSuite) -> None:
