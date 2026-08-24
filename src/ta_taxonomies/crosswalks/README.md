@@ -269,6 +269,34 @@ warning — which is a different answer from `not_found`, and deliberately so.
   and hands an air force officer three American police occupations. The fixture
   contains this exact pair and a test pins it.
 
+## A repo rule this work produced
+
+Three real defects surfaced while building this package alongside the O*NET
+suite: a uniqueness constraint that was a silent no-op rather than an error, a
+`MERGE` that duplicated nodes because it matched on the label *set*, and this
+package's own ambiguous join key.
+
+All three loaded successfully. All three validated clean. All three produced
+counts that reconciled.
+
+And all three **require a pre-existing node to manifest at all**. Load
+validation that only ever runs against an empty graph cannot catch this class
+of bug — not because anyone was careless, but because the failure is
+unreachable by construction under those conditions.
+
+So: **load validation should run at least once against a graph that already
+contains another suite's data.** An empty-graph load proves the loader can
+write. It cannot prove the loader coexists. Those are different claims, and
+only the second one is what actually ships.
+
+`tests/crosswalks/test_load_validate.py::TestAmbiguousJoinKeyIsRefused` is one
+instance of the pattern: it inserts a colliding node first, then asserts the
+loader refuses. The O*NET suite records the same rule in its `NOTES.md`.
+
+Neither package has pushed this to a shared document — `TA-memory` and the
+workspace `AGENTS.md` are another repo and outside both remits. It is written
+in both places pending someone deciding where it should actually live.
+
 ## Sources
 
 - [O*NET Crosswalk Files](https://www.onetcenter.org/crosswalks.html)

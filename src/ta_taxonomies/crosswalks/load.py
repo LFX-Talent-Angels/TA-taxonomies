@@ -145,6 +145,22 @@ def _code_map(session: Session, cypher: str, *, what: str) -> dict[str, str]:
     constraint declares them unique, so the check has to be explicit here.
     Detection, not repair: this layer reports and stops rather than choosing a
     winner or deleting another package's node.
+
+    Worth knowing before adding another source, because the exposure is not
+    uniform. Whether a join key needs this check depends on whether the key is
+    *derivable* from the id:
+
+    - O*NET derives its id from the code (``onet:occupation:15-1252.00``), so a
+      duplicated code IS a duplicated id and the suite's uniqueness constraint
+      already covers it. No separate check is needed there.
+    - ESCO derives its id from the concept URI (``esco:occupation:<uuid>``) and
+      carries ``code`` as a *parallel* property. There is no bijection between
+      them, so no constraint anywhere can make the code unique, and this check
+      is the only thing standing between a collision and silent data loss.
+
+    A future crosswalk keyed on a derivable identifier does not need this. One
+    keyed on a parallel property does, and cannot borrow safety from the
+    suite's schema.
     """
     mapping: dict[str, str] = {}
     collisions: dict[str, list[str]] = {}
