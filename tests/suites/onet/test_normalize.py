@@ -216,3 +216,80 @@ def test_importance_outside_the_published_scale_fails_loudly() -> None:
     )
     with pytest.raises(OnetLoadValidationError, match="outside the published"):
         normalize_document(doc)
+
+
+def test_a_repeated_rating_with_a_different_value_fails_loudly() -> None:
+    # Last-wins here would be indistinguishable from the rating never having
+    # been published: the edge count is identical either way.
+    doc = _doc(
+        **{
+            "Transferable Skills.txt": [
+                _rating("15-1252.00", "2.B.3.e", "IM", "4.5"),
+                _rating("15-1252.00", "2.B.3.e", "IM", "1.5"),
+                _rating("15-1252.00", "2.B.3.e", "LV", "5.5"),
+            ]
+        }
+    )
+    with pytest.raises(OnetLoadValidationError, match="conflicting IM ratings"):
+        normalize_document(doc)
+
+
+def test_an_identical_repeated_rating_is_harmless() -> None:
+    doc = _doc(
+        **{
+            "Transferable Skills.txt": [
+                _rating("15-1252.00", "2.B.3.e", "IM", "4.5"),
+                _rating("15-1252.00", "2.B.3.e", "IM", "4.5"),
+                _rating("15-1252.00", "2.B.3.e", "LV", "5.5"),
+            ]
+        }
+    )
+    assert normalize_document(doc)["has_skill"][0]["importance"] == 4.5
+
+
+def test_one_task_id_with_two_statements_fails_loudly() -> None:
+    # If the same id carries different text, the id is not the identity, and
+    # first-wins would give the task node whichever occupation loaded first.
+    doc = _doc(
+        tasks=[
+            {
+                "O*NET-SOC Code": "15-1252.00",
+                "Task ID": "21662",
+                "Task": "Write code.",
+                "Task Type": "Core",
+                "Incumbents Responding": "10",
+            },
+            {
+                "O*NET-SOC Code": "15-1251.00",
+                "Task ID": "21662",
+                "Task": "Something else entirely.",
+                "Task Type": "Core",
+                "Incumbents Responding": "10",
+            },
+        ]
+    )
+    with pytest.raises(OnetLoadValidationError, match="two different statements"):
+        normalize_document(doc)
+
+
+def test_a_task_shared_by_two_occupations_is_one_node_and_two_edges() -> None:
+    row = {
+        "Task ID": "21662",
+        "Task": "Write code.",
+        "Task Type": "Core",
+        "Incumbents Responding": "10",
+    }
+    doc = _doc(
+        occupations=[
+            {"O*NET-SOC Code": "15-1252.00", "Title": "Software Developers", "Description": ""},
+            {"O*NET-SOC Code": "15-1251.00", "Title": "Computer Programmers", "Description": ""},
+        ],
+        tasks=[
+            {"O*NET-SOC Code": "15-1252.00", **row},
+            {"O*NET-SOC Code": "15-1251.00", **row},
+        ],
+    )
+    payload = normalize_document(doc)
+
+    assert len(payload["tasks"]) == 1
+    assert len(payload["performs_task"]) == 2

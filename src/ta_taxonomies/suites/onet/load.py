@@ -75,6 +75,9 @@ BATCH = 500
 # O*NET's null in text columns. Not a value, not an empty string.
 NA = "n/a"
 
+# Which edge property each rating scale writes, for conflict detection.
+_VALUE_FIELD = {SCALE_IMPORTANCE: "importance", SCALE_LEVEL: "level"}
+
 
 class OnetLoadValidationError(RuntimeError):
     """Raised when normalized O*NET rows cannot be represented faithfully."""
@@ -222,6 +225,19 @@ def _normalize_rated_rows(
 
         scale = _text(row, "Scale ID")
         value = _float(row, "Data Value")
+        # A repeated (occupation, element, scale) would overwrite the earlier
+        # value and every count would still add up, so the loss would be
+        # indistinguishable from the rating never having been published.
+        # Release 30.3 has none; this exists so that a release that does have
+        # them stops the load instead of quietly picking whichever row came
+        # last. An identical repeat is harmless and allowed.
+        previous = edge.get(_VALUE_FIELD.get(scale, ""))
+        if previous is not None and value is not None and previous != value:
+            raise OnetLoadValidationError(
+                f"conflicting {scale} ratings for {code} / {element}: "
+                f"{previous} then {value}; the source table has duplicate rows "
+                "and this loader would silently keep the last one"
+            )
         if scale == SCALE_IMPORTANCE:
             edge["importance"] = value
             edge["importance_n"] = _int(row, "N")
@@ -365,9 +381,22 @@ def normalize_document(doc: Mapping[str, Any]) -> dict[str, list[dict[str, Any]]
     tasks: list[dict[str, Any]] = []
     performs: list[dict[str, Any]] = []
     seen_tasks: set[str] = set()
+    seen_task_text: dict[str, str] = {}
     for row in doc.get("tasks", []):
         code = normalize_onetsoc_code(row["O*NET-SOC Code"])
         tid = code_to_str(row["Task ID"]) or ""
+        statement = _text(row, "Task")
+        # Task IDs are global in O*NET, so the same id reappearing with
+        # different text would mean the identifier is not the identity. First
+        # wins would hide that behind a task node whose text belongs to
+        # whichever occupation the reader happened to load first.
+        known = seen_task_text.get(tid)
+        if known is not None and known != statement:
+            raise OnetLoadValidationError(
+                f"Task ID {tid} carries two different statements; "
+                "the id is not a stable identity in this release"
+            )
+        seen_task_text[tid] = statement
         if tid not in seen_tasks:
             seen_tasks.add(tid)
             tasks.append(
@@ -377,7 +406,7 @@ def normalize_document(doc: Mapping[str, Any]) -> dict[str, list[dict[str, Any]]
                     source_id=tid,
                     # A task statement is a sentence, not a name; it is still
                     # the only label there is, and Locate matches against it.
-                    pref_label=_text(row, "Task"),
+                    pref_label=statement,
                     code=tid,
                     extra={"task_type": _text(row, "Task Type")},
                 )
@@ -799,11 +828,21 @@ def load_full_document(data_dir: Path) -> dict[str, Any]:
     return doc
 
 
-def _dedupe_edges(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Keep one row per (from_id, to_id); last row wins for properties."""
+def _dedupe_edges(rows: list[dict[str, Any]], *, label: str = "") -> list[dict[str, Any]]:
+    """Keep one row per (from_id, to_id); last row wins for properties.
+
+    Deduplication is legitimate — MERGE would collapse the pair anyway, and the
+    expected counts have to match what MERGE produces. What is not legitimate
+    is doing it silently: a source that starts publishing two rows per pair
+    would lose one set of properties with every count still adding up. So the
+    count is printed. Release 30.3 drops nothing.
+    """
     seen: dict[tuple[str, str], dict[str, Any]] = {}
     for row in rows:
         seen[(row["from_id"], row["to_id"])] = row
+    dropped = len(rows) - len(seen)
+    if dropped and label:
+        print(f"  note: {label} collapsed {dropped:,} duplicate endpoint pairs", flush=True)
     return list(seen.values())
 
 
@@ -840,7 +879,7 @@ def run_load(
             unique[row["id"]] = row
         payload[key] = list(unique.values())
     for key in ("has_skill", "performs_task", "classified_under", "related_to", "broader_than"):
-        payload[key] = _dedupe_edges(payload[key])
+        payload[key] = _dedupe_edges(payload[key], label=key)
 
     suppressed = sum(1 for r in payload["has_skill"] if r["recommend_suppress"])
     not_relevant = sum(1 for r in payload["has_skill"] if r["not_relevant"])

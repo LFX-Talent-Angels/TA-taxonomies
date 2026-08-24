@@ -406,6 +406,43 @@ The general rule is ARCHITECTURE.md's "MERGE on identity, never on a composite
 that includes incidental structure" — with the reminder that in Cypher, **a
 label is part of that composite**.
 
+### The same class, elsewhere: last-wins keys
+
+The defect above is one instance of a wider one: *a key collision that resolves
+silently is indistinguishable from the data never having existed.* Every
+dictionary in `normalize_document` was audited against release 30.3 for it:
+
+| Key | Duplicates in 30.3 | Guarded |
+|---|---|---|
+| (occupation, element, scale) → rating | 0 of 214,560 rows | conflicting values now raise |
+| Task ID → statement | 0 of 18,796 | two statements for one id now raise |
+| Element ID → Content Model row | 0 of 3,006 | bijective with the node id |
+| (from, to) → edge | 0 | collapse count now printed |
+| O\*NET-SOC code → occupation | 0 of 1,016 | bijective with the node id |
+
+Nothing collides today, which is exactly why the guards are worth having: they
+exist for the release that changes shape, not for this one. An identical repeat
+stays harmless; only a *conflicting* one stops the load.
+
+Codes need no separate uniqueness check here because every id is derived from
+its code (`onet:occupation:<code>`), so a duplicate code is a duplicate id and
+the constraint already covers it. That is not true of a package whose join key
+is a property rather than the id — `crosswalks/` joins on the ESCO code, which
+no constraint declares unique, and had to add its own detection.
+
+### Where these bugs were found
+
+Three real defects came out of this work — the constraint no-op, the
+label-set MERGE, and `crosswalks/`' ambiguous join key. **None was found by
+reasoning and none by a passing test suite; all three were found by running
+against a graph that already had another suite's nodes in it.** All three
+loaded, validated clean, and reported counts that added up.
+
+Post-load validation that only ever runs against an empty graph cannot catch
+this class at all, because every one of these failures needs a pre-existing
+node to express itself. Worth treating as a repo-wide testing rule rather than
+a note in one suite's file.
+
 ---
 
 ## Reproduce
