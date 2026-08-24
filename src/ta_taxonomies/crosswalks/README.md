@@ -57,11 +57,31 @@ Resolved against the fully loaded ESCO graph:
 | …O*NET occupations no ESCO row reaches | **59** |
 | Table codes absent from this ESCO release | 38 (a version seam, reported not swallowed) |
 
-Verified end to end against both suites loaded into one graph: 8,487
-correspondences written, 0 missing endpoints, 139 absences recorded. Absence is
-checked in **both** directions on purpose — recording only the ESCO side would
-make this look like full coverage of O*NET when 59 of its occupations are
-reached by no published row at all.
+Absence is checked in **both** directions on purpose — recording only the ESCO
+side would make this look like full coverage of O*NET when 59 of its
+occupations are reached by no published row at all.
+
+**Reproducing the end-to-end figures.** Load both suites into one graph, then
+load the crosswalk on top:
+
+```bash
+python -m ta_taxonomies.suites.esco.load --mode full
+python -m ta_taxonomies.suites.onet.load --mode full
+python -m ta_taxonomies.crosswalks.load --mode full --source esco_onet_2019
+```
+
+Expect 8,487 correspondences written, 0 missing endpoints, 139 absences.
+
+Disclosure, because the number above should be checkable rather than taken on
+trust: at the time it was measured the two suites lived on unmerged branches in
+separate Neo4j instances, so the combined graph was assembled by copying each
+suite's occupation nodes (read-only) into a third instance by hand, and only
+then running the crosswalk loader. That staging step is **not** in this repo
+and deliberately so — it is a workaround for a transient condition, and
+committing it would preserve a workaround as permanent code. Once both suites
+are on the same trunk the three commands above are the whole path, and the
+figures are regenerable from source by anyone. Until then, treat the counts as
+measured-but-not-yet-independently-reproducible.
 
 **The correction that matters.** This crosswalk is *published*, but it is not
 *deterministic*. Its own technical report describes a fine-tuned BERT model
