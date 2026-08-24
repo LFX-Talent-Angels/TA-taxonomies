@@ -19,6 +19,7 @@ from ta_taxonomies.crosswalks.load import (
     CrosswalkLoadError,
     esco_code_maps,
     load_crosswalk,
+    load_fixture_document,
     merge_correspondences,
 )
 from ta_taxonomies.crosswalks.models import ClaimStatus, PublishedCorrespondence
@@ -44,9 +45,46 @@ def driver() -> Iterator[Driver]:
     connection = GraphDatabase.driver(uri, auth=(user, password))
     try:
         connection.verify_connectivity()
+        _refuse_non_scratch_graph(connection)
         yield connection
     finally:
         connection.close()
+
+
+# The fixture endpoints this suite is allowed to create, delete and recreate.
+# Anything beyond them belongs to a real suite load.
+_FIXTURE_NODE_IDS = frozenset(endpoint["id"] for endpoint in load_fixture_document()["endpoints"])
+
+
+def _refuse_non_scratch_graph(connection: Driver) -> None:
+    """Skip rather than run destructively against a graph holding real suite data.
+
+    This suite deletes ``onet:occupation:15-1252.00`` to exercise the
+    missing-endpoint guard and lets the fixture recreate it. On a scratch graph
+    that is harmless: the fixture owns that node. On a graph with a real O*NET
+    load it is data loss disguised as cleanup -- the real node carries twelve
+    properties and the labels ``:OnetNode:OnetOccupation:Occupation``, and what
+    comes back is a six-property stub missing ``:OnetNode``, which is both the
+    label O*NET's uniqueness constraint sits on and the one its own load
+    validation checks for. The suite would corrupt a node it does not own and
+    break another package's validation, while staying green.
+
+    Measured, not assumed: that is exactly what happened to the scratch graph
+    used to verify the end-to-end figures.
+    """
+    with connection.session() as session:
+        record = session.run(
+            "MATCH (n) WHERE n.source IN ['esco', 'onet'] AND NOT n.id IN $fixture "
+            "RETURN count(n) AS c",
+            fixture=sorted(_FIXTURE_NODE_IDS),
+        ).single()
+    foreign = int(record["c"]) if record else 0
+    if foreign:
+        pytest.skip(
+            f"target graph holds {foreign} suite nodes this suite does not own; "
+            "these tests delete and recreate endpoints and would corrupt them. "
+            "Point CROSSWALK_TEST_NEO4J_* at an empty scratch database."
+        )
 
 
 @pytest.fixture(scope="module")
@@ -279,16 +317,23 @@ class TestAmbiguousJoinKeyIsRefused:
 class TestDryRunIsReadOnly:
     def test_dry_run_writes_nothing(self, driver: Driver) -> None:
         """The coverage report must be safe to point at someone else's graph."""
-        with driver.session() as session:
-            session.run(f"MATCH ()-[r:{REL_CORRESPONDS_TO}]->() DELETE r")
-            session.run(f"MATCH (n:{LABEL_NO_LINK}) DETACH DELETE n")
 
+        def counts() -> tuple[int, int]:
+            with driver.session() as session:
+                edges = session.run(
+                    f"MATCH ()-[r:{REL_CORRESPONDS_TO}]->() RETURN count(r) AS c"
+                ).single()
+                absences = session.run(f"MATCH (n:{LABEL_NO_LINK}) RETURN count(n) AS c").single()
+            assert edges is not None and absences is not None
+            return edges["c"], absences["c"]
+
+        # Counted around the dry run rather than wiped first. The earlier
+        # version deleted every CORRESPONDS_TO edge and every :NoLink node
+        # unscoped, then never restored them -- so running this suite against a
+        # graph holding a real crosswalk destroyed it, and the "0 edges"
+        # assertion passed because the test had emptied the graph itself.
+        before = counts()
         dry = load_crosswalk(driver, mode="fixture", source_key=SOURCE_KEY, dry_run=True)
         assert dry["written"] is False
         assert dry["resolved_correspondences"] == 8
-
-        with driver.session() as session:
-            record = session.run(
-                f"MATCH ()-[r:{REL_CORRESPONDS_TO}]->() RETURN count(r) AS c"
-            ).single()
-        assert record is not None and record["c"] == 0
+        assert counts() == before, "dry run mutated the graph"
