@@ -315,11 +315,48 @@ published 1–5 scale:
 The third is the one that could not exist without this source. A rating from
 eight respondents with a wide interval loses to one from thirty with a narrow
 one, *without anyone hand-weighting sample size* — the penalty is already in
-the published statistics. Measured on the full graph, ranking paths between
-`Programming` and `Computers and Electronics`, the point-estimate policies rank
-Computer Programmers first while the lower-CI policy demotes routes whose
-evidence is thin. The three policies genuinely disagree; that is the point of
-naming them.
+the published statistics.
+
+Measured on the full graph, ranking the paths between `Programming` (2.B.3.e)
+and `Computers and Electronics` (2.C.3.a):
+
+```
+onet-importance-bottleneck  Computer Programmers, Web Developers, Video Game Designers
+onet-importance-mean        Computer Programmers, Computer Network Architects, Network and Computer Systems Administrators
+onet-importance-lower-ci    Computer Programmers, Computer and Information Research Scientists, Network and Computer Systems Administrators
+```
+
+All three agree on the strongest route and **diverge from rank two onward** —
+the disagreement is real but narrower than "they rank differently" would
+suggest, and it is worth stating at that strength rather than louder. Under
+lower-CI the routes whose ratings rest on small samples fall out of the top;
+under the mean, a path strong on average outranks one with a single weak hop.
+
+Reproduce it against a graph loaded with `--mode full` (see **Reproduce**):
+
+```python
+from ta_taxonomies.contract import PolicyRef
+from ta_taxonomies.suites.onet.db import neo4j_driver
+from ta_taxonomies.suites.onet.tools import OnetSuite
+
+with neo4j_driver() as (driver, database):
+    suite = OnetSuite(driver, database=database)
+    found = suite.enumerate_paths(
+        "onet:element:2.B.3.e", "onet:element:2.C.3.a", max_depth=2, max_paths=20
+    )
+    labels = {n.id: n.label for n in found.nodes}
+    for name in ("onet-importance-bottleneck", "onet-importance-mean",
+                 "onet-importance-lower-ci"):
+        result = suite.score_paths(found.paths, PolicyRef(name=name, version="1"))
+        print(name, [labels[s.path.node_ids[1]] for s in result.scored_paths[:3]])
+```
+
+A claim about ranking with no way to re-run it is a claim a reader has to take
+on trust, and ARCHITECTURE.md makes reproducibility a hard requirement rather
+than a courtesy. Writing this snippet is also what caught the sentence that
+used to be here: it said the point-estimate policies ranked Computer
+Programmers first *while* the lower-CI policy did otherwise, which reads as a
+divergence at the top that the numbers do not show.
 
 Declared, and not source data:
 
