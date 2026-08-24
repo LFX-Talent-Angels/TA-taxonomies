@@ -182,6 +182,7 @@ def resolve(
     isco_ids_by_code: Mapping[str, str],
     provenance: Provenance,
     all_esco_occupation_codes: Iterable[str] | None = None,
+    all_onet_occupation_ids: Iterable[str] | None = None,
 ) -> Resolution:
     """Turn parsed rows into typed correspondences against a loaded ESCO graph.
 
@@ -190,12 +191,19 @@ def resolve(
     of loaded ESCO occupations -- anything in it that the table never mentions
     becomes an explicit ``NoLink``.
 
+    ``all_onet_occupation_ids`` does the same in the other direction. Absence
+    is not symmetric and has to be checked both ways: an ESCO occupation the
+    table skips and an O*NET occupation no ESCO row reaches are different
+    facts, and only recording the first would make the crosswalk look like
+    full coverage of O*NET when it is not.
+
     Every emitted correspondence carries ``MatchStrength.UNSPECIFIED``: the
     distributed file has no strength column, and the honest record of "we were
     not told" is the unspecified value, not a plausible guess.
     """
     resolution = Resolution()
     seen_codes: set[str] = set()
+    seen_onet_ids: set[str] = set()
     unresolved: set[str] = set()
 
     for row in rows:
@@ -206,10 +214,12 @@ def resolve(
             continue
         if row.side == "occupation":
             seen_codes.add(row.esco_code)
+        to_id = onet_occupation_id(row.onet_code)
+        seen_onet_ids.add(to_id)
         resolution.correspondences.append(
             PublishedCorrespondence(
                 from_id=from_id,
-                to_id=onet_occupation_id(row.onet_code),
+                to_id=to_id,
                 from_suite=ESCO,
                 to_suite=ONET,
                 strength=MatchStrength.UNSPECIFIED,
@@ -231,6 +241,21 @@ def resolve(
                     from_suite=ESCO,
                     to_suite=ONET,
                     reason=f"ESCO occupation code {code!r} does not appear in the table",
+                    checked_against=provenance.key,
+                )
+            )
+
+    if all_onet_occupation_ids is not None:
+        for node_id in sorted(set(all_onet_occupation_ids) - seen_onet_ids):
+            resolution.no_links.append(
+                NoLink(
+                    from_id=node_id,
+                    from_suite=ONET,
+                    to_suite=ESCO,
+                    reason=(
+                        f"O*NET occupation {node_id.rsplit(':', 1)[-1]!r} is not "
+                        "reached by any row in the table"
+                    ),
                     checked_against=provenance.key,
                 )
             )

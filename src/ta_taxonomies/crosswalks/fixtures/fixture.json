@@ -9,12 +9,16 @@
     "  2. Mixed key levels. 2512 is an ISCO group code, 2512.4 an ESCO occupation.",
     "     Same column in the source file, different node labels in the graph.",
     "  3. Many-to-many. 2512.4 (software developer) maps to four O*NET occupations.",
-    "     Row 9999.9 is present in the table but absent from ESCO: a version seam."
+    "     Row 9999.9 is present in the table but absent from ESCO: a version seam.",
+    "  4. Absence is not symmetric. 11-9179.00 is a real O*NET occupation that no row in the published table reaches, so it gets a NoLink in the O*NET->ESCO direction, mirroring 0110.1's in the ESCO->O*NET direction."
   ],
   "endpoints": [
     {
       "id": "esco:occupation:b223f402-0318-4e27-8691-df6e7f7295d2",
-      "labels": ["Occupation", "EscoNode"],
+      "labels": [
+        "Occupation",
+        "EscoNode"
+      ],
       "source": "esco",
       "source_id": "http://data.europa.eu/esco/occupation/b223f402-0318-4e27-8691-df6e7f7295d2",
       "pref_label": "lieutenant",
@@ -22,7 +26,10 @@
     },
     {
       "id": "esco:occupation:f2cc5978-e45c-4f28-b859-7f89221b0505",
-      "labels": ["Occupation", "EscoNode"],
+      "labels": [
+        "Occupation",
+        "EscoNode"
+      ],
       "source": "esco",
       "source_id": "http://data.europa.eu/esco/occupation/f2cc5978-e45c-4f28-b859-7f89221b0505",
       "pref_label": "air force officer",
@@ -30,7 +37,10 @@
     },
     {
       "id": "esco:occupation:f2b15a0e-e65a-438a-affb-29b9d50b77d1",
-      "labels": ["Occupation", "EscoNode"],
+      "labels": [
+        "Occupation",
+        "EscoNode"
+      ],
       "source": "esco",
       "source_id": "http://data.europa.eu/esco/occupation/f2b15a0e-e65a-438a-affb-29b9d50b77d1",
       "pref_label": "software developer",
@@ -38,7 +48,10 @@
     },
     {
       "id": "esco:occupation:bab5fa79-7f96-4e21-87b6-1eba560b8d9a",
-      "labels": ["Occupation", "EscoNode"],
+      "labels": [
+        "Occupation",
+        "EscoNode"
+      ],
       "source": "esco",
       "source_id": "http://data.europa.eu/esco/occupation/bab5fa79-7f96-4e21-87b6-1eba560b8d9a",
       "pref_label": "3D modeller",
@@ -46,7 +59,10 @@
     },
     {
       "id": "esco:isco:2512",
-      "labels": ["ISCOGroup", "EscoNode"],
+      "labels": [
+        "ISCOGroup",
+        "EscoNode"
+      ],
       "source": "esco",
       "source_id": "http://data.europa.eu/esco/isco/C2512",
       "pref_label": "Software developers",
@@ -54,7 +70,10 @@
     },
     {
       "id": "onet:occupation:33-1012.00",
-      "labels": ["Occupation", "OnetOccupation"],
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
       "source": "onet",
       "source_id": "33-1012.00",
       "pref_label": "First-Line Supervisors of Police and Detectives",
@@ -62,7 +81,10 @@
     },
     {
       "id": "onet:occupation:33-3012.00",
-      "labels": ["Occupation", "OnetOccupation"],
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
       "source": "onet",
       "source_id": "33-3012.00",
       "pref_label": "Correctional Officers and Jailers",
@@ -70,7 +92,10 @@
     },
     {
       "id": "onet:occupation:15-1252.00",
-      "labels": ["Occupation", "OnetOccupation"],
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
       "source": "onet",
       "source_id": "15-1252.00",
       "pref_label": "Software Developers",
@@ -78,7 +103,10 @@
     },
     {
       "id": "onet:occupation:15-1251.00",
-      "labels": ["Occupation", "OnetOccupation"],
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
       "source": "onet",
       "source_id": "15-1251.00",
       "pref_label": "Computer Programmers",
@@ -86,7 +114,10 @@
     },
     {
       "id": "onet:occupation:15-1253.00",
-      "labels": ["Occupation", "OnetOccupation"],
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
       "source": "onet",
       "source_id": "15-1253.00",
       "pref_label": "Software Quality Assurance Analysts and Testers",
@@ -94,7 +125,10 @@
     },
     {
       "id": "onet:occupation:15-1299.07",
-      "labels": ["Occupation", "OnetOccupation"],
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
       "source": "onet",
       "source_id": "15-1299.07",
       "pref_label": "Blockchain Engineers",
@@ -102,23 +136,82 @@
     },
     {
       "id": "onet:occupation:27-1014.00",
-      "labels": ["Occupation", "OnetOccupation"],
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
       "source": "onet",
       "source_id": "27-1014.00",
       "pref_label": "Special Effects Artists and Animators",
       "code": "27-1014.00"
+    },
+    {
+      "id": "onet:occupation:11-9179.00",
+      "labels": [
+        "Occupation",
+        "OnetOccupation"
+      ],
+      "source": "onet",
+      "source_id": "11-9179.00",
+      "pref_label": "Personal Service Managers, All Other",
+      "code": "11-9179.00"
     }
   ],
   "rows": [
-    { "esco_code": "0110.10", "esco_title": "lieutenant", "onet_code": "33-1012.00", "onet_title": "First-Line Supervisors of Police and Detectives" },
-    { "esco_code": "0110.10", "esco_title": "lieutenant", "onet_code": "33-3012.00", "onet_title": "Correctional Officers and Jailers" },
-    { "esco_code": "2512.4", "esco_title": "software developer", "onet_code": "15-1252.00", "onet_title": "Software Developers" },
-    { "esco_code": "2512.4", "esco_title": "software developer", "onet_code": "15-1251.00", "onet_title": "Computer Programmers" },
-    { "esco_code": "2512.4", "esco_title": "software developer", "onet_code": "15-1253.00", "onet_title": "Software Quality Assurance Analysts and Testers" },
-    { "esco_code": "2166.1", "esco_title": "3D modeller", "onet_code": "27-1014.00", "onet_title": "Special Effects Artists and Animators" },
-    { "esco_code": "2512", "esco_title": "Software developers", "onet_code": "15-1252.00", "onet_title": "Software Developers" },
-    { "esco_code": "2512", "esco_title": "Software developers", "onet_code": "15-1299.07", "onet_title": "Blockchain Engineers" },
-    { "esco_code": "9999.9", "esco_title": "not in this ESCO release", "onet_code": "15-1252.00", "onet_title": "Software Developers" }
+    {
+      "esco_code": "0110.10",
+      "esco_title": "lieutenant",
+      "onet_code": "33-1012.00",
+      "onet_title": "First-Line Supervisors of Police and Detectives"
+    },
+    {
+      "esco_code": "0110.10",
+      "esco_title": "lieutenant",
+      "onet_code": "33-3012.00",
+      "onet_title": "Correctional Officers and Jailers"
+    },
+    {
+      "esco_code": "2512.4",
+      "esco_title": "software developer",
+      "onet_code": "15-1252.00",
+      "onet_title": "Software Developers"
+    },
+    {
+      "esco_code": "2512.4",
+      "esco_title": "software developer",
+      "onet_code": "15-1251.00",
+      "onet_title": "Computer Programmers"
+    },
+    {
+      "esco_code": "2512.4",
+      "esco_title": "software developer",
+      "onet_code": "15-1253.00",
+      "onet_title": "Software Quality Assurance Analysts and Testers"
+    },
+    {
+      "esco_code": "2166.1",
+      "esco_title": "3D modeller",
+      "onet_code": "27-1014.00",
+      "onet_title": "Special Effects Artists and Animators"
+    },
+    {
+      "esco_code": "2512",
+      "esco_title": "Software developers",
+      "onet_code": "15-1252.00",
+      "onet_title": "Software Developers"
+    },
+    {
+      "esco_code": "2512",
+      "esco_title": "Software developers",
+      "onet_code": "15-1299.07",
+      "onet_title": "Blockchain Engineers"
+    },
+    {
+      "esco_code": "9999.9",
+      "esco_title": "not in this ESCO release",
+      "onet_code": "15-1252.00",
+      "onet_title": "Software Developers"
+    }
   ],
   "esco_occupation_ids_by_code": {
     "0110.10": "esco:occupation:b223f402-0318-4e27-8691-df6e7f7295d2",
@@ -129,5 +222,20 @@
   "esco_isco_ids_by_code": {
     "2512": "esco:isco:2512"
   },
-  "all_esco_occupation_codes": ["0110.10", "0110.1", "2512.4", "2166.1"]
+  "all_esco_occupation_codes": [
+    "0110.10",
+    "0110.1",
+    "2512.4",
+    "2166.1"
+  ],
+  "all_onet_occupation_ids": [
+    "onet:occupation:33-1012.00",
+    "onet:occupation:33-3012.00",
+    "onet:occupation:15-1252.00",
+    "onet:occupation:15-1251.00",
+    "onet:occupation:15-1253.00",
+    "onet:occupation:15-1299.07",
+    "onet:occupation:27-1014.00",
+    "onet:occupation:11-9179.00"
+  ]
 }

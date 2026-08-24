@@ -152,6 +152,20 @@ def esco_code_maps(session: Session) -> tuple[dict[str, str], dict[str, str], li
     return occupations, groups, sorted(occupations)
 
 
+def onet_occupation_ids(session: Session) -> list[str]:
+    """Read every loaded O*NET occupation id. Read-only.
+
+    Needed so absence can be checked in both directions. Returns an empty list
+    when the O*NET suite is not loaded, in which case the caller must not
+    record reverse absences -- "no ESCO reaches this" and "this suite is not
+    loaded" would otherwise produce identical output.
+    """
+    return [
+        record["id"]
+        for record in session.run("MATCH (o:Occupation) WHERE o.source = 'onet' RETURN o.id AS id")
+    ]
+
+
 def missing_targets(session: Session, ids: Iterable[str]) -> list[str]:
     """Return the ids among ``ids`` that no node in the graph carries."""
     wanted = sorted(set(ids))
@@ -277,11 +291,21 @@ def merge_correspondences(
         ]
         record = session.run(cypher, rows=rows).single()
         matched = int(record["c"]) if record else 0
-        if matched != len(chunk):
+        if matched < len(chunk):
             raise CrosswalkLoadError(
                 f"{REL_CORRESPONDS_TO} merge attempted {len(chunk)} rows but matched "
                 f"{matched}; {len(chunk) - matched} rows have an endpoint that does not "
                 "exist in the graph. The crosswalk layer never creates endpoints."
+            )
+        if matched > len(chunk):
+            # More matches than rows means some id is carried by more than one
+            # node, so every MATCH multiplied. Distinguished from the case above
+            # because the remedy is the opposite: deduplicate the suite's nodes
+            # and add the uniqueness constraint its loader should have declared.
+            raise CrosswalkLoadError(
+                f"{REL_CORRESPONDS_TO} merge attempted {len(chunk)} rows but matched "
+                f"{matched}; at least one endpoint id is carried by multiple nodes. "
+                "Deduplicate the suite data before loading crosswalks."
             )
         total += matched
     return total
@@ -332,12 +356,22 @@ def seed_fixture_endpoints(session: Session, endpoints: Sequence[dict[str, Any]]
     CI SCAFFOLDING ONLY. Real loads run against real suites; this exists
     because the contract tests must be able to exercise the loader without a
     populated ESCO or O*NET graph. It is unreachable from ``--mode full``.
+
+    Identity is the ``id`` alone, and labels are applied afterwards. Merging on
+    ``(:Occupation:EscoNode {id})`` instead would match on the *label set*, so
+    running this against a graph where a real suite had already created
+    ``(:Occupation {id})`` produces a second node with the same id rather than
+    reusing the first -- and every subsequent endpoint MATCH then multiplies.
+    That is the "MERGE on identity, never on a compound that includes
+    incidental structure" rule from ARCHITECTURE.md, and it bites here exactly
+    as advertised.
     """
     written = 0
     for endpoint in endpoints:
         labels = ":".join(endpoint["labels"])
         session.run(
-            f"MERGE (n:{labels} {{id: $id}}) "
+            "MERGE (n {id: $id}) "
+            f"SET n:{labels} "
             "SET n.source = $source, n.source_id = $source_id, "
             "n.pref_label = $pref_label, n.code = $code, n.kind = $kind",
             id=endpoint["id"],
@@ -433,6 +467,7 @@ def build_resolution(
         occupations = document["esco_occupation_ids_by_code"]
         groups = document["esco_isco_ids_by_code"]
         all_codes = document.get("all_esco_occupation_codes")
+        onet_ids = document.get("all_onet_occupation_ids")
     elif mode == "full":
         path = data_path or _full_source_path(source_key)
         if not path.exists():
@@ -442,6 +477,9 @@ def build_resolution(
             )
         raw_rows = read_xlsx_rows(path)
         occupations, groups, all_codes = esco_code_maps(session)
+        # Empty when O*NET is not loaded yet; resolve() then skips reverse
+        # absences rather than declaring all 1,016 of them unreachable.
+        onet_ids = onet_occupation_ids(session) or None
         if not occupations:
             raise CrosswalkLoadError(
                 "no ESCO occupations found in the graph. Load the ESCO suite first: "
@@ -457,6 +495,7 @@ def build_resolution(
         isco_ids_by_code=groups,
         provenance=provenance,
         all_esco_occupation_codes=all_codes,
+        all_onet_occupation_ids=onet_ids,
     )
     return (
         provenance,

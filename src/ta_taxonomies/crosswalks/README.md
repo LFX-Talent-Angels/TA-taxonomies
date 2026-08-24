@@ -49,12 +49,19 @@ Resolved against the fully loaded ESCO graph:
 
 | | |
 |---|---|
-| Correspondences that resolve | **8,487** (7,566 occupation-level + 921 group-level) |
+| Correspondences loaded | **8,487** (7,566 occupation-level + 921 group-level) |
 | ESCO occupations that cross | **2,959 of 3,039 (97.4%)** |
-| ESCO occupations with no row | 80 — recorded as explicit `NoLink` |
-| …of those, rescued via their ISCO group | 61 |
-| …reachable by neither route | **19** |
+| O*NET occupations reached | **957 of 1,016 (94.2%)** |
+| Recorded `NoLink` records | **139** = 80 ESCO-side + 59 O*NET-side |
+| …ESCO occupations with no row | 80 (61 rescued via their ISCO group; **19 by neither route**) |
+| …O*NET occupations no ESCO row reaches | **59** |
 | Table codes absent from this ESCO release | 38 (a version seam, reported not swallowed) |
+
+Verified end to end against both suites loaded into one graph: 8,487
+correspondences written, 0 missing endpoints, 139 absences recorded. Absence is
+checked in **both** directions on purpose — recording only the ESCO side would
+make this look like full coverage of O*NET when 59 of its occupations are
+reached by no published row at all.
 
 **The correction that matters.** This crosswalk is *published*, but it is not
 *deterministic*. Its own technical report describes a fine-tuned BERT model
@@ -87,14 +94,23 @@ So the second premise holds. And the granularity gap is not a detail:
 
 | | Count | Source |
 |---|---|---|
-| ESCO skills | **13,939** | measured in the loaded graph |
+| ESCO skills | **13,939** | measured in the loaded ESCO graph |
 | ESCO skill→occupation edges | **126,051** | measured; two predicates, no weights |
-| O*NET Skills elements | **35** | 10 Essential + 25 Transferable, O*NET Content Model |
-| O*NET Abilities | 52 | Content Model |
-| O*NET Knowledge | 33 | Content Model |
+| O*NET 2.A Basic Skills | 10 | measured in the loaded O*NET graph |
+| O*NET 2.B Cross-Functional Skills | 25 | measured |
+| **O*NET Skills total** | **35** | 2.A + 2.B |
+| O*NET 1.A Abilities | 52 | measured |
+| O*NET 2.C Knowledge | 33 | measured |
+| **O*NET descriptors total** | **120** | all four branches |
 
 That is roughly **400:1** against the Skills domain alone, and about **116:1**
-against Skills + Abilities + Knowledge combined. These are not two views of the
+against all 120 descriptors combined.
+
+One reconciliation worth writing down before someone re-derives it: the O*NET
+graph holds **107,280 rated element-occupation pairs** across the four
+branches, of which 31,290 are Skills. ADR-0006's "62,580 skill-occupation
+edges rated on Importance *and* Level" is the same data counted as one row per
+rating rather than per pair — 31,290 × 2. The numbers do not disagree. These are not two views of the
 same thing at different resolutions. ESCO enumerates specific competences
 ("operate a hydraulic press"); O*NET rates a fixed psychometric instrument
 ("Active Listening", 0–7, with sample size and confidence bounds). A mapping
@@ -237,7 +253,9 @@ warning — which is a different answer from `not_found`, and deliberately so.
   by a test that parses this module's own Cypher.
 - The loader **never creates endpoints**. A correspondence to a node that does
   not exist fails the load; it is not silently dropped, because a dropped row
-  is indistinguishable from a genuine absence.
+  is indistinguishable from a genuine absence. It also fails when an endpoint
+  id is carried by *more than one* node, with a distinct message — the remedy
+  there is the opposite (deduplicate the suite data).
 - Published and asserted correspondences are **different relationship types**,
   not one type with a flag.
 - Codes are strings everywhere. ESCO `0110.10` (lieutenant) is in the published

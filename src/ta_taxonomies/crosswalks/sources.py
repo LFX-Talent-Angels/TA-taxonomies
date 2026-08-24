@@ -45,12 +45,16 @@ ESCO_ONET_2019 = Provenance(
     ),
     method=MappingMethod.MODEL_ASSISTED_VALIDATED,
     caveats=(
-        "Published methodology defines exact/narrower/broader/close/related match "
-        "types, but the distributed XLSX has no strength column. Rows therefore load "
-        "as MatchStrength.UNSPECIFIED; inferring a strength would be invention.",
-        "ESCO documents a second version of this crosswalk that adds 'related' "
-        "matches and states it did not go through quality assurance or the US DOL "
-        "validation process. That version is deliberately not registered here.",
+        "Two distinct facts about match strength, easy to conflate later and worth "
+        "keeping apart. (1) The publishers issue TWO versions: a validated one "
+        "carrying exact/narrower/broader/close matches, and a second that adds "
+        "'related' matches which ESCO states went through neither quality "
+        "assurance nor US DOL validation. Only the validated one is registered "
+        "here. (2) The XLSX that O*NET actually distributes has no strength "
+        "column at all, so even the validated strengths are not in the file we "
+        "read. Rows therefore load as MatchStrength.UNSPECIFIED. 'We were not "
+        "told the strength' is not the same as 'the strength is unvalidated', "
+        "and neither is a licence to infer one.",
         "Built with a fine-tuned BERT model proposing candidates for human "
         "validation, not by deterministic derivation. Best reported model placed "
         "the correct ESCO concept first for 85% of exact matches.",

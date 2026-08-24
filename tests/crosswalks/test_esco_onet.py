@@ -94,6 +94,7 @@ class TestResolveAgainstFixture:
             isco_ids_by_code=document["esco_isco_ids_by_code"],
             provenance=ESCO_ONET_2019,
             all_esco_occupation_codes=document["all_esco_occupation_codes"],
+            all_onet_occupation_ids=document["all_onet_occupation_ids"],
         )
 
     def test_counts(self, resolution) -> None:
@@ -130,6 +131,36 @@ class TestResolveAgainstFixture:
 
     def test_absences_cite_the_table_they_were_checked_against(self, resolution) -> None:
         assert all(n.checked_against == ESCO_ONET_2019.key for n in resolution.no_links)
+
+    def test_absence_is_recorded_in_both_directions(self, resolution, document: dict) -> None:
+        """An unreached O*NET occupation is a different fact from a skipped ESCO one.
+
+        Recording only the ESCO side would make the crosswalk look like full
+        coverage of O*NET when 59 of its 1,016 occupations are reached by no
+        published row at all.
+        """
+        forward = [n for n in resolution.no_links if n.from_suite == "esco"]
+        reverse = [n for n in resolution.no_links if n.from_suite == "onet"]
+
+        assert {n.from_id for n in forward} == {document["esco_occupation_ids_by_code"]["0110.1"]}
+        assert {n.from_id for n in reverse} == {"onet:occupation:11-9179.00"}
+        assert all(n.to_suite == "esco" for n in reverse)
+
+    def test_reverse_absences_are_skipped_when_onet_is_not_loaded(self, document: dict) -> None:
+        """Silence about O*NET must not be reported as O*NET having no links.
+
+        Passing nothing (the state before the O*NET suite exists) must produce
+        no reverse absences at all, rather than declaring every occupation
+        unreachable.
+        """
+        without_onet = resolve(
+            parse_rows(document["rows"]),
+            occupation_ids_by_code=document["esco_occupation_ids_by_code"],
+            isco_ids_by_code=document["esco_isco_ids_by_code"],
+            provenance=ESCO_ONET_2019,
+            all_esco_occupation_codes=document["all_esco_occupation_codes"],
+        )
+        assert [n for n in without_onet.no_links if n.from_suite == "onet"] == []
 
     def test_source_row_carries_codes_not_prose(self, resolution) -> None:
         """Pointer, not payload: publisher titles stay out of the graph."""

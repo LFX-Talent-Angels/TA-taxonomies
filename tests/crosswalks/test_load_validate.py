@@ -57,7 +57,7 @@ class TestFixtureLoad:
     def test_counts_survive_translation(self, report: dict) -> None:
         assert report["written"] is True
         assert report["counts"]["correspondences"] == report["resolved_correspondences"] == 8
-        assert report["counts"]["no_links"] == report["recorded_no_links"] == 1
+        assert report["counts"]["no_links"] == report["recorded_no_links"] == 2
 
     def test_version_seam_is_reported_not_swallowed(self, report: dict) -> None:
         """A code the table has and ESCO does not is a fact, not a silent drop."""
@@ -119,7 +119,7 @@ class TestQueriesAfterLoad:
         coverage = Crosswalks(driver).coverage(SOURCE_KEY)
         assert coverage["loaded"] is True
         assert coverage["correspondences"] == 8
-        assert coverage["recorded_no_links"] == 1
+        assert coverage["recorded_no_links"] == 2
         assert coverage["method"] == "model_assisted_validated"
 
     def test_unloaded_source_reports_itself_as_unloaded(self, driver: Driver) -> None:
