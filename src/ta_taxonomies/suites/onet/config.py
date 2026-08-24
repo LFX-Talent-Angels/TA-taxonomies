@@ -22,7 +22,11 @@ SOURCE = "onet"
 # renumbers Element IDs across major taxonomy revisions, so a graph is only
 # meaningful next to the release that produced it.
 RELEASE = "30.3"
-ONET_SOC_TAXONOMY = "2019 O*NET-SOC"
+# The SOC taxonomy the O*NET-SOC codes extend, stamped onto every SOC group
+# node. (The O*NET-SOC taxonomy version itself was declared here too and used
+# nowhere; a constant with no reader states an identity the code does not
+# actually carry, so it was removed rather than left implying one. The release
+# above is the version that matters, and it is on every node.)
 SOC_TAXONOMY = "2018 SOC"
 
 # Node labels stored in Neo4j.

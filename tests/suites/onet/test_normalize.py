@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from ta_taxonomies.suites.onet import load
 from ta_taxonomies.suites.onet.config import (
     ESSENTIAL_IMPORTANCE_MIN,
     RELATION_TYPE_POLICY,
@@ -203,6 +204,35 @@ def test_renumbered_content_model_fails_loudly() -> None:
     )
     with pytest.raises(OnetLoadValidationError, match="does not start with"):
         normalize_document(doc)
+
+
+def test_level_outside_the_published_scale_fails_loudly() -> None:
+    # LV_MIN/LV_MAX were declared with the same "must break, not rescale"
+    # intent as the Importance bounds, and then only Importance was checked.
+    # No scoring policy reads Level today, so an out-of-range value would have
+    # loaded and waited for the first policy that did.
+    doc = _doc(
+        **{
+            "Transferable Skills.txt": [
+                _rating("15-1252.00", "2.B.3.e", "IM", "4.5"),
+                _rating("15-1252.00", "2.B.3.e", "LV", "9.9"),
+            ]
+        }
+    )
+    with pytest.raises(OnetLoadValidationError, match="level 9.9 outside the published"):
+        normalize_document(doc)
+
+
+def test_the_soc_group_taxonomy_is_derived_from_config_not_restated() -> None:
+    # Comparing against SOC_TAXONOMY is not enough: a literal "2018 SOC" in the
+    # loader equals the constant too, so the assertion passes either way. The
+    # only way to tell a derived value from one that merely agrees is to change
+    # the config and require the output to follow.
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(load, "SOC_TAXONOMY", "PROBE SOC")
+        payload = normalize_document(_doc())
+
+    assert payload["soc_groups"][0]["extra"]["taxonomy"] == "PROBE SOC"
 
 
 def test_importance_outside_the_published_scale_fails_loudly() -> None:

@@ -536,6 +536,40 @@ against a literal `"HAS_SKILL"` rather than `REL_HAS_SKILL`, which was not even
 imported. That one is behaviour-identical and no test covers it, which is the
 honest thing to say about it: it is a readability fix, not a governance one.
 
+### A config audit, graded
+
+Sweeping every constant in `config.py` for readers outside its own file turned
+up three things of very different weight. Grading them matters more than
+counting them.
+
+**Real.** `LV_MIN` / `LV_MAX` were declared with the comment that the scoring
+policies are defined against these numbers and *"a silent scale change must
+break, not rescale"* — and then only Importance was ever range-checked. Level
+had no validation at all. No policy reads Level today, which is exactly why an
+out-of-range value would have loaded, sat in the graph, and waited for the first
+policy that did. Now checked; real 30.3 values are `[0.00, 6.96]` against the
+declared `[0, 7]`, so it passes on real data.
+
+**Not a finding.** `SOC_TAXONOMY` existed while `load.py` wrote the literal
+`"2018 SOC"`. Now derived — but the mutation restoring the literal **stays
+green**, because it is behaviour-identical. Legibility, not governance. Saying
+otherwise would dress a cleanup up as a defect.
+
+**Dead.** `ONET_SOC_TAXONOMY` had no reader anywhere. Removed rather than left
+implying the code carries an identity it does not; `RELEASE` is the version that
+matters and it is on every node.
+
+**And the test for the second one was, at first, the exact trap this file keeps
+describing.** It asserted the node's taxonomy equalled `SOC_TAXONOMY` — which a
+literal `"2018 SOC"` also satisfies, since the two are the same string. A test
+that compares against the constant cannot tell a derived value from one that
+merely agrees. It now monkeypatches the config and requires the output to
+follow, and only then does the mutation fail.
+
+The audit itself needed re-running: the first sweep used an unquoted `--include`
+glob, every grep matched nothing, and all fifty constants looked dead. A tool
+that reports total failure as total absence is worth distrusting on sight.
+
 ### Where these bugs were found
 
 Three real defects came out of this work — the constraint no-op, the

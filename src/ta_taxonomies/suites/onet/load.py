@@ -41,6 +41,8 @@ from ta_taxonomies.suites.onet.config import (
     LABEL_ONET_NODE,
     LABEL_SOC_GROUP,
     LABEL_TASK,
+    LV_MAX,
+    LV_MIN,
     RATED_FILES,
     REL_BROADER_THAN,
     REL_CLASSIFIED_UNDER,
@@ -51,6 +53,7 @@ from ta_taxonomies.suites.onet.config import (
     RELEASE,
     SCALE_IMPORTANCE,
     SCALE_LEVEL,
+    SOC_TAXONOMY,
     SOURCE,
 )
 from ta_taxonomies.suites.onet.db import neo4j_config_from_env, neo4j_driver, verify_connectivity
@@ -268,6 +271,16 @@ def _normalize_rated_rows(
             raise OnetLoadValidationError(
                 f"importance {importance} outside the published {IM_MIN}–{IM_MAX} scale"
             )
+        # Level was declared with the same "a silent scale change must break,
+        # not rescale" intent as Importance, and then only Importance was
+        # checked. Nothing reads Level's bounds today — no scoring policy uses
+        # it — which is exactly why an out-of-range value would have loaded and
+        # sat there until the first policy that did.
+        level = edge["level"]
+        if level is not None and not (LV_MIN <= level <= LV_MAX):
+            raise OnetLoadValidationError(
+                f"level {level} outside the published {LV_MIN}–{LV_MAX} scale"
+            )
         edge["relation_type"] = _relation_type(importance)
         edge["relation_type_policy"] = RELATION_TYPE_POLICY.name
         edge["relation_type_policy_version"] = RELATION_TYPE_POLICY.version
@@ -320,7 +333,7 @@ def normalize_document(doc: Mapping[str, Any]) -> dict[str, list[dict[str, Any]]
                 # title is the SOC's, and a split SOC gets no borrowed label.
                 pref_label=title if code.endswith(".00") else "",
                 code=soc,
-                extra={"taxonomy": "2018 SOC", "derived_from": "O*NET-SOC code prefix"},
+                extra={"taxonomy": SOC_TAXONOMY, "derived_from": "O*NET-SOC code prefix"},
             )
         elif code.endswith(".00") and not soc_groups[soc]["pref_label"]:
             soc_groups[soc]["pref_label"] = title
