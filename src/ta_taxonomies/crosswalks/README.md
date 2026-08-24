@@ -256,6 +256,12 @@ warning — which is a different answer from `not_found`, and deliberately so.
   is indistinguishable from a genuine absence. It also fails when an endpoint
   id is carried by *more than one* node, with a distinct message — the remedy
   there is the opposite (deduplicate the suite data).
+- The **join key is checked for ambiguity before anything is written**. This
+  crosswalk joins on the ESCO *code*, and no constraint declares codes unique.
+  A duplicated code would keep whichever node was read last, drop the other's
+  correspondences, and still reconcile every count — so it is detected
+  explicitly and the load stops. Detection, not repair: this layer never picks
+  a winner or deletes another package's node.
 - Published and asserted correspondences are **different relationship types**,
   not one type with a flag.
 - Codes are strings everywhere. ESCO `0110.10` (lieutenant) is in the published

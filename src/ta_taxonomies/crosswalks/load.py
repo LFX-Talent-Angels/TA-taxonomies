@@ -130,25 +130,58 @@ def read_xlsx_rows(path: Path) -> list[dict[str, str]]:
 # --------------------------------------------------------------------------
 
 
+def _code_map(session: Session, cypher: str, *, what: str) -> dict[str, str]:
+    """Build a code -> id map, refusing to proceed if a code is not unique.
+
+    The join key for this crosswalk is the ESCO *code*, not the id. That makes
+    a duplicated code the one collision this package cannot survive quietly: a
+    dict comprehension keeps whichever row arrived last, the other node's
+    correspondences are silently dropped, and every count still reconciles
+    because nothing was ever attempted for the loser.
+
+    The write path is already loud about duplicate *ids* -- it MATCHes without
+    a label, so a second node carrying the same id makes the match count
+    exceed the row count. Codes get no such protection from Cypher, because no
+    constraint declares them unique, so the check has to be explicit here.
+    Detection, not repair: this layer reports and stops rather than choosing a
+    winner or deleting another package's node.
+    """
+    mapping: dict[str, str] = {}
+    collisions: dict[str, list[str]] = {}
+    for record in session.run(cypher):
+        code, node_id = record["code"], record["id"]
+        existing = mapping.get(code)
+        if existing is not None and existing != node_id:
+            collisions.setdefault(code, [existing]).append(node_id)
+            continue
+        mapping[code] = node_id
+    if collisions:
+        sample = sorted(collisions.items())[:5]
+        raise CrosswalkLoadError(
+            f"{len(collisions)} {what} codes are carried by more than one node, so the "
+            f"crosswalk join key is ambiguous (e.g. {sample}). Deduplicate the suite "
+            "data before loading crosswalks; this layer will not pick a winner."
+        )
+    return mapping
+
+
 def esco_code_maps(session: Session) -> tuple[dict[str, str], dict[str, str], list[str]]:
     """Read ESCO code -> id maps from the graph, plus all occupation codes.
 
     Read-only. The crosswalk layer looks at the suites; it does not write to
     them.
     """
-    occupations = {
-        record["code"]: record["id"]
-        for record in session.run(
-            "MATCH (o:Occupation) WHERE o.source = 'esco' AND o.code IS NOT NULL "
-            "RETURN o.code AS code, o.id AS id"
-        )
-    }
-    groups = {
-        record["code"]: record["id"]
-        for record in session.run(
-            "MATCH (g:ISCOGroup) WHERE g.code IS NOT NULL RETURN g.code AS code, g.id AS id"
-        )
-    }
+    occupations = _code_map(
+        session,
+        "MATCH (o:Occupation) WHERE o.source = 'esco' AND o.code IS NOT NULL "
+        "RETURN o.code AS code, o.id AS id",
+        what="ESCO occupation",
+    )
+    groups = _code_map(
+        session,
+        "MATCH (g:ISCOGroup) WHERE g.code IS NOT NULL RETURN g.code AS code, g.id AS id",
+        what="ISCO group",
+    )
     return occupations, groups, sorted(occupations)
 
 

@@ -17,6 +17,7 @@ from neo4j import Driver, GraphDatabase
 from ta_taxonomies.crosswalks.config import LABEL_NO_LINK, REL_CORRESPONDS_TO
 from ta_taxonomies.crosswalks.load import (
     CrosswalkLoadError,
+    esco_code_maps,
     load_crosswalk,
     merge_correspondences,
 )
@@ -176,6 +177,36 @@ class TestEndpointsAreNeverInvented:
                 "MATCH (n {id: 'onet:occupation:99-9999.99'}) RETURN count(n) AS c"
             ).single()
         assert record is not None and record["c"] == 0
+
+
+class TestAmbiguousJoinKeyIsRefused:
+    def test_duplicate_esco_code_stops_the_load(self, driver: Driver, report: dict) -> None:
+        """A duplicated code silently drops correspondences, so it must fail loudly.
+
+        The write path already catches duplicate *ids* (it MATCHes label-free,
+        so the match count exceeds the row count). Codes have no constraint
+        behind them, and a collision loses one node's rows while every count
+        still reconciles -- the quiet failure worth an explicit check.
+        """
+        with driver.session() as session:
+            session.run(
+                "CREATE (n:Occupation {id: 'esco:occupation:impostor', "
+                "source: 'esco', code: '2512.4', pref_label: 'impostor'})"
+            )
+        try:
+            with driver.session() as session:
+                with pytest.raises(CrosswalkLoadError, match="more than one node"):
+                    esco_code_maps(session)
+        finally:
+            with driver.session() as session:
+                session.run("MATCH (n {id: 'esco:occupation:impostor'}) DETACH DELETE n")
+
+    def test_clean_graph_builds_the_map(self, driver: Driver, report: dict) -> None:
+        with driver.session() as session:
+            occupations, groups, all_codes = esco_code_maps(session)
+        assert occupations["2512.4"] == SOFTWARE_DEVELOPER
+        assert groups["2512"] == "esco:isco:2512"
+        assert "0110.1" in all_codes
 
 
 class TestDryRunIsReadOnly:
