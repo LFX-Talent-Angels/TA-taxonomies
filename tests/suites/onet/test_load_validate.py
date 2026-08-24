@@ -92,3 +92,40 @@ def test_every_rated_edge_keeps_its_statistics(loaded: dict[str, int]) -> None:
     assert record["level"] == record["total"]
     assert record["sample_size"] == record["total"]
     assert record["policy"] == record["total"]
+
+
+def test_a_foreign_node_holding_a_suite_id_is_refused_not_duplicated(
+    loaded: dict[str, int],
+) -> None:
+    # MERGE matches on the whole pattern, labels included, so a node carrying
+    # one of this suite's ids under a different label set is invisible to it
+    # and gets duplicated rather than matched. The uniqueness constraint cannot
+    # catch that either — constraints are per label — and every count still
+    # adds up, so the load used to succeed with two nodes sharing one id.
+    del loaded
+    target = "onet:occupation:15-1252.00"
+    with neo4j_driver() as (driver, database):
+        with driver.session(database=database) as session:
+            session.run(
+                "CREATE (n:Occupation {id: $id, source: 'crosswalk-placeholder'})", id=target
+            )
+    try:
+        with pytest.raises(OnetLoadValidationError, match="without the :OnetNode label"):
+            run_load(mode="fixture", wipe=True)
+    finally:
+        with neo4j_driver() as (driver, database):
+            with driver.session(database=database) as session:
+                session.run(
+                    "MATCH (n {id: $id}) WHERE n.source = 'crosswalk-placeholder' DETACH DELETE n",
+                    id=target,
+                )
+
+    # Same load, once the foreign node is gone.
+    counts = run_load(mode="fixture", wipe=True)
+    assert counts["occupations"] == 4
+
+    with neo4j_driver() as (driver, database):
+        with driver.session(database=database) as session:
+            holders = session.run("MATCH (n {id: $id}) RETURN count(n) AS c", id=target).single()
+    assert holders is not None
+    assert holders["c"] == 1

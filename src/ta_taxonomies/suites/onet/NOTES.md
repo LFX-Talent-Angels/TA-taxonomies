@@ -365,6 +365,49 @@ this reason rather than the one first assumed.
 
 ---
 
+## MERGE identity: a duplicate that validated clean
+
+`_merge_nodes` originally merged on the *kind* label —
+`MERGE (n:OnetOccupation {id})` — then applied the umbrella and canonical
+labels. MERGE matches on the whole pattern, **labels included**, so a node
+already holding that id under a different label set is invisible to it and gets
+duplicated rather than matched. Measured against a graph seeded with a single
+`(:Occupation {id: 'onet:occupation:15-1252.00'})` placeholder:
+
+```
+nodes carrying onet:occupation:15-1252.00 -> 2
+    ['Occupation']                                 crosswalk-placeholder
+    ['Occupation', 'OnetNode', 'OnetOccupation']   onet
+```
+
+The load **succeeded and validated clean**. The uniqueness constraint could not
+see it, because constraints are per label and the stale node carried neither
+`:OnetNode` nor `:OnetOccupation`; every count still added up, because the count
+queries are label-scoped too. Two nodes shared one id and nothing said so.
+
+This is not hypothetical. A crosswalk that materialises an endpoint before its
+suite is loaded leaves exactly such a node, and the wipe does not remove it —
+deleting another package's node is not this loader's call. (The same bug, in a
+worse form, was hit independently in `crosswalks/`, where the duplicate
+multiplied relationship matches: 8 rows matched 32.)
+
+Two changes, because neither alone is enough:
+
+* **MERGE on `:OnetNode`**, the one label every node of this suite carries and
+  the one the uniqueness constraint is on. That makes the identity the umbrella
+  rather than the kind, and keeps the lookup constraint-backed and indexed.
+* **`validate_load` fails on any node whose id starts with `onet:` and which
+  lacks `:OnetNode`.** No indexed MERGE can be immune to a node that lacks the
+  label it merges on, so the remaining case is detected and named rather than
+  merged around. It names the count and says to label or remove them; it does
+  not delete them.
+
+The general rule is ARCHITECTURE.md's "MERGE on identity, never on a composite
+that includes incidental structure" — with the reminder that in Cypher, **a
+label is part of that composite**.
+
+---
+
 ## Reproduce
 
 ```bash

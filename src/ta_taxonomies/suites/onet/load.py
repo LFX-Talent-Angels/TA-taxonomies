@@ -430,10 +430,19 @@ def _merge_nodes(session: Session, label: str, rows: list[dict[str, Any]]) -> in
     if not rows:
         return 0
     canonical = CANONICAL_LABELS[label]
+    # MERGE on the umbrella label, then apply the kind and canonical labels.
+    #
+    # MERGE matches on the *whole* pattern, labels included, so merging on a
+    # kind label means a node holding this id under any other label set is
+    # invisible and gets duplicated instead of matched. The umbrella is the one
+    # label every node of this suite carries and the one its uniqueness
+    # constraint is on, which makes it both the correct identity and an indexed
+    # lookup. It is still not proof against a node that lacks it entirely —
+    # nothing indexed can be — so validate_load checks for that separately.
     cypher = f"""
     UNWIND $rows AS row
-    MERGE (n:{label} {{id: row.id}})
-    SET n:{LABEL_ONET_NODE}, n:{canonical}
+    MERGE (n:{LABEL_ONET_NODE} {{id: row.id}})
+    SET n:{label}, n:{canonical}
     SET n.source = row.source,
         n.source_id = row.source_id,
         n.pref_label = row.pref_label,
@@ -660,6 +669,23 @@ def validate_load(
             RETURN count(n) AS c
             """
         )
+        # A node holding one of this suite's ids without the suite's umbrella
+        # label. The uniqueness constraint cannot see it — constraints are per
+        # label — so MERGE creates a second node and every count still adds up.
+        # Left undetected, two nodes share one id and the identity rule that
+        # the whole graph rests on is quietly false.
+        #
+        # This is not hypothetical: a crosswalk that materialises an endpoint
+        # before its suite is loaded leaves exactly such a node, and the wipe
+        # does not remove it because deleting another package's node is not
+        # this loader's call. Failing here names it instead.
+        impostors = scalar(
+            f"""
+            MATCH (n)
+            WHERE n.id STARTS WITH '{SOURCE}:' AND NOT n:{LABEL_ONET_NODE}
+            RETURN count(n) AS c
+            """
+        )
         unclassified = scalar(
             f"""
             MATCH (o:{LABEL_OCCUPATION} {{source: $source}})
@@ -698,6 +724,12 @@ def validate_load(
         raise OnetLoadValidationError(f"dangling HAS_SKILL edges: {dangling}")
     if blank:
         raise OnetLoadValidationError(f"blank identity nodes: {blank}")
+    if impostors:
+        raise OnetLoadValidationError(
+            f"{impostors} node(s) carry an '{SOURCE}:' id without the "
+            f":{LABEL_ONET_NODE} label, so they duplicate this suite's identities; "
+            "label them or remove them before loading"
+        )
     if unclassified:
         raise OnetLoadValidationError(f"occupations with no SOC group: {unclassified}")
     if unrated:
