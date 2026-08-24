@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from ta_taxonomies.contract.models import Edge, Path, PolicyRef
+from ta_taxonomies.suites.onet import tools
 from ta_taxonomies.suites.onet.config import (
     CONF_EXACT_CODE,
     KIND_ALIASES,
@@ -19,6 +20,7 @@ from ta_taxonomies.suites.onet.config import (
     POLICY_LOWER_CI,
     POLICY_MEAN,
     SEARCHABLE_LABELS,
+    TRAVERSABLE_RELS,
     UNWEIGHTED_EDGE_SCORE,
 )
 from ta_taxonomies.suites.onet.tools import (
@@ -40,9 +42,11 @@ class _Session:
     def __init__(self, responses: list[list[dict[str, Any]]]) -> None:
         self.responses = responses
         self.queries: list[str] = []
+        self.params: list[dict[str, Any]] = []
 
-    def run(self, query: str, **_parameters: Any) -> _Result:
+    def run(self, query: str, **parameters: Any) -> _Result:
         self.queries.append(query)
+        self.params.append(parameters)
         return _Result(self.responses.pop(0) if self.responses else [])
 
     def __enter__(self) -> _Session:
@@ -125,6 +129,35 @@ def test_label_interpolation_refuses_anything_outside_the_closed_set(
     with pytest.raises(ValueError, match="not searchable"):
         # A real label from another suite is still not one of ours.
         builder(["EscoNode"])
+
+
+def test_the_searched_label_set_is_derived_from_config_not_restated() -> None:
+    # Not "the query mentions the right labels" — that passes just as well
+    # against a hardcoded list, because the two are indistinguishable while the
+    # config happens to hold what the literal holds. The test has to show the
+    # content can *vary*: add a label to the config and the query must follow.
+    session = _Session([[]])
+    extra = "OnetProbeLabel"
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(tools, "SEARCHABLE_LABELS", (*SEARCHABLE_LABELS, extra))
+        _suite(session).search_nodes("15-1252.00")
+
+    assert f"MATCH (n:{extra})" in session.queries[0]
+
+
+def test_traversable_rels_are_derived_from_config_not_restated() -> None:
+    # Same shape, for the traversal side: the types handed to Cypher must come
+    # from TRAVERSABLE_RELS, not from a list that currently agrees with it.
+    # No neighbours come back; the expansion query still runs, and the types
+    # it was called with are the whole point.
+    session = _Session([[]])
+    extra = "PROBE_REL"
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(tools, "TRAVERSABLE_RELS", frozenset({*TRAVERSABLE_RELS, extra}))
+        suite = _suite(session)
+        suite._bounded_paths(session, "a", "b", max_depth=1, max_paths=1)  # type: ignore[arg-type]
+
+    assert extra in session.params[-1]["types"]
 
 
 def test_every_kind_alias_maps_into_the_searchable_set() -> None:

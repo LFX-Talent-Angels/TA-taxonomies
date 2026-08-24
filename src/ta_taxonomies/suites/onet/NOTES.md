@@ -504,6 +504,38 @@ unknown `kind` was rejected, not that a known one could never be interpolated.
 A prose claim that no test covers is not documentation; it is an assertion with
 no `assert`.
 
+### Constants that govern, versus constants that agree
+
+One level below the previous section. `TRAVERSABLE_RELS` and
+`SEARCHABLE_LABELS` are declared in `config.py` as the single place a
+relationship type or a searchable label is decided. Both were **read** by
+`tools.py` and neither was **enforced**: replacing either with a hardcoded list
+that happens to say the same thing left all 100 tests green.
+
+```
+hardcode the traversal rel list   -> 100 passed   (before)  ->  1 failed (after)
+hardcode the searched label list  -> 100 passed   (before)  ->  1 failed (after)
+```
+
+The behaviour was correct; the config's authority over it was not checked. That
+is worse than having no constant, because a reader looks at `config.py`, draws a
+conclusion about what the code does, and nothing holds the code to it.
+
+**The test design is the part worth keeping.** Asserting "the query names the
+right labels" does not distinguish a derived list from a literal that currently
+agrees with it — the two are identical while the config holds what the literal
+holds. The test has to show the content can *vary*: monkeypatch a member into
+the constant and assert the query follows. A test over a set that cannot vary
+proves nothing about derivation.
+
+Two related cleanups fell out of the same look. `_SEARCHABLE` was a frozenset
+copy of `SEARCHABLE_LABELS` taken at import — a second source of truth that
+could drift from the config it was built from, where the drift would surface
+only as a documented `kind` raising at query time. And `get_neighbors` compared
+against a literal `"HAS_SKILL"` rather than `REL_HAS_SKILL`, which was not even
+imported. That one is behaviour-identical and no test covers it, which is the
+honest thing to say about it: it is a readability fix, not a governance one.
+
 ### Where these bugs were found
 
 Three real defects came out of this work — the constraint no-op, the

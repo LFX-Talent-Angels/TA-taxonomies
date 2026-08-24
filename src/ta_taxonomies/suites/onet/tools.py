@@ -60,6 +60,7 @@ from ta_taxonomies.suites.onet.config import (
     POLICY_BOTTLENECK,
     POLICY_LOWER_CI,
     POLICY_MEAN,
+    REL_HAS_SKILL,
     RELATION_TYPE_POLICY,
     RELEASE,
     SEARCH_LIMIT,
@@ -74,8 +75,17 @@ from ta_taxonomies.suites.onet.ids import OnetIdError, normalize_onetsoc_code
 
 # Labels search_nodes may interpolate into Cypher. Cypher cannot parameterise a
 # label and matching the concrete one is the whole point, so the set is closed
-# here rather than trusted from the caller.
-_SEARCHABLE: frozenset[str] = frozenset(SEARCHABLE_LABELS)
+# rather than trusted from the caller.
+#
+# Checked against SEARCHABLE_LABELS itself rather than a frozenset copy taken at
+# import: a copy is a second source of truth that can drift from the config it
+# was built from, and the drift would only show as a documented `kind` raising
+# at query time.
+
+
+def _is_searchable(label: str) -> bool:
+    return label in SEARCHABLE_LABELS
+
 
 _NODE_MAP = """{
                 id: n.id, pref_label: n.pref_label, source: n.source,
@@ -185,7 +195,7 @@ def _exact_pref_cypher(labels: list[str]) -> str:
     """One range-index seek per concrete label, unioned in a single round trip."""
     arms = []
     for label in labels:
-        if label not in _SEARCHABLE:
+        if not _is_searchable(label):
             raise ValueError(f"label is not searchable: {label!r}")
         arms.append(
             f"MATCH (n:{label})\n"
@@ -200,7 +210,7 @@ def _code_cypher(labels: list[str]) -> str:
     """One seek per concrete label on the source code (O*NET-SOC, Element ID)."""
     arms = []
     for label in labels:
-        if label not in _SEARCHABLE:
+        if not _is_searchable(label):
             raise ValueError(f"label is not searchable: {label!r}")
         arms.append(
             f"MATCH (n:{label})\n"
@@ -632,7 +642,7 @@ class OnetSuite:
             ]
 
             meta: dict[str, Any] = {"release": RELEASE}
-            if any(edge.type == "HAS_SKILL" for edge in edges):
+            if any(edge.type == REL_HAS_SKILL for edge in edges):
                 meta["relation_type_policy"] = RELATION_TYPE_POLICY.model_dump()
             return ToolResult(
                 nodes=list(nodes_map.values()),
