@@ -345,8 +345,7 @@ with neo4j_driver() as (driver, database):
         "onet:element:2.B.3.e", "onet:element:2.C.3.a", max_depth=2, max_paths=20
     )
     labels = {n.id: n.label for n in found.nodes}
-    for name in ("onet-importance-bottleneck", "onet-importance-mean",
-                 "onet-importance-lower-ci"):
+    for name in ("onet-importance-bottleneck", "onet-importance-mean", "onet-importance-lower-ci"):
         result = suite.score_paths(found.paths, PolicyRef(name=name, version="1"))
         print(name, [labels[s.path.node_ids[1]] for s in result.scored_paths[:3]])
 ```
@@ -476,6 +475,34 @@ ESCO is the parallel case: `suite_id_from_uri` derives the id from the concept
 URI, and `code` rides alongside as an ordinary property with nothing declaring
 it unique. That is why `crosswalks/`, which joins ESCO by code, had to add a
 collision check that this suite does not need.
+
+### Asserted in prose, enforced by nothing
+
+`tools.py` says of the searchable-label set: *"Interpolation is required because
+Cypher cannot parameterise a label … so the set is closed here rather than
+trusted."* Both query builders raise on a label outside it. **Nothing tested
+that.** Deleting both guards left the whole suite green — verified by mutation,
+not assumed:
+
+```
+remove both label guards      -> 2 fail
+alias pointing outside the set -> 3 fail
+restored                      -> 100 pass
+```
+
+Today `search_nodes` only reaches those builders through `KIND_ALIASES`, so the
+guard is unreachable from the public API — which is a fact about the current
+call path, not a property of the code. It is the last thing between a
+caller-supplied label and Cypher string interpolation, and it was load-bearing
+only by comment.
+
+The general shape, and the reason it is worth a section: **every one of these
+tests checked the *form* of a property and not its *content*.** The path tests
+asserted the ordering was descending, not what the ordering was — which is how
+the `score_paths` prose above went stale in silence. The label tests asserted an
+unknown `kind` was rejected, not that a known one could never be interpolated.
+A prose claim that no test covers is not documentation; it is an assertion with
+no `assert`.
 
 ### Where these bugs were found
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from ta_taxonomies.contract.models import Edge, Path, PolicyRef
 from ta_taxonomies.suites.onet.config import (
     CONF_EXACT_CODE,
+    KIND_ALIASES,
     LABEL_OCCUPATION,
     MAX_BRANCHING_PER_REL,
     MAX_PATH_DEPTH,
@@ -16,11 +18,14 @@ from ta_taxonomies.suites.onet.config import (
     POLICY_BOTTLENECK,
     POLICY_LOWER_CI,
     POLICY_MEAN,
+    SEARCHABLE_LABELS,
     UNWEIGHTED_EDGE_SCORE,
 )
 from ta_taxonomies.suites.onet.tools import (
     OnetSuite,
     _cap_per_rel_type,
+    _code_cypher,
+    _exact_pref_cypher,
     _lucene_infix,
     _lucene_phrase,
 )
@@ -102,6 +107,33 @@ def test_search_matches_concrete_labels_so_the_planner_can_seek() -> None:
 
     assert f"MATCH (n:{LABEL_OCCUPATION})" in session.queries[0]
     assert "MATCH (n:OnetNode)" not in session.queries[0]
+
+
+@pytest.mark.parametrize("builder", [_exact_pref_cypher, _code_cypher])
+def test_label_interpolation_refuses_anything_outside_the_closed_set(
+    builder: Callable[[list[str]], str],
+) -> None:
+    # Cypher cannot parameterise a label, so these two builders interpolate one
+    # into the query string. The closed set is the only thing between a
+    # caller-supplied label and that interpolation, and `kind` reaching them
+    # through KIND_ALIASES is a fact about today's call path, not a guarantee
+    # about tomorrow's. Both guards could be deleted with the whole suite still
+    # green before this existed.
+    assert builder([LABEL_OCCUPATION])
+    with pytest.raises(ValueError, match="not searchable"):
+        builder(["Occupation) DETACH DELETE (n"])
+    with pytest.raises(ValueError, match="not searchable"):
+        # A real label from another suite is still not one of ours.
+        builder(["EscoNode"])
+
+
+def test_every_kind_alias_maps_into_the_searchable_set() -> None:
+    # The invariant that lets search_nodes hand `kind` straight to the query
+    # builders. Adding an alias pointing at a label outside the set would make
+    # a documented `kind` value raise at query time instead of returning a
+    # result — caught here rather than by a user typing it.
+    for alias, label in KIND_ALIASES.items():
+        assert label in SEARCHABLE_LABELS, f"alias {alias!r} maps outside the searchable set"
 
 
 def test_unknown_kind_is_reported_rather_than_used_as_a_label() -> None:
