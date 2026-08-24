@@ -10,15 +10,18 @@ from __future__ import annotations
 
 import ast
 import inspect
+from unittest import mock
 
 import pytest
 
 from ta_taxonomies.crosswalks import load as load_module
+from ta_taxonomies.crosswalks import tools as tools_module
 from ta_taxonomies.crosswalks.config import (
     REL_ASSERTED_CORRESPONDS_TO,
     REL_CORRESPONDS_TO,
     TRAVERSABLE_RELS,
 )
+from ta_taxonomies.crosswalks.tools import traversable_pattern
 
 
 def _cypher_fragments() -> list[str]:
@@ -154,3 +157,28 @@ class TestClaimsAreNotPublishedData:
         """A query written for published data cannot reach project opinion."""
         assert REL_ASSERTED_CORRESPONDS_TO not in TRAVERSABLE_RELS
         assert REL_CORRESPONDS_TO in TRAVERSABLE_RELS
+
+    def test_the_config_actually_governs_the_query(self) -> None:
+        """TRAVERSABLE_RELS must drive the published query, not just describe it.
+
+        Asserting only that the constant holds what it was written to hold is
+        circular: it proves the constant contains its own contents and nothing
+        about behaviour. Until this test existed, ``tools.py`` named
+        ``CORRESPONDS_TO`` inline and nothing outside this file imported the
+        set at all — it read as a safety control while governing nothing, which
+        is worse than no constant, because a reviewer checks the config and
+        concludes something the code does not do.
+        """
+        pattern = traversable_pattern()
+        assert set(pattern.split("|")) == set(TRAVERSABLE_RELS)
+        assert REL_ASSERTED_CORRESPONDS_TO not in pattern
+
+    def test_adding_a_traversable_type_changes_what_is_traversed(self) -> None:
+        """The link is live, not coincidental agreement between two literals."""
+        with mock.patch.object(
+            tools_module, "TRAVERSABLE_RELS", frozenset({REL_CORRESPONDS_TO, "SOME_OTHER_REL"})
+        ):
+            assert set(traversable_pattern().split("|")) == {
+                REL_CORRESPONDS_TO,
+                "SOME_OTHER_REL",
+            }

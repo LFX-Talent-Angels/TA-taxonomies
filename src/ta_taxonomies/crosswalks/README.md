@@ -288,6 +288,12 @@ warning — which is a different answer from `not_found`, and deliberately so.
   the edge and named in a warning. Pinned by
   `TestProjectClaimsNeverPassAsPublishedData`, which fails if the status filter
   or the opt-in is removed.
+- `TRAVERSABLE_RELS` in `config.py` **actually governs** the published-data
+  query, which is built from it rather than naming `CORRESPONDS_TO` inline.
+  The two emit identical Cypher today (the set has one member); the point is
+  that a reviewer who checks the config learns something true. A constant that
+  reads as a safety control while the code hardcodes its own answer is worse
+  than no constant.
 - Codes are strings everywhere. ESCO `0110.10` (lieutenant) is in the published
   table; `0110.1` (air force officer) is not. A numeric round-trip merges them
   and hands an air force officer three American police occupations. The fixture

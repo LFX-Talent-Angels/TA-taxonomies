@@ -27,11 +27,25 @@ from ta_taxonomies.crosswalks.config import (
     LABEL_NO_LINK,
     REL_ASSERTED_CORRESPONDS_TO,
     REL_CORRESPONDS_TO,
+    TRAVERSABLE_RELS,
 )
 
 # Only ACCEPTED claims speak for the project. Anything earlier is work in
 # progress and must not surface in an answer, even an opt-in one.
 _ANSWERABLE_CLAIM_STATUS = "accepted"
+
+
+def traversable_pattern() -> str:
+    """Cypher relationship alternation for the declared-traversable types.
+
+    The published-data query is built from ``TRAVERSABLE_RELS`` rather than
+    naming ``CORRESPONDS_TO`` inline. The two produce identical Cypher today,
+    since the set has one member -- the point is that the config actually
+    governs. A constant that reads as a safety control while the code hardcodes
+    its own answer is worse than no constant: it invites a reviewer to check the
+    config and conclude something the code does not do.
+    """
+    return "|".join(sorted(TRAVERSABLE_RELS))
 
 
 def _node_from_record(data: dict[str, Any]) -> Node:
@@ -78,10 +92,11 @@ class Crosswalks:
             records = list(
                 session.run(
                     f"""
-                    MATCH (a {{id: $node_id}})-[r:{REL_CORRESPONDS_TO}]-(b)
+                    MATCH (a {{id: $node_id}})-[r:{traversable_pattern()}]-(b)
                     WHERE $to_suite IS NULL OR b.source = $to_suite
                     OPTIONAL MATCH (s:{LABEL_CROSSWALK_SOURCE} {{key: r.source_key}})
                     RETURN b {{.id, .kind, .source, .source_id, .pref_label, .code}} AS node,
+                           type(r) AS rel_type,
                            r.source_key AS source_key,
                            r.strength AS strength,
                            startNode(r).id AS from_id,
@@ -98,7 +113,7 @@ class Crosswalks:
                 result.nodes.append(_node_from_record(record["node"]))
                 result.edges.append(
                     Edge(
-                        type=REL_CORRESPONDS_TO,
+                        type=record["rel_type"],
                         from_id=record["from_id"],
                         to_id=record["to_id"],
                         properties={
