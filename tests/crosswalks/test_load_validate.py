@@ -179,6 +179,69 @@ class TestEndpointsAreNeverInvented:
         assert record is not None and record["c"] == 0
 
 
+class TestProjectClaimsNeverPassAsPublishedData:
+    """The package's central safety claim, exercised against the real query.
+
+    ``tools.py`` states that claims are reachable only via ``include_claims``
+    and that only ``accepted`` ones surface. Until this class existed nothing
+    checked either: the type tests cover the lifecycle and the config tests
+    cover the relationship-type names, so the ``AND r.status = $status`` filter
+    could have been deleted with every test still passing.
+
+    Nothing in the loader writes these edges yet, so the fixtures build them
+    directly. That is the point — the query must be correct before anything
+    populates it, not after.
+    """
+
+    @pytest.fixture
+    def claims(self, driver: Driver, report: dict) -> Iterator[None]:
+        with driver.session() as session:
+            session.run(
+                """
+                MATCH (a {id: $esco}), (b {id: $accepted}), (c {id: $proposed})
+                MERGE (a)-[r1:ASSERTED_CORRESPONDS_TO]->(b)
+                SET r1.status = 'accepted', r1.owner = 'mentee',
+                    r1.rationale = 'definitions overlap', r1.reviewed_by = 'mentor'
+                MERGE (a)-[r2:ASSERTED_CORRESPONDS_TO]->(c)
+                SET r2.status = 'proposed', r2.owner = 'mentee',
+                    r2.rationale = 'still being argued'
+                """,
+                esco=AIR_FORCE_OFFICER,
+                accepted="onet:occupation:11-9179.00",
+                proposed="onet:occupation:27-1014.00",
+            )
+        yield
+        with driver.session() as session:
+            session.run("MATCH ()-[r:ASSERTED_CORRESPONDS_TO]->() DELETE r")
+
+    def test_claims_are_invisible_by_default(self, driver: Driver, claims: None) -> None:
+        """A caller who did not opt in must not see project opinion at all."""
+        result = Crosswalks(driver).counterparts(AIR_FORCE_OFFICER, to_suite="onet")
+        assert result.nodes == []
+        assert all(not edge.properties.get("asserted_by_project") for edge in result.edges)
+
+    def test_opting_in_still_excludes_unaccepted_claims(self, driver: Driver, claims: None) -> None:
+        """Opting in buys accepted claims only, never work in progress."""
+        result = Crosswalks(driver).counterparts(
+            AIR_FORCE_OFFICER, to_suite="onet", include_claims=True
+        )
+        assert {node.id for node in result.nodes} == {"onet:occupation:11-9179.00"}, (
+            "a 'proposed' claim reached an answer; only 'accepted' speaks for the project"
+        )
+
+    def test_claims_are_flagged_and_warned_about(self, driver: Driver, claims: None) -> None:
+        """A claim must never be readable as a published fact."""
+        result = Crosswalks(driver).counterparts(
+            AIR_FORCE_OFFICER, to_suite="onet", include_claims=True
+        )
+        claim_edges = [e for e in result.edges if e.type == "ASSERTED_CORRESPONDS_TO"]
+        assert len(claim_edges) == 1
+        assert claim_edges[0].properties["asserted_by_project"] is True
+        assert claim_edges[0].properties["owner"] == "mentee"
+        assert any("asserted by this project" in w for w in result.warnings)
+        assert result.meta["claims_included"] is True
+
+
 class TestAmbiguousJoinKeyIsRefused:
     def test_duplicate_esco_code_stops_the_load(self, driver: Driver, report: dict) -> None:
         """A duplicated code silently drops correspondences, so it must fail loudly.

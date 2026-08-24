@@ -283,7 +283,11 @@ warning — which is a different answer from `not_found`, and deliberately so.
   explicitly and the load stops. Detection, not repair: this layer never picks
   a winner or deletes another package's node.
 - Published and asserted correspondences are **different relationship types**,
-  not one type with a flag.
+  not one type with a flag. Project claims are invisible unless a caller passes
+  `include_claims=True`, and even then only `accepted` ones surface, flagged on
+  the edge and named in a warning. Pinned by
+  `TestProjectClaimsNeverPassAsPublishedData`, which fails if the status filter
+  or the opt-in is removed.
 - Codes are strings everywhere. ESCO `0110.10` (lieutenant) is in the published
   table; `0110.1` (air force officer) is not. A numeric round-trip merges them
   and hands an air force officer three American police occupations. The fixture
