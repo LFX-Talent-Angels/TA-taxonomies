@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "suite": "sfia",
+    "version": "9",
+    "mode": "fixture",
+    "note": "Structure only: codes, names, level numbers and links. No SFIA descriptive text — see ADR-0006 §2 and the suite NOTES.md."
+  },
+  "skills": [
+    {
+      "code": "ADEV",
+      "name": "Animation development",
+      "slug": "animation-development",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "requirements-definition-and-management",
+        "programming-software-development"
+      ]
+    },
+    {
+      "code": "ADMN",
+      "name": "Business administration",
+      "slug": "business-administration",
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": []
+    },
+    {
+      "code": "ASUP",
+      "name": "Application support",
+      "slug": "application-support",
+      "levels": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "related_slugs": [
+        "programming-software-development",
+        "systems-development-management",
+        "software-configuration"
+      ]
+    },
+    {
+      "code": "CFMG",
+      "name": "Configuration management",
+      "slug": "configuration-management",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "systems-software-lifecycle-engineering",
+        "programming-software-development",
+        "software-configuration"
+      ]
+    },
+    {
+      "code": "DLMG",
+      "name": "Systems development management",
+      "slug": "systems-development-management",
+      "levels": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "related_slugs": [
+        "systems-software-lifecycle-engineering",
+        "programming-software-development",
+        "application-support"
+      ]
+    },
+    {
+      "code": "ISCO",
+      "name": "Information systems coordination",
+      "slug": "information-systems-coordination",
+      "levels": [
+        6,
+        7
+      ],
+      "related_slugs": []
+    },
+    {
+      "code": "PORT",
+      "name": "Software configuration",
+      "slug": "software-configuration",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "programming-software-development",
+        "configuration-management",
+        "application-support"
+      ]
+    },
+    {
+      "code": "PROG",
+      "name": "Programming/software development",
+      "slug": "programming-software-development",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "requirements-definition-and-management",
+        "software-configuration",
+        "software-design",
+        "functional-testing",
+        "configuration-management",
+        "systems-integration-and-build",
+        "systems-software-lifecycle-engineering",
+        "real-time-embedded-systems-development",
+        "application-support",
+        "systems-development-management",
+        "animation-development"
+      ]
+    },
+    {
+      "code": "REQM",
+      "name": "Requirements definition and management",
+      "slug": "requirements-definition-and-management",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "software-design",
+        "programming-software-development",
+        "real-time-embedded-systems-development"
+      ]
+    },
+    {
+      "code": "RESD",
+      "name": "Real-time/embedded systems development",
+      "slug": "real-time-embedded-systems-development",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "programming-software-development",
+        "software-design",
+        "requirements-definition-and-management",
+        "systems-integration-and-build",
+        "functional-testing"
+      ]
+    },
+    {
+      "code": "SINT",
+      "name": "Systems integration and build",
+      "slug": "systems-integration-and-build",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "programming-software-development",
+        "functional-testing",
+        "systems-software-lifecycle-engineering",
+        "real-time-embedded-systems-development"
+      ]
+    },
+    {
+      "code": "SLEN",
+      "name": "Systems and software lifecycle engineering",
+      "slug": "systems-software-lifecycle-engineering",
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "related_slugs": [
+        "systems-development-management",
+        "programming-software-development",
+        "software-design",
+        "configuration-management",
+        "systems-integration-and-build",
+        "functional-testing"
+      ]
+    },
+    {
+      "code": "SWDN",
+      "name": "Software design",
+      "slug": "software-design",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "real-time-embedded-systems-development",
+        "requirements-definition-and-management",
+        "programming-software-development"
+      ]
+    },
+    {
+      "code": "TEST",
+      "name": "Functional testing",
+      "slug": "functional-testing",
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "related_slugs": [
+        "systems-integration-and-build",
+        "programming-software-development",
+        "real-time-embedded-systems-development",
+        "systems-software-lifecycle-engineering"
+      ]
+    }
+  ],
+  "codes_by_slug": {
+    "animation-development": "ADEV",
+    "business-administration": "ADMN",
+    "application-support": "ASUP",
+    "configuration-management": "CFMG",
+    "systems-development-management": "DLMG",
+    "information-systems-coordination": "ISCO",
+    "software-configuration": "PORT",
+    "programming-software-development": "PROG",
+    "requirements-definition-and-management": "REQM",
+    "real-time-embedded-systems-development": "RESD",
+    "systems-integration-and-build": "SINT",
+    "systems-software-lifecycle-engineering": "SLEN",
+    "software-design": "SWDN",
+    "functional-testing": "TEST"
+  }
+}
