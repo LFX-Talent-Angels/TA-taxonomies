@@ -26,9 +26,10 @@ from ta_taxonomies.suites.bls.config import (
     REL_BROADER_THAN,
     REL_EMPLOYED_IN,
     SOC_LEVEL_MAJOR,
+    SOC_LEVEL_MINOR,
 )
 from ta_taxonomies.suites.bls.db import neo4j_driver
-from ta_taxonomies.suites.bls.load import BlsLoadValidationError, run_load
+from ta_taxonomies.suites.bls.load import BlsLoadValidationError, run_load, validate_load
 
 pytestmark = pytest.mark.neo4j
 
@@ -167,6 +168,52 @@ def test_a_foreign_node_holding_one_of_our_ids_stops_the_load(
             with driver.session(database=database) as session:
                 session.run("MATCH (n:CrosswalkStub) DETACH DELETE n")
         run_load(mode="fixture", wipe=True)
+
+
+def test_an_invented_minor_group_stops_the_load_at_validation(
+    loaded: dict[str, int],
+) -> None:
+    """The post-load half of the minor-group finding.
+
+    ``normalize_document`` refuses a derived minor before anything is written,
+    but that guard is upstream of the database and this file's whole premise is
+    that post-load validation has holes by construction. Measured by mutation:
+    with the derivation bug restored and the normalize guard removed, the load
+    succeeded, validated clean, and produced 590 SOC groups instead of 575.
+
+    The invariant is exact. Reconstruction only ever produces a broad or a major
+    group — those two levels are derivable from the code — while the minor level
+    is looked up and ``resolve_soc_minor`` returns only published codes. So a
+    minor group carrying ``title_source='derived'`` is an invented SOC code, and
+    there is no legitimate way for one to exist.
+    """
+    with neo4j_driver() as (driver, database):
+        with driver.session(database=database) as session:
+            # Rooted deliberately: the "unrooted node" check fires earlier in
+            # validate_load and would mask the one under test, leaving the test
+            # green for the wrong reason.
+            session.run(
+                f"""
+                MATCH (parent:{LABEL_BLS_NODE} {{id: 'bls:soc:29-0000'}})
+                CREATE (n:{LABEL_BLS_NODE}:{LABEL_SOC_GROUP} {{
+                    id: 'bls:soc:29-1100', source: $source, source_id: '29-1100',
+                    code: '29-1100', pref_label: '', alt_labels: [],
+                    soc_level: '{SOC_LEVEL_MINOR}', title_source: 'derived'
+                }})
+                CREATE (n)-[:{REL_BROADER_THAN} {{levels_skipped: 0}}]->(parent)
+                """,
+                source="bls",
+            )
+    try:
+        with neo4j_driver() as (driver, database):
+            # An empty `expected` skips the count comparison and leaves only the
+            # invariants, which is the part under test here.
+            with pytest.raises(BlsLoadValidationError, match="title_source='derived'"):
+                validate_load(driver, {}, database=database)
+    finally:
+        with neo4j_driver() as (driver, database):
+            with driver.session(database=database) as session:
+                session.run("MATCH (n {id: 'bls:soc:29-1100'}) DETACH DELETE n")
 
 
 def test_this_suite_owns_its_own_constraints_rather_than_inheriting_them(

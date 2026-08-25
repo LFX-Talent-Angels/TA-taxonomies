@@ -192,6 +192,38 @@ The fix is that `resolve_soc_minor(code, published_minors)` takes the published
 set as a **required** argument. There is no default that is right, so the
 signature refuses to offer one.
 
+### And then the same lesson again, one level up
+
+The first version of *this section* stopped there, with the bug guarded in
+`normalize_document` — which refuses a derived minor before anything is written.
+That is upstream of the database, and this file's own premise is that post-load
+validation has holes by construction. So it was checked by mutation rather than
+assumed. Restoring the derivation bug **and** removing the normalize guard:
+
+```
+load:      merges 825 occupations, 590 SOC groups, 110,353 edges
+validate:  ok
+result:    590 SOC groups instead of 575, 291 "derived" groups instead of 276
+```
+
+The load succeeded and validated clean. **Post-load validation did not catch
+it.** `validate_load` now asserts that no node at minor level carries
+`title_source='derived'`, and the same mutation stops there instead:
+
+```
+BlsLoadValidationError: 15 minor group(s) carry title_source='derived'. …
+```
+
+The invariant is exact rather than approximate: reconstruction only ever
+produces a broad or a major group, because those two levels are derivable from
+the code, while the minor level is looked up and `resolve_soc_minor` returns
+only published codes. There is no legitimate way for a derived minor to exist.
+
+Worth stating plainly, because it is the part that generalises: **a guard placed
+before the write and a guard placed after it are not substitutes.** The first
+stops a bad load; only the second can tell you a graph you are already holding
+is wrong.
+
 ---
 
 ## `ep.aspect` ships no code list, so the meanings are re-derived on every load

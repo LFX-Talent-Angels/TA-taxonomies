@@ -914,6 +914,30 @@ def validate_load(
             RETURN count(n) AS c
             """
         )
+        # No minor group may be a reconstructed one.
+        #
+        # This is the post-load half of the minor-group finding, and it exists
+        # because the other half was not enough. ``normalize_document`` refuses
+        # a derived minor before anything is written — but that guard is
+        # *upstream* of the database, and this file's own lesson is that
+        # post-load validation has holes by construction. Measured by mutation:
+        # with the derivation bug restored and the normalize guard removed, the
+        # load succeeded, validated clean, and produced 590 SOC groups instead
+        # of 575. Nothing in the graph said so.
+        #
+        # The invariant is exact rather than approximate. Reconstruction only
+        # ever produces a broad or a major group: those two levels are derivable
+        # from the code, while the minor level is looked up and
+        # ``resolve_soc_minor`` returns only codes BLS publishes. So a minor
+        # group carrying ``title_source='derived'`` is a code that was invented,
+        # and there is no legitimate way for one to exist.
+        derived_minors = scalar(
+            f"""
+            MATCH (n:{LABEL_BLS_NODE} {{source: $source}})
+            WHERE n.soc_level = '{SOC_LEVEL_MINOR}' AND n.title_source = 'derived'
+            RETURN count(n) AS c
+            """
+        )
         # ADR-0006 adopts this suite for having no skills layer. Asserted here
         # rather than only written down, because an invariant nobody enforces is
         # a comment.
@@ -967,6 +991,13 @@ def validate_load(
         raise BlsLoadValidationError(
             f"{untitled_not_derived} node(s) have no pref_label but are not "
             "derived groups; a published title went missing"
+        )
+    if derived_minors:
+        raise BlsLoadValidationError(
+            f"{derived_minors} minor group(s) carry title_source='derived'. The "
+            "minor level is looked up in what BLS publishes, never reconstructed "
+            "(ids.soc_minor_candidates), so these are invented SOC codes and the "
+            "roll-up above the broad level is wrong for everything under them"
         )
     if skill_edges:
         raise BlsLoadValidationError(
