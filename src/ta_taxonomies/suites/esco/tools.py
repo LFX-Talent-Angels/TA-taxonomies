@@ -13,9 +13,11 @@ not reimplement graph access. LangGraph ``@tool`` wiring stays in TA-agents.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from neo4j import Driver, Session
+from neo4j.exceptions import ClientError
 
 from ta_taxonomies.contract.models import (
     Candidate,
@@ -32,6 +34,7 @@ from ta_taxonomies.suites.esco.config import (
     CONF_CONTAINS,
     CONF_EXACT_ALT,
     CONF_EXACT_PREF,
+    FULLTEXT_INDEX,
     KIND_ALIASES,
     LABEL_ESCO_NODE,
     LABEL_ISCO_GROUP,
@@ -42,12 +45,170 @@ from ta_taxonomies.suites.esco.config import (
     MAX_FRONTIER_PATHS,
     MAX_PATH_DEPTH,
     MAX_PATHS,
+    MIN_WILDCARD_TERM,
     REL_BROADER_THAN,
     REL_CLASSIFIED_UNDER,
     REL_HAS_SKILL,
+    SEARCH_LIMIT,
+    SEARCH_SCAN_CAP,
     SOURCE,
     TRAVERSABLE_RELS,
 )
+
+# Labels search_nodes may interpolate into Cypher. Interpolation is required
+# because Cypher cannot parameterise a label, and matching the concrete label
+# is the whole point — so the set is closed here rather than trusted.
+_SEARCHABLE_LABELS: frozenset[str] = frozenset(
+    {LABEL_OCCUPATION, LABEL_SKILL, LABEL_ISCO_GROUP, LABEL_SKILL_GROUP}
+)
+
+# Everything Locate returns about a node, as a Cypher map, so a branch can
+# collect its full result set and hand back both the count and the top slice.
+_NODE_MAP = """{
+                id: n.id, pref_label: n.pref_label, source: n.source,
+                source_id: n.source_id, uri: n.uri, kind: n.kind,
+                code: n.code, description: n.description,
+                alt_labels: n.alt_labels, labels: labels(n)
+            }"""
+
+# Retrieval heads: the full-text index, or the label scan it replaced. The
+# predicates below are identical in both, which is what makes the fallback
+# safe — it is slower, never different.
+_FULLTEXT_HEAD = "CALL db.index.fulltext.queryNodes($index, $lucene) YIELD node AS n"
+_SCAN_HEAD = f"MATCH (n:{LABEL_ESCO_NODE})"
+
+_ALIAS_OR_CASEFOLD_BODY = f"""
+WHERE n.source = $source
+  AND any(x IN labels(n) WHERE x IN $labels)
+  AND ($q IN coalesce(n.alt_labels, []) OR toLower(n.pref_label) = toLower($q))
+WITH n, ($q IN coalesce(n.alt_labels, [])) AS is_alt
+ORDER BY size(n.pref_label), n.id
+LIMIT $scan_cap
+WITH collect({{node: {_NODE_MAP}, is_alt: is_alt}}) AS rows
+WITH [r IN rows WHERE r.is_alt | r.node] AS alt,
+     [r IN rows WHERE NOT r.is_alt | r.node] AS cf
+RETURN size(alt) AS alt_total, alt[0..$limit] AS alt_top,
+       size(cf) AS cf_total, cf[0..$limit] AS cf_top
+"""
+
+_CONTAINS_BODY = f"""
+WHERE n.source = $source
+  AND any(x IN labels(n) WHERE x IN $labels)
+  AND (
+    toLower(n.pref_label) CONTAINS toLower($q)
+    OR any(a IN coalesce(n.alt_labels, [])
+           WHERE toLower(a) CONTAINS toLower($q))
+  )
+WITH n ORDER BY size(n.pref_label), n.id
+LIMIT $scan_cap
+WITH collect({_NODE_MAP}) AS rows
+RETURN size(rows) AS total, rows[0..$limit] AS top
+"""
+
+_FULLTEXT_ALIAS_OR_CASEFOLD = _FULLTEXT_HEAD + _ALIAS_OR_CASEFOLD_BODY
+_SCAN_ALIAS_OR_CASEFOLD = _SCAN_HEAD + _ALIAS_OR_CASEFOLD_BODY
+_FULLTEXT_CONTAINS = _FULLTEXT_HEAD + _CONTAINS_BODY
+_SCAN_CONTAINS = _SCAN_HEAD + _CONTAINS_BODY
+
+# Split on anything that is not a letter or digit. Two things follow: the terms
+# line up with what the analyzer indexes, and none of them can contain a Lucene
+# metacharacter (+ - && ! ( ) [ ] ^ " ~ * ? : \\ /), so wildcard terms built
+# from them never need escaping.
+_TERM_SPLIT = re.compile(r"[\W_]+", re.UNICODE)
+
+
+def _query_terms(q: str) -> list[str]:
+    return [term for term in _TERM_SPLIT.split(q.lower()) if term]
+
+
+def _lucene_phrase(q: str) -> str | None:
+    """Quoted phrase query for the exact-match tiers, or None if unusable.
+
+    None means "nothing here the index can find" — a query of pure punctuation
+    ("+++") indexes to no terms, so the caller must scan instead of concluding
+    there is no match.
+    """
+    if not _query_terms(q):
+        return None
+    # Inside a phrase only the quote and the backslash keep meaning.
+    escaped = q.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _lucene_infix(q: str) -> str | None:
+    """Infix-wildcard query mirroring CONTAINS, or None if it would not pay.
+
+    Every term is required (``+``) and wrapped in ``*`` because CONTAINS
+    matches inside a word, not just at its start. A term below
+    ``MIN_WILDCARD_TERM`` expands over most of the term dictionary and costs
+    more than the scan, so those queries decline the index instead.
+    """
+    terms = _query_terms(q)
+    if not terms or any(len(term) < MIN_WILDCARD_TERM for term in terms):
+        return None
+    return " ".join(f"+*{term}*" for term in terms)
+
+
+def _exact_pref_cypher(labels: list[str]) -> str:
+    """One index seek per concrete label, unioned in a single round trip."""
+    arms = []
+    for label in labels:
+        if label not in _SEARCHABLE_LABELS:
+            raise ValueError(f"label is not searchable: {label!r}")
+        arms.append(
+            f"MATCH (n:{label})\n"
+            "WHERE n.source = $source AND n.pref_label = $q\n"
+            f"RETURN {_NODE_MAP} AS node\n"
+            "LIMIT $scan_cap"
+        )
+    return "\nUNION\n".join(arms)
+
+
+def _locate_sort_key(row: dict[str, Any]) -> tuple[int, str]:
+    """Mirror the Cypher ordering (shortest label first, then id)."""
+    return len(row.get("pref_label") or ""), str(row.get("id") or "")
+
+
+def _locate_result(
+    rows: list[dict[str, Any]],
+    total: int,
+    confidence: float,
+    method: str,
+    evidence_suffix: str,
+    notes: list[str],
+    *,
+    ambiguous: bool = False,
+) -> ToolResult:
+    """Build a Locate result that says how much of the match set it is showing.
+
+    ``pruning`` carries the counts; ``truncated`` is the flag an agent can
+    branch on without reading them. Before this, a query with 900 matches and
+    a query with 25 were indistinguishable in the response.
+    """
+    candidates = [
+        Candidate(node=_record_to_node(row), confidence=confidence, method=method) for row in rows
+    ]
+    warnings = list(notes)
+    if ambiguous:
+        warnings.append("ambiguous")
+    pruned = max(0, total - len(candidates))
+    if pruned:
+        warnings.append("truncated")
+    if total >= SEARCH_SCAN_CAP:
+        # The total itself stopped at the cap; report it as a floor, not a fact.
+        warnings.append("match_count_capped")
+    return ToolResult(
+        candidates=candidates,
+        nodes=[candidate.node for candidate in candidates],
+        pruning=PruningStats(
+            considered=len(candidates) + pruned,
+            returned=len(candidates),
+            pruned=pruned,
+        ),
+        warnings=warnings,
+        evidence=[f"esco:search:{evidence_suffix}"],
+        meta={"limit": SEARCH_LIMIT, "matches": total},
+    )
 
 
 def _record_to_node(rec: dict[str, Any]) -> Node:
@@ -122,6 +283,13 @@ class EscoSuite:
         Order: exact preferred label → exact alt label → case-insensitive
         preferred → substring on pref/alts. Never invents hits (``not_found``).
         ``kind`` optionally restricts labels (see ``KIND_ALIASES`` in config).
+
+        The four tiers and their confidences are unchanged; only how candidates
+        are *retrieved* changed. Tier 1 seeks the concrete-label range index;
+        tiers 2–4 retrieve through the full-text index and then re-apply the
+        original predicate, so the answer set is the same one the old scan
+        produced. Results are capped at ``SEARCH_LIMIT`` and the cap is now
+        reported (``pruning`` + ``truncated``) instead of applied silently.
         """
         q = (text or "").strip()
         if not q:
@@ -140,173 +308,205 @@ class EscoSuite:
                 return ToolResult(warnings=[f"unknown_kind:{kind}"])
             labels = [mapped]
 
+        notes: list[str] = []
         with self._session() as session:
-            # 1) exact preferredLabel (case-sensitive)
-            exact_pref = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND n.pref_label = $q
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
-            )
-            if exact_pref:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(r),
-                        confidence=CONF_EXACT_PREF,
-                        method="exact_pref",
-                    )
-                    for r in exact_pref
-                ]
-                return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    evidence=[f"esco:search:exact_pref:{q}"],
+            # 1) exact preferredLabel (case-sensitive) — concrete-label seek
+            total, rows = self._match_exact_pref(session, labels, q)
+            if rows:
+                return _locate_result(
+                    rows, total, CONF_EXACT_PREF, "exact_pref", f"exact_pref:{q}", notes
                 )
 
-            # 2) exact alt_label (list membership)
-            exact_alt = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND n.alt_labels IS NOT NULL
-                  AND $q IN n.alt_labels
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
+            # 2+3) exact alt_label, then case-insensitive preferred label.
+            # Both need the same candidate pool, so they share one round trip.
+            alt_total, alt_rows, cf_total, cf_rows = self._match_exact_alias_or_casefold(
+                session, labels, q, notes
             )
-            if exact_alt:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(r),
-                        confidence=CONF_EXACT_ALT,
-                        method="exact_alt",
-                    )
-                    for r in exact_alt
-                ]
-                return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    evidence=[f"esco:search:exact_alt:{q}"],
+            if alt_rows:
+                return _locate_result(
+                    alt_rows, alt_total, CONF_EXACT_ALT, "exact_alt", f"exact_alt:{q}", notes
+                )
+            if cf_total == 1:
+                return _locate_result(
+                    cf_rows,
+                    cf_total,
+                    CONF_CASEFOLD_UNIQUE,
+                    "casefold_pref",
+                    f"casefold_pref:{q}",
+                    notes,
+                )
+            if cf_rows:
+                return _locate_result(
+                    cf_rows,
+                    cf_total,
+                    CONF_CASEFOLD_AMBIGUOUS,
+                    "casefold_pref_ambiguous",
+                    f"casefold_pref:{q}",
+                    notes,
+                    ambiguous=True,
                 )
 
-            # 3) case-insensitive unique pref match
-            casefold = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND toLower(n.pref_label) = toLower($q)
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
-            )
-            if len(casefold) == 1:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(casefold[0]),
-                        confidence=CONF_CASEFOLD_UNIQUE,
-                        method="casefold_pref",
-                    )
-                ]
+            # 4) substring on pref_label or alt_labels (case-insensitive)
+            total, rows = self._match_contains(session, labels, q, notes)
+            if not rows:
                 return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    evidence=[f"esco:search:casefold_pref:{q}"],
-                )
-            if len(casefold) > 1:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(r),
-                        confidence=CONF_CASEFOLD_AMBIGUOUS,
-                        method="casefold_pref_ambiguous",
-                    )
-                    for r in casefold
-                ]
-                return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    warnings=["ambiguous"],
-                    evidence=[f"esco:search:casefold_pref:{q}"],
-                )
-
-            # 4) CONTAINS on pref_label or alt_labels (case-insensitive)
-            contains = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND (
-                    toLower(n.pref_label) CONTAINS toLower($q)
-                    OR any(a IN coalesce(n.alt_labels, [])
-                           WHERE toLower(a) CONTAINS toLower($q))
-                  )
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
-            )
-            if not contains:
-                return ToolResult(
-                    warnings=["not_found"],
+                    warnings=["not_found", *notes],
                     evidence=[f"esco:search:not_found:{q}"],
                 )
-
-            cands = [
-                Candidate(
-                    node=_record_to_node(r),
-                    confidence=CONF_CONTAINS,
-                    method="contains",
-                )
-                for r in contains
-            ]
-            warnings = ["ambiguous"] if len(cands) > 1 else []
-            return ToolResult(
-                candidates=cands,
-                nodes=[c.node for c in cands],
-                warnings=warnings,
-                evidence=[f"esco:search:contains:{q}"],
+            return _locate_result(
+                rows,
+                total,
+                CONF_CONTAINS,
+                "contains",
+                f"contains:{q}",
+                notes,
+                ambiguous=total > 1,
             )
 
+    # -- Locate retrieval ---------------------------------------------------
+    #
+    # Each helper returns (total_matches, capped_rows). The total is what makes
+    # truncation reportable; before this it was unknowable, because the query
+    # stopped at LIMIT 25 and nobody counted the rest.
+
     @staticmethod
-    def _query_match(
+    def _match_exact_pref(
         session: Session,
-        _labels: list[str],
+        labels: list[str],
+        q: str,
+    ) -> tuple[int, list[dict[str, Any]]]:
+        """Exact preferred label, one range-index seek per concrete label.
+
+        The umbrella ``:EscoNode`` + ``labels(n)`` filter this replaces could
+        not reach the per-label ``pref_label`` index and scanned every node.
+        Ordering and the cap are applied here rather than in Cypher so the
+        query stays a plain UNION, which is stable across Cypher versions.
+        """
+        result = session.run(
+            _exact_pref_cypher(labels),
+            q=q,
+            source=SOURCE,
+            scan_cap=SEARCH_SCAN_CAP,
+        )
+        rows = [dict(record["node"]) for record in result]
+        rows.sort(key=_locate_sort_key)
+        return len(rows), rows[:SEARCH_LIMIT]
+
+    def _match_exact_alias_or_casefold(
+        self,
+        session: Session,
+        labels: list[str],
+        q: str,
+        notes: list[str],
+    ) -> tuple[int, list[dict[str, Any]], int, list[dict[str, Any]]]:
+        """Exact alias membership and case-insensitive preferred label at once.
+
+        Retrieval is a Lucene phrase query, which is a superset of both
+        predicates: a node whose alias equals ``q`` (or whose preferred label
+        equals it apart from case) necessarily contains ``q``'s terms in that
+        order. The exact predicates are then re-applied in Cypher, so the
+        result is identical to the scan's — just over a few hundred candidates
+        instead of the whole graph.
+        """
+        phrase = _lucene_phrase(q)
+        record = None
+        if phrase is not None:
+            record = self._run_fulltext(
+                session,
+                _FULLTEXT_ALIAS_OR_CASEFOLD,
+                notes,
+                lucene=phrase,
+                q=q,
+                labels=labels,
+                source=SOURCE,
+                index=FULLTEXT_INDEX,
+                limit=SEARCH_LIMIT,
+                scan_cap=SEARCH_SCAN_CAP,
+            )
+        if record is None:
+            # No indexable terms in the query, or no full-text index on this
+            # graph. Fall back to the original scan: slower, same answer.
+            record = session.run(
+                _SCAN_ALIAS_OR_CASEFOLD,
+                q=q,
+                labels=labels,
+                source=SOURCE,
+                limit=SEARCH_LIMIT,
+                scan_cap=SEARCH_SCAN_CAP,
+            ).single()
+        if record is None:
+            return 0, [], 0, []
+        return (
+            int(record["alt_total"]),
+            [dict(row) for row in record["alt_top"]],
+            int(record["cf_total"]),
+            [dict(row) for row in record["cf_top"]],
+        )
+
+    def _match_contains(
+        self,
+        session: Session,
+        labels: list[str],
+        q: str,
+        notes: list[str],
+    ) -> tuple[int, list[dict[str, Any]]]:
+        """Case-insensitive substring on pref_label or any alt label.
+
+        Retrieval uses infix wildcards (``+*data* +*scien*``) rather than
+        prefix ones, because CONTAINS is an infix predicate: ``"data scien"``
+        matches "metadata science", which ``+data*`` would miss. The CONTAINS
+        predicate itself is re-applied in Cypher, so this returns the same
+        nodes as the scan did.
+        """
+        lucene = _lucene_infix(q)
+        record = None
+        if lucene is not None:
+            record = self._run_fulltext(
+                session,
+                _FULLTEXT_CONTAINS,
+                notes,
+                lucene=lucene,
+                q=q,
+                labels=labels,
+                source=SOURCE,
+                index=FULLTEXT_INDEX,
+                limit=SEARCH_LIMIT,
+                scan_cap=SEARCH_SCAN_CAP,
+            )
+        if record is None:
+            record = session.run(
+                _SCAN_CONTAINS,
+                q=q,
+                labels=labels,
+                source=SOURCE,
+                limit=SEARCH_LIMIT,
+                scan_cap=SEARCH_SCAN_CAP,
+            ).single()
+        if record is None:
+            return 0, []
+        return int(record["total"]), [dict(row) for row in record["top"]]
+
+    @staticmethod
+    def _run_fulltext(
+        session: Session,
         cypher: str,
-        params: dict[str, Any],
-    ) -> list[dict[str, Any]]:
-        return [dict(r) for r in session.run(cypher, **params)]
+        notes: list[str],
+        **params: Any,
+    ) -> Any:
+        """Run a full-text query, returning None if the index is not there.
+
+        A graph loaded before this index existed must keep working rather than
+        raise at query time; the caller falls back to the scan and the warning
+        says why the call was slow.
+        """
+        try:
+            return session.run(cypher, **params).single()
+        except ClientError as exc:
+            if "no such fulltext" not in str(exc).lower():
+                raise
+            if "fulltext_index_missing" not in notes:
+                notes.append("fulltext_index_missing")
+            return None
 
     def get_neighbors(
         self,

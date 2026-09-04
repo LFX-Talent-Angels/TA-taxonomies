@@ -53,12 +53,21 @@ def _node(node_id: str, label: str) -> dict[str, Any]:
 
 
 def test_contains_results_use_deterministic_order_and_equal_confidence() -> None:
+    # Three round trips now, not four: the exact-alias and case-insensitive
+    # tiers share one candidate pool.
     session = _Session(
         [
-            [],
-            [],
-            [],
-            [_node("esco:occupation:b", "data scientist"), _node("esco:occupation:a", "scientist")],
+            [],  # 1) exact preferred label (concrete-label index seek)
+            [{"alt_total": 0, "alt_top": [], "cf_total": 0, "cf_top": []}],  # 2+3)
+            [
+                {
+                    "total": 2,
+                    "top": [
+                        _node("esco:occupation:b", "data scientist"),
+                        _node("esco:occupation:a", "scientist"),
+                    ],
+                }
+            ],  # 4) substring
         ]
     )
     suite = _suite_with_session(session)
@@ -70,6 +79,19 @@ def test_contains_results_use_deterministic_order_and_equal_confidence() -> None
         CONF_CONTAINS,
     ]
     assert "ORDER BY size(n.pref_label), n.id" in session.queries[-1]
+
+
+def test_exact_pref_tier_never_scans_the_umbrella_label() -> None:
+    # The regression this whole change exists for: matching :EscoNode and
+    # filtering labels(n) cannot reach the per-label pref_label index.
+    session = _Session([[{"node": _node("esco:occupation:a", "data scientist")}]])
+    suite = _suite_with_session(session)
+
+    result = suite.search_nodes("data scientist", kind="occupation")
+
+    assert [candidate.method for candidate in result.candidates] == ["exact_pref"]
+    assert "MATCH (n:Occupation)" in session.queries[0]
+    assert "any(x IN labels(n)" not in session.queries[0]
 
 
 def test_enumerate_paths_rejects_unbounded_requests_without_database_access() -> None:
