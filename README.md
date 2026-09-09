@@ -52,8 +52,27 @@ cd TA-taxonomies
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env   # Neo4j credentials etc.
+docker compose up -d
 pytest
 ```
+
+ESCO and O*NET share one local Neo4j (`ta-neo4j`). They are separate logical
+graphs (`:EscoNode` / `:OnetNode`, suite-scoped ids). Browser's node total is
+the **sum**, not a merge.
+
+```bash
+# ESCO (English DATABASE xlsx under data/esco/raw/DATABASE)
+python -m ta_taxonomies.suites.esco.load --mode full
+
+# O*NET 31.0 text dump under data/onet/raw  (see suites/onet/README.md)
+python -m ta_taxonomies.suites.onet.load --mode full
+```
+
+`--mode fixture` is for CI only; it wipes **that suite** and must not be aimed
+at a demo database that holds a full graph.
+
+Cheat-sheet Cypher: `src/ta_taxonomies/suites/esco/queries.cypher` and
+`src/ta_taxonomies/suites/onet/queries.cypher`.
 
 ## Layout
 
