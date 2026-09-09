@@ -28,7 +28,6 @@ from typing import Any
 
 import pytest
 from neo4j import Driver, GraphDatabase
-from synthetic_esco import build_document
 
 from ta_taxonomies.suites.esco.config import (
     LABEL_ISCO_GROUP,
@@ -46,6 +45,8 @@ from ta_taxonomies.suites.esco.load import (
     validate_load,
 )
 from ta_taxonomies.suites.esco.tools import _SCAN_CONTAINS, EscoSuite, _exact_pref_cypher
+
+from .synthetic_esco import build_document
 
 _URI = os.getenv("TA_PERF_NEO4J_URI")
 
