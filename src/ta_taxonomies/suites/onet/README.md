@@ -45,9 +45,17 @@ The website "All Files" button currently points at the Excel zip
 (`db_31_0_excel.zip`). This suite uses the **text** zip, which is still
 published at the URL above (same files as Sprint 1, tab-delimited).
 
-Loader entrypoint (not implemented yet):
+## Load
+
+`--mode full` is the product graph: every taxonomy-knowledge file in 31.0
+(see [`INVENTORY.md`](./INVENTORY.md)). `--mode fixture` is a small committed
+slice of that **same** schema for tests. Do not run fixture wipe against a
+demo database that holds a full O*NET (or ESCO) graph.
 
 ```bash
-python -m ta_taxonomies.suites.onet.load --mode fixture
-python -m ta_taxonomies.suites.onet.load --mode full
+python -m ta_taxonomies.suites.onet.load --mode full     # product
+python -m ta_taxonomies.suites.onet.load --mode fixture  # CI only
 ```
+
+Same Neo4j as ESCO (`ta-neo4j`, `bolt://localhost:7687`). O*NET nodes carry
+`:OnetNode` and `source="onet"`; wipe is suite-scoped.
