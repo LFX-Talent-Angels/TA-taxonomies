@@ -121,60 +121,70 @@ and columns are unchanged**; row counts moved with the quarterly update.
 - 3,006 unique Element IDs (hierarchy + leaves). Use as skill/software
   category descriptions. Skill rating files already carry `Element Name`.
 
-## v1 freeze (load these)
+## Product freeze (load all taxonomy knowledge)
 
-| File | Graph role | Why |
-| --- | --- | --- |
-| Occupation Data.txt | `:Occupation` | Locate hub |
-| Job Titles.txt | `alt_labels` | Locate aliases (ESCO `altLabels` analogue) |
-| Task Statements.txt | `:Task` + `PERFORMS_TASK` | Connect "what does this job do?" |
-| Essential Skills.txt | `:Skill` + weighted `HAS_SKILL` essential | Connect + score_paths |
-| Transferable Skills.txt | same, transferable | Programming etc. |
-| Content Model Reference.txt | skill/category labels + descriptions | names for Element IDs |
-| Related Occupations.txt | `RELATED_TO` | Connect "related jobs" |
-| Software Skills.txt | `:Software` + `USES_SOFTWARE` | Honest ICT Connect; extra suite kind (like ESCO `ISCOGroup`) |
+This is **not** an MVP cut. `--mode full` loads every O*NET knowledge file
+into the shared Neo4j (`ta-neo4j`, same Bolt as ESCO, `:OnetNode` +
+`source="onet"`). A committed **fixture** is only for CI / contract tests: a
+small slice of the **same** schema, never a smaller model.
 
-Same loader path for fixture (ICT slice) and `--mode full`.
+| File | Graph role |
+| --- | --- |
+| Occupation Data.txt | `:Occupation` |
+| Job Titles.txt | occupation `alt_labels` |
+| Sample of Reported Titles.txt | more occupation `alt_labels` (survey titles) |
+| Task Statements.txt | `:Task` + `PERFORMS_TASK` |
+| Task Ratings.txt | ratings on `PERFORMS_TASK` / task nodes |
+| Task Categories.txt | category labels for task scales |
+| Emerging Tasks.txt | proposed tasks (still O*NET knowledge) |
+| Essential Skills.txt | `:Skill` + weighted `HAS_SKILL` essential |
+| Transferable Skills.txt | `:Skill` + weighted `HAS_SKILL` transferable |
+| Knowledge.txt | `:Knowledge` + weighted occupation edges |
+| Abilities.txt | `:Ability` + weighted occupation edges |
+| Work Activities.txt | `:WorkActivity` + weighted occupation edges |
+| Work Context.txt | `:WorkContext` + weighted occupation edges |
+| Work Styles.txt | `:WorkStyle` + weighted occupation edges |
+| Software Skills.txt | `:Software` + `USES_SOFTWARE` |
+| Content Model Reference.txt | element nodes + descriptions |
+| Related Occupations.txt | occupation `RELATED_TO` |
+| Job Zones.txt / Job Zone Reference.txt | `:JobZone` + occupation link |
+| Education.txt / Education Categories.txt | education profile of occupations |
+| Training and Experience.txt + Categories | training/experience profile |
+| Career interests + specific interest files | `:Interest` nodes and links |
+| GWA / IWA / DWA + Tasks to DWAs | work-activity hierarchy |
+| \* to Work Activities / Work Context | cross-domain element links |
+| Scales Reference.txt / Level Scale Anchors.txt | how `Data Value` is interpreted |
 
-## Deferred (same schema later)
+**Not loaded** (survey operations, not taxonomy knowledge — same idea as ESCO
+skipping collection tags):
 
-Knowledge, Abilities, Work Activities, Work Context, Work Styles, Task
-Ratings, Emerging Tasks, DWA/IWA/GWA joins, Job Zones, Education, Training,
-interests, Sample of Reported Titles (Job Titles already covers aliases),
-element-to-element "to Work Activities/Context" files.
+- `Read Me.txt`
+- `Survey Booklet Locations.txt`
+- `Occupation Level Metadata.txt`
 
-## Proposed ids and rels
+## Ids and rels
 
 | Kind | `id` | `source_id` |
 | --- | --- | --- |
 | Occupation | `onet:occupation:<O*NET-SOC>` | SOC code |
-| Skill | `onet:skill:<Element ID>` | Element ID (`2.B.3.e`) |
+| Content-model element | `onet:element:<Element ID>` | Element ID (`2.B.3.e`) |
 | Task | `onet:task:<Task ID>` | Task ID |
-| Software | `onet:software:<stable slug of Workplace Example>` | example string |
+| Software | `onet:software:<slug of Workplace Example>` | example string |
+| Job zone | `onet:job-zone:<n>` | zone number as string |
+| Scale | `onet:scale:<Scale ID>` | `IM`, `LV`, … |
 
-Umbrella label `:OnetNode`. Canonical labels shared with ESCO
-(`Occupation`, `Skill`, `Task`). `source="onet"` on every node.
+`kind` on the node says Skill vs Knowledge vs Ability vs WorkActivity, etc.
+Essential vs transferable is `HAS_SKILL.relation_type`, not two id schemes.
 
-| Rel | From → To | Properties |
-| --- | --- | --- |
-| `HAS_SKILL` | Occupation → Skill | `relation_type`, `importance`, `level`, `n`, `standard_error`, `ci_lower`, `ci_upper`, `recommend_suppress` |
-| `PERFORMS_TASK` | Occupation → Task | `task_type` |
-| `RELATED_TO` | Occupation → Occupation | `relatedness_tier`, `index` |
-| `USES_SOFTWARE` | Occupation → Software | `hot_technology`, `in_demand`, `element_id` (category) |
-
-Traversable = those four. Full-text index `FOR (n:OnetNode)` on
+Umbrella `:OnetNode`. Shared canonical labels (`Occupation`, `Skill`, `Task`)
+plus suite-specific labels (`Software`, `Knowledge`, `Ability`, …).
+`source="onet"` on every node. Full-text index `FOR (n:OnetNode)` on
 `pref_label` + `alt_labels`, analyzer `standard-no-stop-words`.
 
-## Open questions (do not block Task 1)
+Software slug: lowercase, non-alphanumerics → `-`. Load fails if two examples
+collapse to the same slug. All job titles are stored (no alias cap).
 
-1. **Software id:** slug of `Workplace Example` vs hash. Slug is readable;
-   collisions need a check at load (inventory: 8,753 unique names today).
-2. **Alt-label cap:** 2,750 titles on one residual occupation. v1 stores all;
-   revisit if Neo4j property size hurts.
-3. **Sample of Reported Titles** vs Job Titles overlap — not measured row-wise;
-   deferred unless Locate evals need the survey titles specifically.
+## Next
 
-## v1 out of this inventory
-
-No Neo4j load yet. Next: identity helpers + schema constants using the ids
-above (`feat(onet): add identity helpers…`).
+Identity helpers + Neo4j schema constants, then the loader that ingests the
+full freeze (`--mode full`) and a test fixture cut from the same files.
