@@ -28,7 +28,7 @@ from typing import Any
 
 import pytest
 from neo4j import Driver, GraphDatabase
-from synthetic_esco import build_document
+from .synthetic_esco import build_document
 
 from ta_taxonomies.suites.esco.config import (
     LABEL_ISCO_GROUP,
