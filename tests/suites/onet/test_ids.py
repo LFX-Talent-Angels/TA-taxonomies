@@ -42,6 +42,9 @@ def test_software_slug_is_stable_and_casefold() -> None:
     assert software_slug("Adobe Acrobat") == "adobe-acrobat"
     assert software_slug("Adobe  Acrobat") == "adobe-acrobat"
     assert suite_id_software("Python") == "onet:software:python"
+    assert software_slug("C") != software_slug("C#")
+    assert software_slug("C#") == "c-sharp"
+    assert software_slug("C++") == "c-plus-plus"
 
 
 def test_software_slug_rejects_empty() -> None:
