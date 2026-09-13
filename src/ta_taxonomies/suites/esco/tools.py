@@ -28,6 +28,7 @@ from ta_taxonomies.contract.models import (
     PruningStats,
     ToolResult,
 )
+from ta_taxonomies.contract.schema import SuiteSchema
 from ta_taxonomies.suites.esco.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
@@ -276,6 +277,15 @@ class EscoSuite:
 
     def _session(self) -> Session:
         return self._driver.session(database=self._database)
+
+    @property
+    def suite_schema(self) -> SuiteSchema:
+        return SuiteSchema(
+            skill_rel_types=("HAS_SKILL",),
+            optional_rel_values=frozenset({"optional"}),
+            group_rel_type="CLASSIFIED_UNDER",
+            group_node_kinds=frozenset({"ISCOGroup", "isco group"}),
+        )
 
     def search_nodes(self, text: str, kind: str | None = None) -> ToolResult:
         """Locate: resolve free text to ESCO nodes with confidence.

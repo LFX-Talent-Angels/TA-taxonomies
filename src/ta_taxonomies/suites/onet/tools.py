@@ -28,6 +28,7 @@ from ta_taxonomies.contract.models import (
     ScoredPath,
     ToolResult,
 )
+from ta_taxonomies.contract.schema import SuiteSchema
 from ta_taxonomies.suites.onet.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
@@ -249,6 +250,15 @@ class OnetSuite:
 
     def _session(self) -> Session:
         return self._driver.session(database=self._database)
+
+    @property
+    def suite_schema(self) -> SuiteSchema:
+        return SuiteSchema(
+            skill_rel_types=("HAS_SKILL", "USES_SOFTWARE"),
+            optional_rel_values=frozenset({"optional", "transferable"}),
+            group_rel_type=None,
+            group_node_kinds=frozenset(),
+        )
 
     def search_nodes(self, text: str, kind: str | None = None) -> ToolResult:
         q = (text or "").strip()
