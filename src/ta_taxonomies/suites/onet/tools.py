@@ -204,7 +204,11 @@ def _record_to_node(rec: dict[str, Any]) -> Node:
         kind=str(kind),
         label=rec.get("pref_label") or "",
         source="onet",
-        source_id=rec.get("source_id") or rec["id"],
+        # Never fall back to the suite-scoped graph id: onet:occupation:<code>
+        # is not a native source id, and downstream memory writes would double
+        # the suite prefix (onet:onet:occupation:...). Keep source_id empty so
+        # callers fall back to the label slug instead.
+        source_id=rec.get("source_id") or "",
         properties={
             k: v
             for k, v in rec.items()
