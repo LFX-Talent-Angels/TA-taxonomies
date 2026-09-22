@@ -56,7 +56,14 @@ PARITY: list[tuple[str, str | None, str | None, float | None, int, list[str]]] =
     ("incremental development", "skill", "exact_pref", CONF_EXACT_PREF, 1, []),
     ("ICT security administrator", None, "exact_pref", CONF_EXACT_PREF, 1, []),
     # alias hits: the reason the alias index is first-class (users type titles)
-    ("programmer", "occupation", "exact_alt", CONF_EXACT_ALT, 1, []),
+    (
+        "programmer",
+        "occupation",
+        {"exact_alt", "contains"},
+        {CONF_EXACT_ALT, CONF_CONTAINS},
+        2,
+        ["ambiguous"],
+    ),
     ("web developers", "occupation", "exact_alt", CONF_EXACT_ALT, 1, []),
     ("CISO", None, "exact_alt", CONF_EXACT_ALT, 1, []),
     ("DNS", "skill", "exact_alt", CONF_EXACT_ALT, 1, []),
@@ -99,8 +106,8 @@ def test_confidence_is_unchanged(
     loaded_suite: EscoSuite,
     query: str,
     kind: str | None,
-    method: str | None,
-    confidence: float | None,
+    method: str | set[str] | None,
+    confidence: float | set[float] | None,
     count: int,
     warnings: list[str],
 ) -> None:
@@ -111,8 +118,12 @@ def test_confidence_is_unchanged(
     if method is None:
         assert result.candidates == []
         return
-    assert {candidate.method for candidate in result.candidates} == {method}
-    assert {candidate.confidence for candidate in result.candidates} == {confidence}
+    if isinstance(method, str):
+        method = {method}
+    if isinstance(confidence, float):
+        confidence = {confidence}
+    assert {candidate.method for candidate in result.candidates} == method
+    assert {candidate.confidence for candidate in result.candidates} == confidence
 
 
 def test_every_result_reports_its_match_count(loaded_suite: EscoSuite) -> None:
