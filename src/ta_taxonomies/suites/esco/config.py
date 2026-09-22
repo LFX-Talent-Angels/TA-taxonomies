@@ -63,6 +63,10 @@ CONF_EXACT_ALT = 0.90
 CONF_CASEFOLD_UNIQUE = 0.85
 CONF_CASEFOLD_AMBIGUOUS = 0.80
 CONF_CONTAINS = 0.70
+# Declared policy confidence for hybrid BM25+vector results (Tier 5).
+# Between CONF_CONTAINS and CONF_CASEFOLD_UNIQUE: semantic hit, but no keyword
+# match in the label, so confidence is lower than a pref_label contains match.
+CONF_HYBRID = 0.75
 
 # Locate result policy (declared). SEARCH_LIMIT is what the caller gets back;
 # SEARCH_SCAN_CAP bounds how many matches we are willing to count before
