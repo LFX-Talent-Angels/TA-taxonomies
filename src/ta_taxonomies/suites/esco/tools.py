@@ -33,7 +33,6 @@ from ta_taxonomies.suites.esco.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
     CONF_CONTAINS,
-    CONF_EXACT_ALT,
     CONF_EXACT_PREF,
     FULLTEXT_INDEX,
     KIND_ALIASES,
@@ -332,10 +331,6 @@ class EscoSuite:
             alt_total, alt_rows, cf_total, cf_rows = self._match_exact_alias_or_casefold(
                 session, labels, q, notes
             )
-            if alt_rows:
-                return _locate_result(
-                    alt_rows, alt_total, CONF_EXACT_ALT, "exact_alt", f"exact_alt:{q}", notes
-                )
             if cf_total == 1:
                 return _locate_result(
                     cf_rows,
@@ -356,8 +351,19 @@ class EscoSuite:
                     ambiguous=True,
                 )
 
-            # 4) substring on pref_label or alt_labels (case-insensitive)
+            # 4) substring on pref_label or alt_labels (case-insensitive).
+            # Also merge any exact alt_label hits from Tier 2 so that a query
+            # like "nurse" does not exit early on nanny/midwife (which have
+            # "nurse" as a historical alt_label) before "registered nurse"
+            # (whose pref_label contains the word) is ever considered.
+            # group_and_sort_locate in TA-agents re-ranks the merged set and
+            # promotes pref_label token matches above alt_label exact matches.
             total, rows = self._match_contains(session, labels, q, notes)
+            if alt_rows:
+                seen = {row["id"] for row in rows}
+                extra = [row for row in alt_rows if row["id"] not in seen]
+                rows = rows + extra
+                total = len(rows)
             if not rows:
                 return ToolResult(
                     warnings=["not_found", *notes],

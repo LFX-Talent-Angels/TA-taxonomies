@@ -33,7 +33,6 @@ from ta_taxonomies.suites.onet.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
     CONF_CONTAINS,
-    CONF_EXACT_ALT,
     CONF_EXACT_PREF,
     FULLTEXT_INDEX,
     KIND_ALIASES,
@@ -284,10 +283,6 @@ class OnetSuite:
             alt_total, alt_rows, cf_total, cf_rows = self._match_exact_alias_or_casefold(
                 session, labels, q, notes
             )
-            if alt_rows:
-                return _locate_result(
-                    alt_rows, alt_total, CONF_EXACT_ALT, "exact_alt", f"exact_alt:{q}", notes
-                )
             if cf_total == 1:
                 return _locate_result(
                     cf_rows,
@@ -308,7 +303,16 @@ class OnetSuite:
                     ambiguous=True,
                 )
 
+            # Merge exact alt_label hits with pref_label substring matches so
+            # that a query whose answer lives in pref_label (e.g. "registered
+            # nurse") is not blocked by an unrelated node that has the query
+            # term as a historical alt_label (e.g. "nanny" → alt: "nurse").
             total, rows = self._match_contains(session, labels, q, notes)
+            if alt_rows:
+                seen = {row["id"] for row in rows}
+                extra = [row for row in alt_rows if row["id"] not in seen]
+                rows = rows + extra
+                total = len(rows)
             if not rows:
                 return ToolResult(
                     warnings=["not_found", *notes],
