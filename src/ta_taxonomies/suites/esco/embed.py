@@ -36,9 +36,10 @@ _FETCH_CYPHER = f"""
 MATCH (n:{NODE_LABEL})
 WHERE n.source = $source
   AND ($force OR n.label_embedding IS NULL)
+  AND ($after IS NULL OR n.id > $after)
 RETURN n.id AS id, n.pref_label AS pref_label
 ORDER BY n.id
-SKIP $skip LIMIT $batch
+LIMIT $batch
 """
 
 _WRITE_CYPHER = f"""
@@ -80,7 +81,10 @@ def build_embeddings(driver: Any, *, force: bool = False) -> int:
 
     model = SentenceTransformer(EMBED_MODEL)
     updated = 0
-    skip = 0
+    # Keyset pagination: resume after the last id written. SKIP/offset paging
+    # is wrong here because the IS NULL filter shrinks the result set as each
+    # batch is written, so an advancing offset skips half the unembedded nodes.
+    after: str | None = None
 
     with driver.session() as session:
         while True:
@@ -88,7 +92,7 @@ def build_embeddings(driver: Any, *, force: bool = False) -> int:
                 _FETCH_CYPHER,
                 source=SOURCE,
                 force=force,
-                skip=skip,
+                after=after,
                 batch=BATCH_SIZE,
             ).data()
             if not records:
@@ -101,7 +105,7 @@ def build_embeddings(driver: Any, *, force: bool = False) -> int:
             ]
             session.run(_WRITE_CYPHER, rows=rows, source=SOURCE)
             updated += len(rows)
-            skip += BATCH_SIZE
+            after = records[-1]["id"]
             print(f"  embedded {updated} nodes...", end="\r", flush=True)
 
     print(f"\nDone. Embedded {updated} ESCO nodes.")
