@@ -96,3 +96,35 @@ def test_rerun_fills_only_the_gaps(module: Any) -> None:
 
     assert updated == module.BATCH_SIZE
     assert all(v is not None for v in store.values())
+
+
+def test_query_model_is_loaded_once_per_process(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tier-5 search built a new SentenceTransformer on every query."""
+    from ta_taxonomies.suites.esco import tools as esco_tools
+    from ta_taxonomies.suites.onet import tools as onet_tools
+
+    built: list[str] = []
+
+    class Counting(_FakeModel):
+        def __init__(self, name: str) -> None:
+            built.append(name)
+
+    monkeypatch.setattr(sys.modules["sentence_transformers"], "SentenceTransformer", Counting)
+    for module in (esco_tools, onet_tools):
+        module._embedding_model.cache_clear()
+        module._embed_query("a")
+        module._embed_query("b")
+        module._embedding_model.cache_clear()
+    assert len(built) == 2
+
+
+@pytest.mark.parametrize("module_name", ["esco", "onet"])
+def test_vector_search_has_a_relevance_floor(module_name: str) -> None:
+    import inspect
+
+    from ta_taxonomies.suites.esco import tools as esco_tools
+    from ta_taxonomies.suites.onet import tools as onet_tools
+
+    module = {"esco": esco_tools, "onet": onet_tools}[module_name]
+    assert 0.7 < module._VECTOR_MIN_SCORE < 0.8
+    assert "score >= $min_score" in inspect.getsource(module)
