@@ -35,7 +35,7 @@ from neo4j.exceptions import ClientError
 
 from ta_taxonomies.contract.models import Candidate, Node, PruningStats, SuiteName, ToolResult
 from ta_taxonomies.suites._groups import attach_groups, top_groups
-from ta_taxonomies.suites._keywords import keyword_query
+from ta_taxonomies.suites._keywords import enough_words, keyword_query, topic_stems
 from ta_taxonomies.suites._wordstart import word_start_pattern
 
 
@@ -581,7 +581,9 @@ class Locator:
                 "hybrid_rrf",
                 f"hybrid:{q}",
                 notes,
-                ambiguous=len(hybrid_rows) > 1,
+                # A meaning-search hit is a guess, even a lone one: the user
+                # confirms it, so it is never "the" answer.
+                ambiguous=True,
             )
 
     def search_group(self, text: str, group: str) -> ToolResult:
@@ -725,9 +727,17 @@ class Locator:
             labels=labels,
             source=self.config.source,
             index=self.config.fulltext_index,
-            limit=self.config.search_limit,
+            # Over-fetch: the shared-words filter below drops weak hits.
+            limit=self.config.search_limit * 4,
         )
-        return [dict(row) for row in record["top"]] if record is not None else []
+        if record is None:
+            return []
+        stems = topic_stems(q)
+        return [
+            dict(row)
+            for row in record["top"]
+            if enough_words(stems, [row.get("pref_label") or "", *(row.get("alt_labels") or [])])
+        ]
 
     def match_vector(
         self, session: Session, labels: list[str], embedding: list[float], notes: list[str]

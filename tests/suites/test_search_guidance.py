@@ -231,7 +231,7 @@ def test_tier5_uses_the_keyword_list(cls: type[Any], monkeypatch: Any) -> None:
 
     module = importlib.import_module(cls.__module__)
     monkeypatch.setattr(module, "_embed_query", lambda _q: None)
-    construction = _node("x:construction", "construction engineer")
+    construction = _node("x:construction", "building engineer")
     session = _Session(
         [
             *_NO_EXACT,
@@ -243,7 +243,7 @@ def test_tier5_uses_the_keyword_list(cls: type[Any], monkeypatch: Any) -> None:
 
     _query, params = session.calls[3]
     assert params["lucene"] == "engine* build*"
-    assert [c.node.label for c in result.candidates] == ["construction engineer"]
+    assert [c.node.label for c in result.candidates] == ["building engineer"]
     assert [c.method for c in result.candidates] == ["hybrid_rrf"]
 
 
@@ -300,3 +300,41 @@ def test_acronym_in_a_title_needs_no_second_opinion(cls: type[Any], monkeypatch:
     )
     result = _suite(cls, session).search_nodes("ICT help", kind="occupation")
     assert [c.method for c in result.candidates] == ["contains"]
+
+
+def test_one_stray_word_is_not_a_keyword_match() -> None:
+    from ta_taxonomies.suites._keywords import enough_words, topic_stems
+
+    stems = topic_stems("xyzzy-nonexistent-occupation")
+    assert stems == ["xyzzy", "nonexistent"]
+    assert not enough_words(stems, ["occupational therapist"])
+    two = topic_stems("an engineer who builds bridges")
+    assert enough_words(two, ["bridge engineer"])
+    assert not enough_words(two, ["engine fitter"])
+    assert enough_words(topic_stems("plumbing"), ["plumber"])  # shared stem "plumb"
+    assert enough_words(topic_stems("plumber"), ["plumber"])
+
+
+def test_a_ruled_out_word_is_not_searched_for() -> None:
+    from ta_taxonomies.suites._keywords import topic_stems
+
+    assert topic_stems("works with computers but not coding") == ["comput"]
+    assert topic_stems("a job without travel, no night shifts") == ["shift"]
+
+
+def test_a_lone_meaning_hit_is_still_the_users_to_confirm(monkeypatch: Any) -> None:
+    import importlib
+
+    module = importlib.import_module(EscoSuite.__module__)
+    monkeypatch.setattr(module, "_embed_query", lambda _q: [0.0])
+    session = _Session(
+        [
+            *_NO_EXACT,
+            [{"total": 0, "top": [], "group_codes": []}],
+            [{"top": []}],
+            [{"node": _node("x:math", "mathematician")}],
+        ]
+    )
+    result = _suite(EscoSuite, session).search_nodes("I like math but not coding")
+    assert [c.method for c in result.candidates] == ["hybrid_rrf"]
+    assert "ambiguous" in result.warnings

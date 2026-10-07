@@ -22,6 +22,8 @@ _STOP_WORDS = frozenset(
     really so some something such than that the their them then there these
     they thing things this those to too up us very want wants was we were what
     when where which who whom why will with work works working would you your
+    occupation occupations career careers role roles position positions
+    profession professions title titles field
     """.split()
 )
 
@@ -39,6 +41,25 @@ def _stem(term: str) -> str:
     return term
 
 
+#: The word after one of these is ruled out ("not coding"), not searched for.
+_NEGATIONS = frozenset({"not", "no", "without", "except", "never", "nor"})
+
+
+def topic_stems(q: str) -> list[str]:
+    """The crude stems of the topic words in ``q``, in order, at most MAX_TERMS."""
+    stems: list[str] = []
+    previous = ""
+    for term in _TERM_SPLIT.split(q.lower()):
+        ruled_out = previous in _NEGATIONS
+        previous = term
+        if ruled_out or len(term) < 3 or term in _STOP_WORDS or term in _NEGATIONS:
+            continue
+        stem = _stem(term)
+        if stem not in stems:
+            stems.append(stem)
+    return stems[:MAX_TERMS]
+
+
 def keyword_query(q: str) -> str | None:
     """An OR-of-prefixes Lucene query for the topic words in ``q``, or None.
 
@@ -46,13 +67,18 @@ def keyword_query(q: str) -> str | None:
     "builds" finds "building" and "builder". Terms come from splitting on
     non-alphanumerics, so none can carry a Lucene metacharacter.
     """
-    stems: list[str] = []
-    for term in _TERM_SPLIT.split(q.lower()):
-        if len(term) < 3 or term in _STOP_WORDS:
-            continue
-        stem = _stem(term)
-        if stem not in stems:
-            stems.append(stem)
+    stems = topic_stems(q)
     if not stems:
         return None
-    return " ".join(f"{stem}*" for stem in stems[:MAX_TERMS])
+    return " ".join(f"{stem}*" for stem in stems)
+
+
+def enough_words(stems: list[str], names: list[str]) -> bool:
+    """A keyword hit must share two topic words with a query that has two or more.
+
+    One stray word is not a match: "xyzzy-nonexistent-occupation" found every
+    "occupational ..." title through a single word. One-word queries need one.
+    """
+    words = {word for name in names for word in _TERM_SPLIT.split(name.lower()) if word}
+    shared = sum(1 for stem in stems if any(word.startswith(stem) for word in words))
+    return shared >= min(2, len(stems))
