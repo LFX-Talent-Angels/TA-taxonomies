@@ -293,18 +293,20 @@ def _locate_result(
 _ACRONYM_RE = re.compile(r"\b[A-Z]{2,3}\b")
 
 
-def _alias_needs_second_opinion(
-    q: str, alt_rows: list[dict[str, Any]], contains_rows: list[dict[str, Any]]
-) -> bool:
-    """An acronym query that matched only through aliases is not trusted alone.
+def _alias_needs_second_opinion(q: str, *row_sets: list[dict[str, Any]]) -> bool:
+    """An acronym query that no title contains is not trusted on aliases alone.
 
     ESCO lists "AI engineer" as an alias of "animal artificial insemination
-    technician"; "HR manager" is a correct alias of "human resources manager".
-    Only the meaning search can tell the two apart.
+    technician", and "QA tester" only inside an alias of "localiser"; "HR
+    manager" is a correct alias of "human resources manager". Only the meaning
+    search can tell them apart.
     """
-    alt_ids = {row["id"] for row in alt_rows}
-    only_aliases = all(row["id"] in alt_ids for row in contains_rows)
-    return only_aliases and bool(_ACRONYM_RE.search(q))
+    if not _ACRONYM_RE.search(q):
+        return False
+    needle = q.casefold()
+    return not any(
+        needle in (row.get("pref_label") or "").casefold() for rows in row_sets for row in rows
+    )
 
 
 def _locate_merged_result(
@@ -314,40 +316,36 @@ def _locate_merged_result(
     notes: list[str],
     evidence_suffix: str,
     *,
-    other_confidence: float = CONF_CONTAINS,
-    other_method: str = "contains",
+    meaning_rows: list[dict[str, Any]] | None = None,
     extra_warnings: tuple[str, ...] = (),
 ) -> ToolResult:
     """Build a Locate result where each row keeps the tier that matched it.
 
-    Exact alt_label hits (row in ``alt_rows``) keep ``exact_alt`` 0.90;
-    pref_label substring hits (row in ``contains_rows`` only) stay
-    ``contains`` 0.70. Rows are deduped by id (alt wins). This keeps the
-    confidence scale honest when the two sets are merged: an alias that is
-    exactly the query is never demoted to a guess.
+    Exact alt_label hits keep ``exact_alt`` 0.90, substring hits stay
+    ``contains`` 0.70 and meaning-search hits are ``hybrid_rrf``. Rows are
+    deduped by id, the stronger tier winning. This keeps the confidence scale
+    honest when the sets are merged: an alias that is exactly the query is
+    never demoted to a guess.
     """
-    alt_by_id = {row["id"]: row for row in alt_rows}
-    merged_rows: list[dict[str, Any]] = []
+    tiers = (
+        (alt_rows, CONF_EXACT_ALT, "exact_alt"),
+        (contains_rows, CONF_CONTAINS, "contains"),
+        (meaning_rows or [], CONF_HYBRID, "hybrid_rrf"),
+    )
+    candidates: list[Candidate] = []
     seen: set[str] = set()
-    for row in alt_rows:
-        merged_rows.append(row)
-        seen.add(row["id"])
-    for row in contains_rows:
-        if row["id"] not in seen:
-            merged_rows.append(row)
+    for rows, confidence, method in tiers:
+        for row in rows:
+            if row["id"] in seen:
+                continue
             seen.add(row["id"])
-    candidates = [
-        Candidate(
-            node=_record_to_node(row),
-            confidence=CONF_EXACT_ALT if row["id"] in alt_by_id else other_confidence,
-            method="exact_alt" if row["id"] in alt_by_id else other_method,
-        )
-        for row in merged_rows
-    ]
+            candidates.append(
+                Candidate(node=_record_to_node(row), confidence=confidence, method=method)
+            )
     warnings = [*notes, *extra_warnings]
-    if len(merged_rows) > 1:
+    if len(candidates) > 1:
         warnings.append("ambiguous")
-    pruned = max(0, total - len(merged_rows))
+    pruned = max(0, total - len(candidates))
     if pruned:
         warnings.append("truncated")
     if total >= SEARCH_SCAN_CAP:
@@ -520,23 +518,23 @@ class EscoSuite:
                 total = len(alt_rows) + sum(
                     1 for row in rows if row["id"] not in {a["id"] for a in alt_rows}
                 )
-            if alt_rows and _alias_needs_second_opinion(q, alt_rows, rows):
+            if (alt_rows or rows) and _alias_needs_second_opinion(q, alt_rows, rows):
                 query_vector = _embed_query(q)
                 meaning_rows = (
                     self._match_vector(session, labels, query_vector, notes)
                     if query_vector is not None
                     else []
                 )
-                if meaning_rows and meaning_rows[0]["id"] not in {a["id"] for a in alt_rows}:
+                alias_ids = {row["id"] for row in [*alt_rows, *rows]}
+                if meaning_rows and meaning_rows[0]["id"] not in alias_ids:
                     # The meaning search disagrees with the alias: offer both.
                     return _locate_merged_result(
                         alt_rows,
-                        meaning_rows,
-                        len({row["id"] for row in [*alt_rows, *meaning_rows]}),
+                        rows,
+                        len(alias_ids | {row["id"] for row in meaning_rows}),
                         notes,
                         f"alias_unconfirmed:{q}",
-                        other_confidence=CONF_HYBRID,
-                        other_method="hybrid_rrf",
+                        meaning_rows=meaning_rows,
                         extra_warnings=("alias_unconfirmed",),
                     )
             if alt_rows or rows:

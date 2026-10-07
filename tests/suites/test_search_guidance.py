@@ -257,3 +257,46 @@ def test_tier5_without_topic_words_runs_no_keyword_query(cls: type[Any], monkeyp
     result = _suite(cls, session).search_nodes("who are you")
     assert "not_found" in result.warnings
     assert len(session.calls) == 3
+
+
+# -- acronym second opinion for alias substrings -------------------------------
+
+
+@pytest.mark.parametrize("cls", [EscoSuite, OnetSuite])
+def test_acronym_found_only_inside_an_alias_gets_a_second_opinion(
+    cls: type[Any], monkeypatch: Any
+) -> None:
+    import importlib
+
+    module = importlib.import_module(cls.__module__)
+    monkeypatch.setattr(module, "_embed_query", lambda _q: [0.0])
+    localiser = _node("x:localiser", "localiser")  # alias "localisation QA tester"
+    tester = _node("x:tester", "software tester")
+    session = _Session(
+        [
+            *_NO_EXACT,
+            [{"total": 1, "top": [localiser], "group_codes": []}],  # 4) alias substring
+            [{"node": tester}],  # meaning search
+        ]
+    )
+    result = _suite(cls, session).search_nodes("QA tester", kind="occupation")
+
+    assert [c.node.label for c in result.candidates] == ["localiser", "software tester"]
+    assert [c.method for c in result.candidates] == ["contains", "hybrid_rrf"]
+    assert {"alias_unconfirmed", "ambiguous"} <= set(result.warnings)
+
+
+@pytest.mark.parametrize("cls", [EscoSuite, OnetSuite])
+def test_acronym_in_a_title_needs_no_second_opinion(cls: type[Any], monkeypatch: Any) -> None:
+    import importlib
+
+    module = importlib.import_module(cls.__module__)
+    monkeypatch.setattr(module, "_embed_query", lambda _q: pytest.fail("no meaning search"))
+    session = _Session(
+        [
+            *_NO_EXACT,
+            [{"total": 1, "top": [_node("x:ict", "ICT help desk agent")], "group_codes": []}],
+        ]
+    )
+    result = _suite(cls, session).search_nodes("ICT help", kind="occupation")
+    assert [c.method for c in result.candidates] == ["contains"]
