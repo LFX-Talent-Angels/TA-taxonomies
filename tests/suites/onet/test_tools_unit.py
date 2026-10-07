@@ -65,7 +65,7 @@ def test_contains_results_use_deterministic_order() -> None:
     )
     result = _suite_with_session(session).search_nodes("scien", kind="occupation")
     assert [c.confidence for c in result.candidates] == [CONF_CONTAINS, CONF_CONTAINS]
-    assert "ORDER BY size(n.pref_label), n.id" in session.queries[-1]
+    assert "ORDER BY alias_only, size(n.pref_label), n.id" in session.queries[-1]
 
 
 def test_exact_pref_matches_concrete_occupation_label() -> None:

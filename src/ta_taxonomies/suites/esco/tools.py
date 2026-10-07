@@ -102,7 +102,11 @@ WHERE n.source = $source
     OR any(a IN coalesce(n.alt_labels, [])
            WHERE toLower(a) CONTAINS toLower($q))
   )
-WITH n ORDER BY size(n.pref_label), n.id
+// Titles that contain the query rank ahead of alias-only matches *before* the
+// cut, or short unrelated titles with a matching alias crowd them out
+// ("engineer" kept "chemist" and lost most "... engineer" titles).
+WITH n, CASE WHEN toLower(n.pref_label) CONTAINS toLower($q) THEN 0 ELSE 1 END AS alias_only
+ORDER BY alias_only, size(n.pref_label), n.id
 LIMIT $scan_cap
 WITH collect({_NODE_MAP}) AS rows
 RETURN size(rows) AS total, rows[0..$limit] AS top

@@ -78,7 +78,7 @@ def test_contains_results_use_deterministic_order_and_equal_confidence() -> None
         CONF_CONTAINS,
         CONF_CONTAINS,
     ]
-    assert "ORDER BY size(n.pref_label), n.id" in session.queries[-1]
+    assert "ORDER BY alias_only, size(n.pref_label), n.id" in session.queries[-1]
 
 
 def test_exact_pref_tier_never_scans_the_umbrella_label() -> None:
