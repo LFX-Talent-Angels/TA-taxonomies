@@ -10,7 +10,9 @@ Import-only — works the same for Docker and Aura backends.
 
 from __future__ import annotations
 
-SOURCE = "esco"
+from typing import Final
+
+SOURCE: Final = "esco"
 
 # Node labels stored in Neo4j
 LABEL_ESCO_NODE = "EscoNode"

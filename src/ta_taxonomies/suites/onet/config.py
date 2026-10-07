@@ -10,7 +10,9 @@ Import-only — works the same for Docker and Aura backends.
 
 from __future__ import annotations
 
-SOURCE = "onet"
+from typing import Final
+
+SOURCE: Final = "onet"
 
 LABEL_ONET_NODE = "OnetNode"
 LABEL_OCCUPATION = "Occupation"
