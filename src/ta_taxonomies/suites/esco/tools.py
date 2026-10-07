@@ -30,6 +30,9 @@ from ta_taxonomies.contract.models import (
     ToolResult,
 )
 from ta_taxonomies.contract.schema import SuiteSchema
+from ta_taxonomies.suites._groups import attach_groups, top_groups
+from ta_taxonomies.suites._keywords import keyword_query
+from ta_taxonomies.suites._wordstart import word_start_pattern
 from ta_taxonomies.suites.esco.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
@@ -97,22 +100,37 @@ RETURN size(alt) AS alt_total, alt[0..$limit] AS alt_top,
 _CONTAINS_BODY = f"""
 WHERE n.source = $source
   AND any(x IN labels(n) WHERE x IN $labels)
+  AND ($group_prefix IS NULL OR coalesce(n.isco_group, '') STARTS WITH $group_prefix)
   AND (
-    toLower(n.pref_label) CONTAINS toLower($q)
-    OR any(a IN coalesce(n.alt_labels, [])
-           WHERE toLower(a) CONTAINS toLower($q))
+    n.pref_label =~ $word_start
+    OR any(a IN coalesce(n.alt_labels, []) WHERE a =~ $word_start)
   )
 // Titles that contain the query rank ahead of alias-only matches *before* the
 // cut, or short unrelated titles with a matching alias crowd them out
 // ("engineer" kept "chemist" and lost most "... engineer" titles).
-WITH n, CASE WHEN toLower(n.pref_label) CONTAINS toLower($q) THEN 0 ELSE 1 END AS alias_only
+WITH n, CASE WHEN n.pref_label =~ $word_start THEN 0 ELSE 1 END AS alias_only
 ORDER BY alias_only, size(n.pref_label), n.id
 LIMIT $scan_cap
-WITH collect({_NODE_MAP}) AS rows
-RETURN size(rows) AS total, rows[0..$limit] AS top
+// Group codes of every title match, not just the top slice: a broad query
+// reports how its matches split into occupation groups. Alias-only matches are
+// left out ("nursery nurse" would put child care under "nurse").
+WITH collect({_NODE_MAP}) AS rows,
+     collect(CASE WHEN alias_only = 0 THEN n.isco_group END) AS group_codes
+RETURN size(rows) AS total, rows[0..$limit] AS top, group_codes
 """
 
 _FULLTEXT_ALIAS_OR_CASEFOLD = _FULLTEXT_HEAD + _ALIAS_OR_CASEFOLD_BODY
+# Tier-5 keyword list. The Lucene score only orders this list for the fusion;
+# it never becomes a confidence.
+_FULLTEXT_KEYWORDS = f"""
+CALL db.index.fulltext.queryNodes($index, $lucene) YIELD node AS n, score
+WHERE n.source = $source
+  AND any(x IN labels(n) WHERE x IN $labels)
+WITH n, score
+ORDER BY score DESC, size(n.pref_label), n.id
+LIMIT $limit
+RETURN collect({_NODE_MAP}) AS top
+"""
 _SCAN_ALIAS_OR_CASEFOLD = _SCAN_HEAD + _ALIAS_OR_CASEFOLD_BODY
 _FULLTEXT_CONTAINS = _FULLTEXT_HEAD + _CONTAINS_BODY
 _SCAN_CONTAINS = _SCAN_HEAD + _CONTAINS_BODY
@@ -497,7 +515,7 @@ class EscoSuite:
             # promotes pref_label token matches above alt_label exact matches.
             # Each row keeps the tier that matched it (merging never demotes an
             # exact alias to a guess).
-            total, rows = self._match_contains(session, labels, q, notes)
+            total, rows, group_codes = self._match_contains(session, labels, q, notes)
             if alt_rows:
                 total = len(alt_rows) + sum(
                     1 for row in rows if row["id"] not in {a["id"] for a in alt_rows}
@@ -523,14 +541,15 @@ class EscoSuite:
                     )
             if alt_rows or rows:
                 if alt_rows:
-                    return _locate_merged_result(
+                    merged = _locate_merged_result(
                         alt_rows,
                         rows,
                         total,
                         notes,
                         f"contains:{q}",
                     )
-                return _locate_result(
+                    return self._with_groups(session, merged, group_codes)
+                found = _locate_result(
                     rows,
                     total,
                     CONF_CONTAINS,
@@ -539,13 +558,14 @@ class EscoSuite:
                     notes,
                     ambiguous=total > 1,
                 )
+                return self._with_groups(session, found, group_codes)
 
             # 5) Hybrid BM25 + vector (semantic fallback for natural-language
             # queries with no keyword overlap in any label). Only reached when
             # Tiers 1–4 all returned nothing. Gracefully skips vector if the
             # embed.py index has not been built yet.
             embedding = _embed_query(q)
-            bm25_rows: list[dict[str, Any]] = rows  # empty at this point
+            bm25_rows = self._match_keywords(session, labels, q, notes)
             vector_rows: list[dict[str, Any]] = []
             if embedding is not None:
                 vector_rows = self._match_vector(session, labels, embedding, notes)
@@ -564,6 +584,50 @@ class EscoSuite:
                 notes,
                 ambiguous=len(hybrid_rows) > 1,
             )
+
+    def search_group(self, text: str, group: str) -> ToolResult:
+        """Occupations matching ``text`` inside one ISCO group.
+
+        ``group`` is a code from ``meta.groups`` of an earlier search ("2142");
+        a shorter code covers its sub-groups ("214"). Narrows a broad match set
+        once the user says which area they mean.
+        """
+        q = (text or "").strip()
+        code = (group or "").strip()
+        if not q:
+            return ToolResult(warnings=["empty_query"])
+        if not code.isdigit():
+            return ToolResult(warnings=[f"unknown_group:{group}"])
+        notes: list[str] = []
+        with self._session() as session:
+            total, rows, _ = self._match_contains(
+                session, [LABEL_OCCUPATION], q, notes, group_prefix=code
+            )
+        if not rows:
+            return ToolResult(
+                warnings=["not_found", *notes],
+                evidence=[f"esco:search_group:{code}:not_found:{q}"],
+            )
+        return _locate_result(
+            rows, total, CONF_CONTAINS, "contains", f"group:{code}:{q}", notes, ambiguous=total > 1
+        )
+
+    @staticmethod
+    def _with_groups(session: Session, result: ToolResult, codes: list[str]) -> ToolResult:
+        """Name the ISCO unit groups a contains match set falls into."""
+        shown, total = top_groups(codes)
+        if total < 2:
+            return result
+        names = {
+            record["code"]: {"id": record["id"], "label": record["label"]}
+            for record in session.run(
+                f"MATCH (g:{LABEL_ISCO_GROUP}) WHERE g.source = $source AND g.code IN $codes "
+                "RETURN g.code AS code, g.id AS id, g.pref_label AS label",
+                codes=[code for code, _ in shown],
+                source=SOURCE,
+            )
+        }
+        return attach_groups(result, shown, total, names, "isco-08")
 
     # -- Locate retrieval ---------------------------------------------------
     #
@@ -651,8 +715,9 @@ class EscoSuite:
         labels: list[str],
         q: str,
         notes: list[str],
-    ) -> tuple[int, list[dict[str, Any]]]:
-        """Case-insensitive substring on pref_label or any alt label.
+        group_prefix: str | None = None,
+    ) -> tuple[int, list[dict[str, Any]], list[str]]:
+        """Case-insensitive word-start match on pref_label or any alt label.
 
         Retrieval uses infix wildcards (``+*data* +*scien*``) rather than
         prefix ones, because CONTAINS is an infix predicate: ``"data scien"``
@@ -668,7 +733,8 @@ class EscoSuite:
                 _FULLTEXT_CONTAINS,
                 notes,
                 lucene=lucene,
-                q=q,
+                word_start=word_start_pattern(q),
+                group_prefix=group_prefix,
                 labels=labels,
                 source=SOURCE,
                 index=FULLTEXT_INDEX,
@@ -678,15 +744,42 @@ class EscoSuite:
         if record is None:
             record = session.run(
                 _SCAN_CONTAINS,
-                q=q,
+                word_start=word_start_pattern(q),
+                group_prefix=group_prefix,
                 labels=labels,
                 source=SOURCE,
                 limit=SEARCH_LIMIT,
                 scan_cap=SEARCH_SCAN_CAP,
             ).single()
         if record is None:
-            return 0, []
-        return int(record["total"]), [dict(row) for row in record["top"]]
+            return 0, [], []
+        codes = [str(code) for code in (record.get("group_codes") or []) if code]
+        return int(record["total"]), [dict(row) for row in record["top"]], codes
+
+    def _match_keywords(
+        self,
+        session: Session,
+        labels: list[str],
+        q: str,
+        notes: list[str],
+    ) -> list[dict[str, Any]]:
+        """Labels sharing topic words with ``q``, most shared words first."""
+        lucene = keyword_query(q)
+        if lucene is None:
+            return []
+        record = self._run_fulltext(
+            session,
+            _FULLTEXT_KEYWORDS,
+            notes,
+            lucene=lucene,
+            labels=labels,
+            source=SOURCE,
+            index=FULLTEXT_INDEX,
+            limit=SEARCH_LIMIT,
+        )
+        if record is None:
+            return []
+        return [dict(row) for row in record["top"]]
 
     def _match_vector(
         self,

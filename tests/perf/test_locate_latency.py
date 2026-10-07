@@ -29,6 +29,7 @@ from typing import Any
 import pytest
 from neo4j import Driver, GraphDatabase
 
+from ta_taxonomies.suites._wordstart import word_start_pattern
 from ta_taxonomies.suites.esco.config import (
     LABEL_ISCO_GROUP,
     LABEL_OCCUPATION,
@@ -144,7 +145,8 @@ def test_loose_match_is_faster_than_the_scan_it_replaced(
     with driver.session(database=database) as session:
         for query in LOOSE_QUERIES:
             params = {
-                "q": query,
+                "word_start": word_start_pattern(query),
+                "group_prefix": None,
                 "labels": LABELS,
                 "source": SOURCE,
                 "limit": SEARCH_LIMIT,
