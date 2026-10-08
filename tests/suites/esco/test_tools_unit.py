@@ -78,7 +78,7 @@ def test_contains_results_use_deterministic_order_and_equal_confidence() -> None
         CONF_CONTAINS,
         CONF_CONTAINS,
     ]
-    assert "ORDER BY size(n.pref_label), n.id" in session.queries[-1]
+    assert "ORDER BY alias_only, size(n.pref_label), n.id" in session.queries[-1]
 
 
 def test_exact_pref_tier_never_scans_the_umbrella_label() -> None:
@@ -223,3 +223,60 @@ def test_score_paths_uses_typed_contract_even_while_policy_is_deferred() -> None
 
     assert result.paths == [path]
     assert result.meta["policy"] == {"name": "esco-essential-first", "version": "1"}
+
+
+def _alias_only_session(alias_hit: dict[str, Any], *vector: dict[str, Any]) -> _Session:
+    return _Session(
+        [
+            [],  # 1) exact preferred label
+            [{"alt_total": 1, "alt_top": [alias_hit], "cf_total": 0, "cf_top": []}],
+            [{"total": 1, "top": [alias_hit]}],  # 4) contains finds the same node
+            [{"node": row} for row in vector],  # 5) meaning search, second opinion
+        ]
+    )
+
+
+def test_acronym_alias_the_meaning_search_disagrees_with_is_offered_not_trusted(
+    monkeypatch: Any,
+) -> None:
+    from ta_taxonomies.suites.esco import tools
+
+    monkeypatch.setattr(tools, "_embed_query", lambda _q: [0.0])
+    vet = _node("esco:occupation:vet", "animal artificial insemination technician")
+    ai = _node("esco:occupation:ai", "artificial intelligence engineer")
+    suite = _suite_with_session(_alias_only_session(vet, ai))
+
+    result = suite.search_nodes("AI engineer", kind="occupation")
+
+    assert [c.node.label for c in result.candidates] == [vet["pref_label"], ai["pref_label"]]
+    assert [c.method for c in result.candidates] == ["exact_alt", "hybrid_rrf"]
+    assert {"alias_unconfirmed", "ambiguous"} <= set(result.warnings)
+
+
+def test_acronym_alias_the_meaning_search_confirms_is_kept(monkeypatch: Any) -> None:
+    from ta_taxonomies.suites.esco import tools
+
+    monkeypatch.setattr(tools, "_embed_query", lambda _q: [0.0])
+    hr = _node("esco:occupation:hr", "human resources manager")
+    suite = _suite_with_session(_alias_only_session(hr, hr))
+
+    result = suite.search_nodes("HR manager", kind="occupation")
+
+    assert [c.method for c in result.candidates] == ["exact_alt"]
+    assert "alias_unconfirmed" not in result.warnings
+
+
+def test_plain_word_alias_needs_no_second_opinion(monkeypatch: Any) -> None:
+    from ta_taxonomies.suites.esco import tools
+
+    def no_embedding(_q: str) -> list[float]:
+        raise AssertionError("no meaning search for a non-acronym alias")
+
+    monkeypatch.setattr(tools, "_embed_query", no_embedding)
+    nanny = _node("esco:occupation:nanny", "nanny")
+    session = _alias_only_session(nanny)
+    session.responses.pop()  # no fifth round trip expected
+
+    result = _suite_with_session(session).search_nodes("nurse", kind="occupation")
+
+    assert [c.method for c in result.candidates] == ["exact_alt"]

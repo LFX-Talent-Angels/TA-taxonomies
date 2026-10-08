@@ -4,8 +4,8 @@ name: DCO
 # (Developer Certificate of Origin). See CONTRIBUTING.md.
 
 on:
+  # Every pull request, including stacked ones based on another branch.
   pull_request:
-    branches: [main, dev]
 
 jobs:
   dco-check:

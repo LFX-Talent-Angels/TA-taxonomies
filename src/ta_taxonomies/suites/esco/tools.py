@@ -102,7 +102,11 @@ WHERE n.source = $source
     OR any(a IN coalesce(n.alt_labels, [])
            WHERE toLower(a) CONTAINS toLower($q))
   )
-WITH n ORDER BY size(n.pref_label), n.id
+// Titles that contain the query rank ahead of alias-only matches *before* the
+// cut, or short unrelated titles with a matching alias crowd them out
+// ("engineer" kept "chemist" and lost most "... engineer" titles).
+WITH n, CASE WHEN toLower(n.pref_label) CONTAINS toLower($q) THEN 0 ELSE 1 END AS alias_only
+ORDER BY alias_only, size(n.pref_label), n.id
 LIMIT $scan_cap
 WITH collect({_NODE_MAP}) AS rows
 RETURN size(rows) AS total, rows[0..$limit] AS top
@@ -268,12 +272,33 @@ def _locate_result(
     )
 
 
+_ACRONYM_RE = re.compile(r"\b[A-Z]{2,3}\b")
+
+
+def _alias_needs_second_opinion(
+    q: str, alt_rows: list[dict[str, Any]], contains_rows: list[dict[str, Any]]
+) -> bool:
+    """An acronym query that matched only through aliases is not trusted alone.
+
+    ESCO lists "AI engineer" as an alias of "animal artificial insemination
+    technician"; "HR manager" is a correct alias of "human resources manager".
+    Only the meaning search can tell the two apart.
+    """
+    alt_ids = {row["id"] for row in alt_rows}
+    only_aliases = all(row["id"] in alt_ids for row in contains_rows)
+    return only_aliases and bool(_ACRONYM_RE.search(q))
+
+
 def _locate_merged_result(
     alt_rows: list[dict[str, Any]],
     contains_rows: list[dict[str, Any]],
     total: int,
     notes: list[str],
     evidence_suffix: str,
+    *,
+    other_confidence: float = CONF_CONTAINS,
+    other_method: str = "contains",
+    extra_warnings: tuple[str, ...] = (),
 ) -> ToolResult:
     """Build a Locate result where each row keeps the tier that matched it.
 
@@ -296,12 +321,12 @@ def _locate_merged_result(
     candidates = [
         Candidate(
             node=_record_to_node(row),
-            confidence=CONF_EXACT_ALT if row["id"] in alt_by_id else CONF_CONTAINS,
-            method="exact_alt" if row["id"] in alt_by_id else "contains",
+            confidence=CONF_EXACT_ALT if row["id"] in alt_by_id else other_confidence,
+            method="exact_alt" if row["id"] in alt_by_id else other_method,
         )
         for row in merged_rows
     ]
-    warnings = list(notes)
+    warnings = [*notes, *extra_warnings]
     if len(merged_rows) > 1:
         warnings.append("ambiguous")
     pruned = max(0, total - len(merged_rows))
@@ -477,6 +502,25 @@ class EscoSuite:
                 total = len(alt_rows) + sum(
                     1 for row in rows if row["id"] not in {a["id"] for a in alt_rows}
                 )
+            if alt_rows and _alias_needs_second_opinion(q, alt_rows, rows):
+                query_vector = _embed_query(q)
+                meaning_rows = (
+                    self._match_vector(session, labels, query_vector, notes)
+                    if query_vector is not None
+                    else []
+                )
+                if meaning_rows and meaning_rows[0]["id"] not in {a["id"] for a in alt_rows}:
+                    # The meaning search disagrees with the alias: offer both.
+                    return _locate_merged_result(
+                        alt_rows,
+                        meaning_rows,
+                        len({row["id"] for row in [*alt_rows, *meaning_rows]}),
+                        notes,
+                        f"alias_unconfirmed:{q}",
+                        other_confidence=CONF_HYBRID,
+                        other_method="hybrid_rrf",
+                        extra_warnings=("alias_unconfirmed",),
+                    )
             if alt_rows or rows:
                 if alt_rows:
                     return _locate_merged_result(
