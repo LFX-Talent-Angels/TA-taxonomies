@@ -35,6 +35,7 @@ from ta_taxonomies.suites.onet.config import (
     CONF_CONTAINS,
     CONF_EXACT_ALT,
     CONF_EXACT_PREF,
+    CONF_HYBRID,
     FULLTEXT_INDEX,
     KIND_ALIASES,
     LABEL_ABILITY,
@@ -149,6 +150,48 @@ def _exact_pref_cypher(labels: list[str]) -> str:
     return "\nUNION\n".join(arms)
 
 
+_VECTOR_INDEX = "onet_label_embedding"
+_VECTOR_K = 25
+
+
+def _embedding_available() -> bool:
+    try:
+        import sentence_transformers  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def _embed_query(text: str) -> list[float] | None:
+    """Return a unit-norm embedding for ``text``, or None if unavailable."""
+    if not _embedding_available():
+        return None
+    from sentence_transformers import SentenceTransformer
+
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+    vec = model.encode([text], normalize_embeddings=True)
+    return vec[0].tolist()
+
+
+def _reciprocal_rank_fusion(
+    result_lists: list[list[dict[str, Any]]],
+    k: int = 60,
+) -> list[dict[str, Any]]:
+    """Merge ranked lists via RRF. Returns rows sorted by descending RRF score."""
+    scores: dict[str, float] = {}
+    by_id: dict[str, dict[str, Any]] = {}
+    for lst in result_lists:
+        for rank, row in enumerate(lst):
+            node_id = str(row.get("id") or "")
+            if not node_id:
+                continue
+            scores[node_id] = scores.get(node_id, 0.0) + 1.0 / (k + rank + 1)
+            if node_id not in by_id:
+                by_id[node_id] = row
+    return sorted(by_id.values(), key=lambda r: -scores[str(r.get("id") or "")])
+
+
 def _locate_sort_key(row: dict[str, Any]) -> tuple[int, str]:
     return len(row.get("pref_label") or ""), str(row.get("id") or "")
 
@@ -161,7 +204,11 @@ def _record_to_node(rec: dict[str, Any]) -> Node:
         kind=str(kind),
         label=rec.get("pref_label") or "",
         source="onet",
-        source_id=rec.get("source_id") or rec["id"],
+        # Never fall back to the suite-scoped graph id: onet:occupation:<code>
+        # is not a native source id, and downstream memory writes would double
+        # the suite prefix (onet:onet:occupation:...). Keep source_id empty so
+        # callers fall back to the label slug instead.
+        source_id=rec.get("source_id") or "",
         properties={
             k: v
             for k, v in rec.items()
@@ -388,9 +435,29 @@ class OnetSuite:
                     notes,
                     ambiguous=total > 1,
                 )
-            return ToolResult(
-                warnings=["not_found", *notes],
-                evidence=[f"onet:search:not_found:{q}"],
+
+            # 5) Hybrid BM25 + vector (semantic fallback for natural-language
+            # queries with no keyword overlap in any label). Only reached when
+            # Tiers 1–4 all returned nothing.
+            embedding = _embed_query(q)
+            bm25_rows: list[dict[str, Any]] = rows  # empty at this point
+            vector_rows: list[dict[str, Any]] = []
+            if embedding is not None:
+                vector_rows = self._match_vector(session, labels, embedding, notes)
+            hybrid_rows = _reciprocal_rank_fusion([bm25_rows, vector_rows])
+            if not hybrid_rows:
+                return ToolResult(
+                    warnings=["not_found", *notes],
+                    evidence=[f"onet:search:not_found:{q}"],
+                )
+            return _locate_result(
+                hybrid_rows[:SEARCH_LIMIT],
+                len(hybrid_rows),
+                CONF_HYBRID,
+                "hybrid_rrf",
+                f"hybrid:{q}",
+                notes,
+                ambiguous=len(hybrid_rows) > 1,
             )
 
     @staticmethod
@@ -483,6 +550,40 @@ class OnetSuite:
         if record is None:
             return 0, []
         return int(record["total"]), [dict(row) for row in record["top"]]
+
+    def _match_vector(
+        self,
+        session: Session,
+        labels: list[str],
+        embedding: list[float],
+        notes: list[str],
+    ) -> list[dict[str, Any]]:
+        """Vector ANN search — returns top-K nodes by cosine similarity."""
+        try:
+            result = session.run(
+                f"""
+                CALL db.index.vector.queryNodes($index, $k, $embedding)
+                YIELD node AS n, score
+                WHERE n.source = $source
+                  AND any(x IN labels(n) WHERE x IN $labels)
+                RETURN {_NODE_MAP} AS node
+                LIMIT $limit
+                """,
+                index=_VECTOR_INDEX,
+                k=_VECTOR_K,
+                embedding=embedding,
+                source=SOURCE,
+                labels=labels,
+                limit=SEARCH_LIMIT,
+            )
+            return [dict(record["node"]) for record in result]
+        except Exception as exc:
+            msg = str(exc).lower()
+            if "no such index" in msg or "vector index" in msg or "no index" in msg:
+                if "vector_index_missing" not in notes:
+                    notes.append("vector_index_missing")
+                return []
+            raise
 
     @staticmethod
     def _run_fulltext(
