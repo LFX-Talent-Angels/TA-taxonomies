@@ -12,6 +12,7 @@ policy ``onet-importance-v1`` (mean of ``HAS_SKILL.importance`` on a path).
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from neo4j import Driver, Session
@@ -74,6 +75,15 @@ IMPORTANCE_POLICY = PolicyRef(name="onet-importance-v1", version="1")
 
 
 # Everything O*NET's Locate needs; the tiers themselves live in suites._locate.
+_SOC_CODE = re.compile(r"[0-9]{2}-[0-9]{4}(?:\.[0-9]{2})?")
+
+
+def _onet_codes(q: str) -> list[str]:
+    if not _SOC_CODE.fullmatch(q):
+        return []
+    return [q] if "." in q else [f"{q}.00"]
+
+
 def _soc_names(_session: Session, codes: list[str]) -> dict[str, dict[str, Any]]:
     return {code: {"label": SOC_MAJOR_GROUPS.get(code)} for code in codes}
 
@@ -114,6 +124,8 @@ ONET_LOCATE = LocateConfig(
         prefix_for=lambda code: f"{code}-" if code in SOC_MAJOR_GROUPS else None,
         names_for=_soc_names,
     ),
+    # O*NET-SOC codes; "15-1252" means the base occupation "15-1252.00".
+    codes_for=_onet_codes,
     search_limit=SEARCH_LIMIT,
     scan_cap=SEARCH_SCAN_CAP,
     min_wildcard_term=MIN_WILDCARD_TERM,

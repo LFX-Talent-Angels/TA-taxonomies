@@ -338,3 +338,84 @@ def test_a_lone_meaning_hit_is_still_the_users_to_confirm(monkeypatch: Any) -> N
     result = _suite(EscoSuite, session).search_nodes("I like math but not coding")
     assert [c.method for c in result.candidates] == ["hybrid_rrf"]
     assert "ambiguous" in result.warnings
+
+
+def test_an_acronym_alone_matches_whole_words_only() -> None:
+    assert word_start_pattern("AI") == r"(?su).*(?<![\p{L}\p{N}])AI(?![\p{L}\p{N}]).*"
+    # Lowercase or longer text keeps the word-start match.
+    assert word_start_pattern("ai").endswith("ai.*")
+    assert word_start_pattern("AI engineer").endswith("AI engineer.*")
+
+
+def test_a_pasted_paragraph_skips_the_wildcard_index() -> None:
+    from ta_taxonomies.suites._locate import MAX_INFIX_TERMS, lucene_infix
+
+    paragraph = " ".join(f"word{i}" for i in range(MAX_INFIX_TERMS + 1))
+    assert lucene_infix(paragraph, 3) is None
+    assert lucene_infix("data scien", 3) == "+*data* +*scien*"
+
+
+@pytest.mark.parametrize(
+    ("cls", "query", "codes"),
+    [
+        (OnetSuite, "15-1252.00", ["15-1252.00"]),
+        (OnetSuite, "15-1252", ["15-1252.00"]),
+        (EscoSuite, "2512", ["2512"]),
+        (EscoSuite, "2512.4", ["2512.4"]),
+    ],
+)
+def test_a_code_is_looked_up_before_any_label(cls: type[Any], query: str, codes: list[str]) -> None:
+    session = _Session([[{"node": _node("x:dev", "Software Developers")}]])
+    result = _suite(cls, session).search_nodes(query)
+    _query, params = session.calls[0]
+    assert params["codes"] == codes
+    assert [c.method for c in result.candidates] == ["exact_code"]
+
+
+@pytest.mark.parametrize("query", ["15-12520", "2512a", "nurse", "12345"])
+def test_text_that_is_not_a_code_skips_the_code_lookup(query: str) -> None:
+    from ta_taxonomies.suites.esco.tools import ESCO_LOCATE
+    from ta_taxonomies.suites.onet.tools import ONET_LOCATE
+
+    assert ONET_LOCATE.codes_for is not None and ESCO_LOCATE.codes_for is not None
+    assert ONET_LOCATE.codes_for(query) == []
+    if query != "12345":
+        assert ESCO_LOCATE.codes_for(query) == []
+
+
+def test_isco_group_codes_are_one_to_four_ascii_digits() -> None:
+    from ta_taxonomies.suites.esco.tools import ESCO_LOCATE
+
+    assert ESCO_LOCATE.groups is not None
+    prefix_for = ESCO_LOCATE.groups.prefix_for
+    assert prefix_for("2142") == "2142"
+    assert prefix_for("21") == "21"
+    for bad in ("99999999", "\u0662\u0665", "21 42", ""):
+        assert prefix_for(bad) is None, bad
+
+
+def test_an_unconfirmed_alias_counts_every_match_and_shows_one_page(monkeypatch: Any) -> None:
+    from ta_taxonomies.suites.esco import tools
+
+    monkeypatch.setattr(tools, "_embed_query", lambda _q: [0.0])
+    alias_hits = [_node(f"x:a{i}", f"title {i}") for i in range(25)]
+    meaning = [{"node": _node(f"x:m{i}", f"meaning {i}")} for i in range(25)]
+    session = _Session(
+        [
+            *_NO_EXACT,
+            [{"total": 40, "top": alias_hits, "group_codes": []}],  # 40 alias-only matches
+            meaning,
+        ]
+    )
+    result = _suite(EscoSuite, session).search_nodes("QA tester")
+    assert len(result.candidates) == 25
+    assert result.meta["matches"] == 40 + 25
+    assert "truncated" in result.warnings
+
+
+def test_one_word_left_after_a_dropped_acronym_is_no_keyword_query() -> None:
+    assert keyword_query("IT manager") is None
+    assert keyword_query("UX designer") is None
+    assert keyword_query("a manager") == "manag*"
+    assert keyword_query("is it a manager") == "manag*"
+    assert keyword_query("plumber") == "plumb*"

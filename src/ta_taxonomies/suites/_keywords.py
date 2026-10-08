@@ -70,7 +70,26 @@ def keyword_query(q: str) -> str | None:
     stems = topic_stems(q)
     if not stems:
         return None
+    if len(stems) == 1 and _drops_a_short_word(q):
+        # "IT manager": "IT" is too short to search, so the list would be every
+        # "... manager" title. The vector search answers alone instead.
+        return None
     return " ".join(f"{stem}*" for stem in stems)
+
+
+def _drops_a_short_word(q: str) -> bool:
+    """A short word that carries meaning ("IT", "HR", "UX") was left out.
+
+    Read in the original case: "IT" in capitals is an acronym, "it" a pronoun.
+    """
+    for term in _TERM_SPLIT.split(q):
+        if not 0 < len(term) < 3:
+            continue
+        if term.isupper() and len(term) == 2:
+            return True
+        if term.lower() not in _STOP_WORDS and term.lower() not in _NEGATIONS:
+            return True
+    return False
 
 
 def enough_words(stems: list[str], names: list[str]) -> bool:

@@ -6,6 +6,7 @@ whichever fix landed last. A suite now describes itself in a
 :class:`LocateConfig` — labels, indexes, confidences, how its occupations group
 — and gets every rule below, unchanged:
 
+0. ``exact_code``  — a code the suite recognises ("15-1252.00", "2512").
 1. ``exact_pref``  — the preferred label exactly (one range-index seek per label).
 2. ``exact_alt``   — an alias exactly; merged into tier 4, never an early exit.
 3. ``casefold_pref`` — the preferred label apart from case.
@@ -94,6 +95,9 @@ class LocateConfig:
     #: Properties to fall back on, in order, when a node has no ``source_id``.
     source_id_fallbacks: tuple[str, ...] = ()
     groups: GroupScheme | None = None
+    #: Query -> the ``code`` values it names ("15-1252" -> ["15-1252.00"]), or
+    #: [] when it is not a code. A code is looked up before any label.
+    codes_for: Callable[[str], list[str]] | None = None
     search_limit: int = 25
     scan_cap: int = 5_000
     #: Shorter terms skip the full-text index (a wildcard that wide costs more).
@@ -117,6 +121,8 @@ class LocateConfig:
 # wildcard terms built from them never need escaping.
 _TERM_SPLIT = re.compile(r"[\W_]+", re.UNICODE)
 ACRONYM_RE = re.compile(r"\b[A-Z]{2,3}\b")
+#: More required wildcard terms than any title has; well under Lucene's 1024.
+MAX_INFIX_TERMS = 32
 
 
 def query_terms(q: str) -> list[str]:
@@ -140,6 +146,10 @@ def lucene_infix(q: str, min_term: int) -> str | None:
     predicate, which Cypher re-applies. None when a term is too short to pay."""
     terms = query_terms(q)
     if not terms or any(len(term) < min_term for term in terms):
+        return None
+    if len(terms) > MAX_INFIX_TERMS:
+        # A pasted paragraph: past Lucene's clause limit the query raises. The
+        # scan answers instead (and finds nothing, as no title is that long).
         return None
     return " ".join(f"+*{term}*" for term in terms)
 
@@ -415,6 +425,8 @@ def merged_result(
             candidates.append(
                 Candidate(node=record_to_node(config, row), confidence=confidence, method=method)
             )
+    # Exact aliases first, then contains, then meaning: one page, like every tier.
+    candidates = candidates[: config.search_limit]
     warnings = [*notes, *extra_warnings]
     if len(candidates) > 1:
         warnings.append("ambiguous")
@@ -481,6 +493,22 @@ class Locator:
         source = self.config.source
         notes: list[str] = []
         with self._session() as session:
+            # 0) a code ("15-1252.00", "2512") names one record, before any label
+            codes = self.config.codes_for(q) if self.config.codes_for else []
+            if codes:
+                rows = self.match_code(session, labels, codes)
+                if rows:
+                    return locate_result(
+                        self.config,
+                        rows,
+                        len(rows),
+                        conf.exact_pref,
+                        "exact_code",
+                        f"exact_code:{q}",
+                        notes,
+                        ambiguous=len(rows) > 1,
+                    )
+
             # 1) exact preferred label
             total, rows = self.match_exact_pref(session, labels, q)
             if rows:
@@ -539,7 +567,8 @@ class Locator:
                         self.config,
                         alt_rows,
                         rows,
-                        len(alias_ids | {row["id"] for row in meaning_rows}),
+                        # Every word-start match counts, not only the shown page.
+                        total + sum(1 for row in meaning_rows if row["id"] not in alias_ids),
                         notes,
                         f"alias_unconfirmed:{q}",
                         meaning_rows=meaning_rows,
@@ -629,6 +658,24 @@ class Locator:
         return attach_groups(result, shown, total, names, scheme.name)
 
     # -- retrieval: each returns the total as well as the capped rows ----------
+
+    def match_code(
+        self, session: Session, labels: list[str], codes: list[str]
+    ) -> list[dict[str, Any]]:
+        """Nodes whose ``code`` is one of ``codes`` (passed as a parameter)."""
+        result = session.run(
+            f"MATCH (n:{self.config.node_label}) "
+            "WHERE n.source = $source AND n.code IN $codes "
+            "AND any(x IN labels(n) WHERE x IN $labels) "
+            f"RETURN {self.q.node_map} AS node LIMIT $limit",
+            source=self.config.source,
+            codes=codes,
+            labels=labels,
+            limit=self.config.search_limit,
+        )
+        rows = [dict(record["node"]) for record in result]
+        rows.sort(key=_sort_key)
+        return rows
 
     def match_exact_pref(
         self, session: Session, labels: list[str], q: str

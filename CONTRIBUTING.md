@@ -57,6 +57,7 @@ FOO_LOCATE = LocateConfig(
     fulltext_index="foo_node_text",  # over pref_label + alt_labels
     vector_index="foo_label_embedding",  # 384-dim cosine, optional
     groups=GroupScheme(...),  # optional, see 3
+    codes_for=lambda q: [q] if CODE.fullmatch(q) else [],  # optional: codes
 )
 
 
@@ -75,6 +76,7 @@ What every suite gets from the engine, and must not reimplement:
 
 | Tier | `method` | Rule | Confidence |
 |---|---|---|---|
+| 0 | `exact_code` | a code the suite recognises (`codes_for`), e.g. "15-1252.00" | 0.95 |
 | 1 | `exact_pref` | preferred label exactly | 0.95 |
 | 2 | `exact_alt` | an alias exactly; merged into tier 4, never an early exit | 0.90 |
 | 3 | `casefold_pref` | preferred label apart from case | 0.85 unique / 0.80 several |
@@ -83,6 +85,7 @@ What every suite gets from the engine, and must not reimplement:
 
 - **One confidence scale.** Confidence says how a match was made. Never put a
   Lucene or cosine score in it. The conformance test checks the scale.
+- **An acronym alone is a whole word**: "AI" does not match "aircraft".
 - **Acronyms are double-checked.** An acronym that no title contains ("AI
   engineer", "QA tester") is not trusted on aliases alone; the meaning search
   is asked and both are offered (`alias_unconfirmed`).
@@ -114,15 +117,18 @@ conformance test sends it hostile strings. A taxonomy without groups sets
 ### 4. Fixture
 
 The committed fixture must hold at least: one occupation whose exact title you
-name in the conformance case, two or more occupations whose titles share a
-word (the broad query), and, if the suite has groups, occupations in at least
-two groups. Keep it small; it loads in CI-sized time.
+name in the conformance case, and two or more occupations whose titles share a
+word (the broad query). If the suite has groups, include a query whose title
+matches fall in **two or more groups** (`group_query`), so groups and
+narrowing are tested live; without one they are only tested offline. If the
+suite has codes, name one in `sample_code`. Keep it small; it loads in
+CI-sized time.
 
 ### 5. Register the conformance case
 
 Add one `SuiteCase` to `_cases()` in `tests/contract/test_suite_conformance.py`
 (config, class, fixture loader, exact title, broad query, a sample group
-code). Then:
+code, and where the fixture allows a `group_query` and a `sample_code`). Then:
 
 ```bash
 pytest tests/contract -q                         # offline checks, always

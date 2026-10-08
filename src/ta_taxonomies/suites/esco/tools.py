@@ -13,6 +13,7 @@ not reimplement graph access. LangGraph ``@tool`` wiring stays in TA-agents.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from neo4j import Driver, Session
@@ -67,8 +68,11 @@ from ta_taxonomies.suites.esco.config import (
     TRAVERSABLE_RELS,
 )
 
-
 # Everything ESCO's Locate needs; the tiers themselves live in suites._locate.
+_ISCO_CODE = re.compile(r"[0-9]{1,4}")
+_ESCO_CODE = re.compile(r"[0-9]{1,4}(?:\.[0-9]+)*")
+
+
 def _isco_names(session: Session, codes: list[str]) -> dict[str, dict[str, Any]]:
     return {
         record["code"]: {"id": record["id"], "label": record["label"]}
@@ -105,9 +109,11 @@ ESCO_LOCATE = LocateConfig(
         code_expr="n.isco_group",
         member_expr="n.isco_group",
         # A shorter code covers its sub-groups ("214" holds "2142").
-        prefix_for=lambda code: code if code.isdigit() else None,
+        prefix_for=lambda code: code if _ISCO_CODE.fullmatch(code) else None,
         names_for=_isco_names,
     ),
+    # ISCO group codes ("2512") and ESCO occupation codes ("2512.4").
+    codes_for=lambda q: [q] if _ESCO_CODE.fullmatch(q) else [],
     search_limit=SEARCH_LIMIT,
     scan_cap=SEARCH_SCAN_CAP,
     min_wildcard_term=MIN_WILDCARD_TERM,

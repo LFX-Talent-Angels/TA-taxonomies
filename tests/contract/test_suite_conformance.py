@@ -1,6 +1,6 @@
 """Every suite behaves the same way. A new suite is done when this file is green.
 
-Adding a suite? Add one ``SuiteCase`` to ``CASES`` below. Nothing else in this
+Adding a suite? Add one ``SuiteCase`` to ``_cases()`` below. Nothing else in this
 file changes: the same checks run against every suite.
 
 Two layers:
@@ -49,6 +49,12 @@ class SuiteCase:
     broad_query: str
     #: A well-formed group code (None when the suite has no group scheme).
     sample_group_code: str | None
+    #: A query whose title matches span two groups or more in the fixture, so
+    #: groups and narrowing are checked live. None only when the fixture
+    #: cannot hold one; then groups are checked offline only.
+    group_query: str | None = None
+    #: A code the fixture holds and the title it names (None without codes).
+    sample_code: tuple[str, str] | None = None
 
 
 def _load_esco() -> object:
@@ -76,6 +82,7 @@ def _cases() -> list[SuiteCase]:
             exact_title="software developer",
             broad_query="developer",
             sample_group_code="2512",
+            group_query="developer",
         ),
         SuiteCase(
             name="onet",
@@ -85,6 +92,9 @@ def _cases() -> list[SuiteCase]:
             exact_title="Software Developers",
             broad_query="software",
             sample_group_code="15",
+            # Every fixture title sharing a word sits in SOC 15: no live group query.
+            group_query=None,
+            sample_code=("15-1252.00", "Software Developers"),
         ),
         # Add your suite here.
     ]
@@ -93,6 +103,7 @@ def _cases() -> list[SuiteCase]:
 CASES = _cases()
 IDS = [case.name for case in CASES]
 METHODS = {
+    "exact_code",
     "exact_pref",
     "exact_alt",
     "casefold_pref",
@@ -136,7 +147,7 @@ def test_only_the_suites_own_labels_reach_cypher(case: SuiteCase) -> None:
     config = case.config
     assert config.occupation_label in config.default_labels
     assert set(config.default_labels) <= config.searchable_labels
-    for label in config.searchable_labels:
+    for label in [*config.searchable_labels, config.node_label]:
         assert re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", label), label
 
 
@@ -199,6 +210,8 @@ def loaded(request: pytest.FixtureRequest) -> Iterator[tuple[SuiteCase, Any]]:
         "NEO4J_URI": _URI or "",
         "NEO4J_USER": os.getenv("TA_CONFORMANCE_NEO4J_USER", "neo4j"),
         "NEO4J_PASSWORD": os.getenv("TA_CONFORMANCE_NEO4J_PASSWORD", ""),
+        # The loader and the searching driver must use the same database.
+        "NEO4J_DATABASE": os.getenv("TA_CONFORMANCE_NEO4J_DATABASE", "neo4j"),
     }
     saved = {key: os.environ.get(key) for key in env}
     os.environ.update(env)
@@ -212,7 +225,7 @@ def loaded(request: pytest.FixtureRequest) -> Iterator[tuple[SuiteCase, Any]]:
                 os.environ[key] = value
     driver = GraphDatabase.driver(env["NEO4J_URI"], auth=(env["NEO4J_USER"], env["NEO4J_PASSWORD"]))
     try:
-        yield case, case.suite_class(driver)
+        yield case, case.suite_class(driver, database=env["NEO4J_DATABASE"])
     finally:
         driver.close()
 
@@ -220,6 +233,7 @@ def loaded(request: pytest.FixtureRequest) -> Iterator[tuple[SuiteCase, Any]]:
 def _check_candidates(case: SuiteCase, result: ToolResult) -> None:
     conf = case.config.confidences
     declared = {
+        "exact_code": conf.exact_pref,
         "exact_pref": conf.exact_pref,
         "exact_alt": conf.exact_alt,
         "casefold_pref": conf.casefold_unique,
@@ -278,19 +292,30 @@ def test_a_fragment_inside_a_word_does_not_match(loaded: tuple[SuiteCase, Any]) 
 @live
 def test_groups_are_reported_and_narrow(loaded: tuple[SuiteCase, Any]) -> None:
     case, suite = loaded
-    if case.config.groups is None:
-        pytest.skip("suite has no group scheme")
-    result = suite.search_nodes(case.broad_query, kind="occupation")
-    for group in result.meta.get("groups", []):
+    if case.config.groups is None or case.group_query is None:
+        pytest.skip("no group query for this fixture; groups are checked offline")
+    result = suite.search_nodes(case.group_query, kind="occupation")
+    groups = result.meta.get("groups")
+    assert groups, "a group query must report meta.groups"
+    for group in groups:
         assert set(group) == {"id", "code", "label", "count"}
         assert group["count"] >= 1
-    counts = [group["count"] for group in result.meta.get("groups", [])]
+    counts = [group["count"] for group in groups]
     assert counts == sorted(counts, reverse=True)
-    if result.meta.get("groups"):
-        code = result.meta["groups"][0]["code"]
-        narrowed = suite.search_group(case.broad_query, code)
-        _check_candidates(case, narrowed)
-        assert narrowed.candidates
+    narrowed = suite.search_group(case.group_query, groups[0]["code"])
+    _check_candidates(case, narrowed)
+    assert narrowed.candidates
+
+
+@live
+def test_a_code_names_its_record(loaded: tuple[SuiteCase, Any]) -> None:
+    case, suite = loaded
+    if case.sample_code is None:
+        pytest.skip("no code in this fixture")
+    code, title = case.sample_code
+    result = suite.search_nodes(code)
+    _check_candidates(case, result)
+    assert [(c.method, c.node.label) for c in result.candidates] == [("exact_code", title)]
 
 
 @live
