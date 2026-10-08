@@ -419,3 +419,12 @@ def test_one_word_left_after_a_dropped_acronym_is_no_keyword_query() -> None:
     assert keyword_query("a manager") == "manag*"
     assert keyword_query("is it a manager") == "manag*"
     assert keyword_query("plumber") == "plumb*"
+
+
+@pytest.mark.parametrize("query", ["ai engineer", "qa tester", "Ux designer"])
+def test_a_lowercase_acronym_also_gets_a_second_opinion(query: str) -> None:
+    from ta_taxonomies.suites._locate import alias_needs_second_opinion
+
+    alias_only = [{"id": "x", "pref_label": "animal artificial insemination technician"}]
+    assert alias_needs_second_opinion(query, alias_only)
+    assert not alias_needs_second_opinion("chief of staff", [{"id": "y", "pref_label": "z"}])

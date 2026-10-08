@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import functools
 import re
+import threading
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -121,6 +122,18 @@ class LocateConfig:
 # wildcard terms built from them never need escaping.
 _TERM_SPLIT = re.compile(r"[\W_]+", re.UNICODE)
 ACRONYM_RE = re.compile(r"\b[A-Z]{2,3}\b")
+#: Two- or three-letter words that are not acronyms.
+_SMALL_WORDS = frozenset("a an and at by for in of on or the to".split())
+
+
+def _short_word(q: str) -> bool:
+    """A word that may be an acronym, in any case: "AI engineer", "qa tester"."""
+    return any(
+        len(word) in (2, 3) and word.isalpha() and word.casefold() not in _SMALL_WORDS
+        for word in re.split(r"[\W_]+", q)
+    )
+
+
 #: More required wildcard terms than any title has; well under Lucene's 1024.
 MAX_INFIX_TERMS = 32
 
@@ -166,6 +179,9 @@ def embedding_available() -> bool:
         return False
 
 
+_MODEL_LOCK = threading.Lock()
+
+
 @functools.lru_cache(maxsize=1)
 def embedding_model() -> Any:
     """One model per process, shared by every suite (it is ~400 MB in memory)."""
@@ -178,7 +194,11 @@ def embed_query(text: str) -> list[float] | None:
     """A unit-norm embedding for ``text``, or None without the local model."""
     if not embedding_available():
         return None
-    vec = embedding_model().encode([text], normalize_embeddings=True)
+    # Load and encode under one lock: the model is shared by every suite, and
+    # two threads encoding at once crashed the process (segfault in
+    # transformers). An encode takes milliseconds.
+    with _MODEL_LOCK:
+        vec = embedding_model().encode([text], normalize_embeddings=True)
     return vec[0].tolist()
 
 
@@ -206,7 +226,7 @@ def alias_needs_second_opinion(q: str, *row_sets: list[dict[str, Any]]) -> bool:
     manager" is a correct alias of "human resources manager". Only the meaning
     search can tell them apart.
     """
-    if not ACRONYM_RE.search(q):
+    if not _short_word(q):
         return False
     needle = q.casefold()
     return not any(
