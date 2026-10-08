@@ -52,8 +52,13 @@ def suite_id_scale(scale_id: str) -> str:
 
 
 def software_slug(name: str) -> str:
-    """Stable id fragment for a Workplace Example that has no O*NET code."""
+    """Stable id fragment for a Workplace Example that has no O*NET code.
+
+    ``#`` and ``+`` are kept as words so ``C`` and ``C#`` (or ``C++``) do not
+    collapse to the same id.
+    """
     text = _require_token(name, what="software name").lower()
+    text = text.replace("#", "-sharp").replace("+", "-plus")
     slug = _SLUG_SPLIT.sub("-", text).strip("-")
     if not slug:
         raise OnetIdError(f"software name {name!r} slugs to empty")
