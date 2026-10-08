@@ -13,6 +13,7 @@ not reimplement graph access. LangGraph ``@tool`` wiring stays in TA-agents.
 
 from __future__ import annotations
 
+import functools
 import re
 from typing import Any
 
@@ -168,6 +169,13 @@ def _exact_pref_cypher(labels: list[str]) -> str:
 
 _VECTOR_INDEX = "esco_label_embedding"
 _VECTOR_K = 25
+#: Neo4j's cosine score is (1 + cos) / 2. Without a floor the ANN always returns
+#: its K nearest labels, so a nonsense query ("xyzzy") came back as a dozen
+#: occupations tagged hybrid_rrf. Measured with all-MiniLM-L6-v2 over the full
+#: graphs (2026-09-30): gibberish queries top out at 0.732 (ESCO) / 0.703
+#: (O*NET); natural-language job descriptions start at 0.739 / 0.742. Thin on
+#: ESCO — a better-embedded label text is the real fix — but it removes noise.
+_VECTOR_MIN_SCORE = 0.74
 
 
 def _embedding_available() -> bool:
@@ -179,14 +187,19 @@ def _embedding_available() -> bool:
         return False
 
 
+@functools.lru_cache(maxsize=1)
+def _embedding_model() -> Any:
+    """Load the model once per process (it was reloaded on every search)."""
+    from sentence_transformers import SentenceTransformer
+
+    return SentenceTransformer("all-MiniLM-L6-v2")
+
+
 def _embed_query(text: str) -> list[float] | None:
     """Return a unit-norm embedding for ``text``, or None if unavailable."""
     if not _embedding_available():
         return None
-    from sentence_transformers import SentenceTransformer
-
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    vec = model.encode([text], normalize_embeddings=True)
+    vec = _embedding_model().encode([text], normalize_embeddings=True)
     return vec[0].tolist()
 
 
@@ -649,13 +662,15 @@ class EscoSuite:
                 f"""
                 CALL db.index.vector.queryNodes($index, $k, $embedding)
                 YIELD node AS n, score
-                WHERE n.source = $source
+                WHERE score >= $min_score
+                  AND n.source = $source
                   AND any(x IN labels(n) WHERE x IN $labels)
                 RETURN {_NODE_MAP} AS node
                 LIMIT $limit
                 """,
                 index=_VECTOR_INDEX,
                 k=_VECTOR_K,
+                min_score=_VECTOR_MIN_SCORE,
                 embedding=embedding,
                 source=SOURCE,
                 labels=labels,
