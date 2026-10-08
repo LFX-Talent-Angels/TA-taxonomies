@@ -212,6 +212,61 @@ def _locate_result(
     )
 
 
+def _locate_merged_result(
+    alt_rows: list[dict[str, Any]],
+    contains_rows: list[dict[str, Any]],
+    total: int,
+    notes: list[str],
+    evidence_suffix: str,
+) -> ToolResult:
+    """Build a Locate result where each row keeps the tier that matched it.
+
+    Exact alt_label hits (row in ``alt_rows``) keep ``exact_alt`` 0.90;
+    pref_label substring hits (row in ``contains_rows`` only) stay
+    ``contains`` 0.70. Rows are deduped by id (alt wins). This keeps the
+    confidence scale honest when the two sets are merged: an alias that is
+    exactly the query is never demoted to a guess.
+    """
+    alt_by_id = {row["id"]: row for row in alt_rows}
+    merged_rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in alt_rows:
+        merged_rows.append(row)
+        seen.add(row["id"])
+    for row in contains_rows:
+        if row["id"] not in seen:
+            merged_rows.append(row)
+            seen.add(row["id"])
+    candidates = [
+        Candidate(
+            node=_record_to_node(row),
+            confidence=CONF_EXACT_ALT if row["id"] in alt_by_id else CONF_CONTAINS,
+            method="exact_alt" if row["id"] in alt_by_id else "contains",
+        )
+        for row in merged_rows
+    ]
+    warnings = list(notes)
+    if len(merged_rows) > 1:
+        warnings.append("ambiguous")
+    pruned = max(0, total - len(merged_rows))
+    if pruned:
+        warnings.append("truncated")
+    if total >= SEARCH_SCAN_CAP:
+        warnings.append("match_count_capped")
+    return ToolResult(
+        candidates=candidates,
+        nodes=[candidate.node for candidate in candidates],
+        pruning=PruningStats(
+            considered=max(1, len(candidates) + pruned),
+            returned=len(candidates),
+            pruned=pruned,
+        ),
+        warnings=warnings,
+        evidence=[f"esco:search:{evidence_suffix}"],
+        meta={"limit": SEARCH_LIMIT, "matches": total},
+    )
+
+
 def _record_to_node(rec: dict[str, Any]) -> Node:
     labels = list(rec.get("labels") or [])
     kind = rec.get("kind") or (labels[0] if labels else "Node")
@@ -332,10 +387,6 @@ class EscoSuite:
             alt_total, alt_rows, cf_total, cf_rows = self._match_exact_alias_or_casefold(
                 session, labels, q, notes
             )
-            if alt_rows:
-                return _locate_result(
-                    alt_rows, alt_total, CONF_EXACT_ALT, "exact_alt", f"exact_alt:{q}", notes
-                )
             if cf_total == 1:
                 return _locate_result(
                     cf_rows,
@@ -356,21 +407,41 @@ class EscoSuite:
                     ambiguous=True,
                 )
 
-            # 4) substring on pref_label or alt_labels (case-insensitive)
+            # 4) substring on pref_label or alt_labels (case-insensitive).
+            # Also merge any exact alt_label hits from Tier 2 so that a query
+            # like "nurse" does not exit early on nanny/midwife (which have
+            # "nurse" as a historical alt_label) before "registered nurse"
+            # (whose pref_label contains the word) is ever considered.
+            # group_and_sort_locate in TA-agents re-ranks the merged set and
+            # promotes pref_label token matches above alt_label exact matches.
+            # Each row keeps the tier that matched it (merging never demotes an
+            # exact alias to a guess).
             total, rows = self._match_contains(session, labels, q, notes)
-            if not rows:
-                return ToolResult(
-                    warnings=["not_found", *notes],
-                    evidence=[f"esco:search:not_found:{q}"],
+            if alt_rows:
+                total = len(alt_rows) + sum(
+                    1 for row in rows if row["id"] not in {a["id"] for a in alt_rows}
                 )
-            return _locate_result(
-                rows,
-                total,
-                CONF_CONTAINS,
-                "contains",
-                f"contains:{q}",
-                notes,
-                ambiguous=total > 1,
+            if alt_rows or rows:
+                if alt_rows:
+                    return _locate_merged_result(
+                        alt_rows,
+                        rows,
+                        total,
+                        notes,
+                        f"contains:{q}",
+                    )
+                return _locate_result(
+                    rows,
+                    total,
+                    CONF_CONTAINS,
+                    "contains",
+                    f"contains:{q}",
+                    notes,
+                    ambiguous=total > 1,
+                )
+            return ToolResult(
+                warnings=["not_found", *notes],
+                evidence=[f"esco:search:not_found:{q}"],
             )
 
     # -- Locate retrieval ---------------------------------------------------
