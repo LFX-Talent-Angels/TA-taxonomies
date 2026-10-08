@@ -10,7 +10,9 @@ Import-only — works the same for Docker and Aura backends.
 
 from __future__ import annotations
 
-SOURCE = "onet"
+from typing import Final
+
+SOURCE: Final = "onet"
 
 LABEL_ONET_NODE = "OnetNode"
 LABEL_OCCUPATION = "Occupation"
@@ -84,6 +86,44 @@ KIND_ALIASES: dict[str, str] = {
     "jobzone": LABEL_JOB_ZONE,
     "job_zone": LABEL_JOB_ZONE,
     "interest": LABEL_INTEREST,
+}
+
+#: Kinds that search more than one label. O*NET's Skill nodes are its 35-odd
+#: basic and cross-functional skills plus their framework headings, so a skill
+#: question such as "bookkeeping" or "wiring" found nothing; the work itself is
+#: described by knowledge areas, work activities and tasks.
+KIND_EXPANSIONS: dict[str, tuple[str, ...]] = {
+    "skill": (LABEL_SKILL, LABEL_KNOWLEDGE, LABEL_WORK_ACTIVITY, LABEL_TASK),
+    "skills": (LABEL_SKILL, LABEL_KNOWLEDGE, LABEL_WORK_ACTIVITY, LABEL_TASK),
+}
+
+#: SOC 2018 major groups, keyed by the first two digits of an O*NET-SOC code.
+#: The graph has no group nodes, so these names label the group counts of a
+#: broad occupation search (public US federal classification).
+SOC_MAJOR_GROUPS: dict[str, str] = {
+    "11": "Management",
+    "13": "Business and Financial Operations",
+    "15": "Computer and Mathematical",
+    "17": "Architecture and Engineering",
+    "19": "Life, Physical, and Social Science",
+    "21": "Community and Social Service",
+    "23": "Legal",
+    "25": "Educational Instruction and Library",
+    "27": "Arts, Design, Entertainment, Sports, and Media",
+    "29": "Healthcare Practitioners and Technical",
+    "31": "Healthcare Support",
+    "33": "Protective Service",
+    "35": "Food Preparation and Serving Related",
+    "37": "Building and Grounds Cleaning and Maintenance",
+    "39": "Personal Care and Service",
+    "41": "Sales and Related",
+    "43": "Office and Administrative Support",
+    "45": "Farming, Fishing, and Forestry",
+    "47": "Construction and Extraction",
+    "49": "Installation, Maintenance, and Repair",
+    "51": "Production",
+    "53": "Transportation and Material Moving",
+    "55": "Military Specific",
 }
 
 # Locate confidence policy (declared; not source data). Same scale as ESCO so

@@ -12,15 +12,12 @@ policy ``onet-importance-v1`` (mean of ``HAS_SKILL.importance`` on a path).
 
 from __future__ import annotations
 
-import functools
 import re
 from typing import Any
 
 from neo4j import Driver, Session
-from neo4j.exceptions import ClientError
 
 from ta_taxonomies.contract.models import (
-    Candidate,
     Edge,
     Node,
     Path,
@@ -30,6 +27,19 @@ from ta_taxonomies.contract.models import (
     ToolResult,
 )
 from ta_taxonomies.contract.schema import SuiteSchema
+from ta_taxonomies.suites._locate import (
+    Confidences,
+    GroupScheme,
+    LocateConfig,
+    Locator,
+    embed_query,
+    locate_result,
+    lucene_infix,
+    lucene_phrase,
+    queries_for,
+    query_terms,
+    record_to_node,
+)
 from ta_taxonomies.suites.onet.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
@@ -39,6 +49,7 @@ from ta_taxonomies.suites.onet.config import (
     CONF_HYBRID,
     FULLTEXT_INDEX,
     KIND_ALIASES,
+    KIND_EXPANSIONS,
     LABEL_ABILITY,
     LABEL_INTEREST,
     LABEL_KNOWLEDGE,
@@ -55,184 +66,103 @@ from ta_taxonomies.suites.onet.config import (
     MIN_WILDCARD_TERM,
     SEARCH_LIMIT,
     SEARCH_SCAN_CAP,
+    SOC_MAJOR_GROUPS,
     SOURCE,
     TRAVERSABLE_RELS,
 )
 
-_SEARCHABLE_LABELS: frozenset[str] = frozenset(KIND_ALIASES.values())
-_DEFAULT_SEARCH_LABELS = (
-    LABEL_OCCUPATION,
-    LABEL_SKILL,
-    LABEL_TASK,
-    LABEL_SOFTWARE,
-    LABEL_KNOWLEDGE,
-    LABEL_ABILITY,
-    LABEL_WORK_ACTIVITY,
-    LABEL_INTEREST,
-)
-
 IMPORTANCE_POLICY = PolicyRef(name="onet-importance-v1", version="1")
 
-_NODE_MAP = """{
-                id: n.id, pref_label: n.pref_label, source: n.source,
-                source_id: n.source_id, kind: n.kind,
-                code: n.code, description: n.description,
-                alt_labels: n.alt_labels, labels: labels(n)
-            }"""
 
-_FULLTEXT_HEAD = "CALL db.index.fulltext.queryNodes($index, $lucene) YIELD node AS n"
-_SCAN_HEAD = f"MATCH (n:{LABEL_ONET_NODE})"
+# Everything O*NET's Locate needs; the tiers themselves live in suites._locate.
+_SOC_CODE = re.compile(r"[0-9]{2}-[0-9]{4}(?:\.[0-9]{2})?")
 
-_ALIAS_OR_CASEFOLD_BODY = f"""
-WHERE n.source = $source
-  AND any(x IN labels(n) WHERE x IN $labels)
-  AND ($q IN coalesce(n.alt_labels, []) OR toLower(n.pref_label) = toLower($q))
-WITH n, ($q IN coalesce(n.alt_labels, [])) AS is_alt
-ORDER BY size(n.pref_label), n.id
-LIMIT $scan_cap
-WITH collect({{node: {_NODE_MAP}, is_alt: is_alt}}) AS rows
-WITH [r IN rows WHERE r.is_alt | r.node] AS alt,
-     [r IN rows WHERE NOT r.is_alt | r.node] AS cf
-RETURN size(alt) AS alt_total, alt[0..$limit] AS alt_top,
-       size(cf) AS cf_total, cf[0..$limit] AS cf_top
-"""
 
-_CONTAINS_BODY = f"""
-WHERE n.source = $source
-  AND any(x IN labels(n) WHERE x IN $labels)
-  AND (
-    toLower(n.pref_label) CONTAINS toLower($q)
-    OR any(a IN coalesce(n.alt_labels, [])
-           WHERE toLower(a) CONTAINS toLower($q))
-  )
-// Titles that contain the query rank ahead of alias-only matches *before* the
-// cut, or short unrelated titles with a matching alias crowd them out
-// ("engineer" kept "chemist" and lost most "... engineer" titles).
-WITH n, CASE WHEN toLower(n.pref_label) CONTAINS toLower($q) THEN 0 ELSE 1 END AS alias_only
-ORDER BY alias_only, size(n.pref_label), n.id
-LIMIT $scan_cap
-WITH collect({_NODE_MAP}) AS rows
-RETURN size(rows) AS total, rows[0..$limit] AS top
-"""
+def _onet_codes(q: str) -> list[str]:
+    if not _SOC_CODE.fullmatch(q):
+        return []
+    return [q] if "." in q else [f"{q}.00"]
 
-_FULLTEXT_ALIAS_OR_CASEFOLD = _FULLTEXT_HEAD + _ALIAS_OR_CASEFOLD_BODY
-_SCAN_ALIAS_OR_CASEFOLD = _SCAN_HEAD + _ALIAS_OR_CASEFOLD_BODY
-_FULLTEXT_CONTAINS = _FULLTEXT_HEAD + _CONTAINS_BODY
-_SCAN_CONTAINS = _SCAN_HEAD + _CONTAINS_BODY
 
-_TERM_SPLIT = re.compile(r"[\W_]+", re.UNICODE)
+def _soc_names(_session: Session, codes: list[str]) -> dict[str, dict[str, Any]]:
+    return {code: {"label": SOC_MAJOR_GROUPS.get(code)} for code in codes}
+
+
+ONET_LOCATE = LocateConfig(
+    source=SOURCE,
+    node_label=LABEL_ONET_NODE,
+    occupation_label=LABEL_OCCUPATION,
+    default_labels=(
+        LABEL_OCCUPATION,
+        LABEL_SKILL,
+        LABEL_TASK,
+        LABEL_SOFTWARE,
+        LABEL_KNOWLEDGE,
+        LABEL_ABILITY,
+        LABEL_WORK_ACTIVITY,
+        LABEL_INTEREST,
+    ),
+    kind_aliases=KIND_ALIASES,
+    kind_expansions=KIND_EXPANSIONS,
+    fulltext_index=FULLTEXT_INDEX,
+    vector_index="onet_label_embedding",
+    confidences=Confidences(
+        exact_pref=CONF_EXACT_PREF,
+        exact_alt=CONF_EXACT_ALT,
+        casefold_unique=CONF_CASEFOLD_UNIQUE,
+        casefold_ambiguous=CONF_CASEFOLD_AMBIGUOUS,
+        contains=CONF_CONTAINS,
+        hybrid=CONF_HYBRID,
+    ),
+    # Never fall back to the graph id: onet:occupation:<code> is not a native
+    # source id, and memory writes would double the prefix (onet:onet:...).
+    source_id_fallbacks=(),
+    groups=GroupScheme(
+        name="soc-2018-major",
+        code_expr="CASE WHEN 'Occupation' IN labels(n) THEN substring(n.code, 0, 2) END",
+        member_expr="n.code",
+        prefix_for=lambda code: f"{code}-" if code in SOC_MAJOR_GROUPS else None,
+        names_for=_soc_names,
+    ),
+    # O*NET-SOC codes; "15-1252" means the base occupation "15-1252.00".
+    codes_for=_onet_codes,
+    search_limit=SEARCH_LIMIT,
+    scan_cap=SEARCH_SCAN_CAP,
+    min_wildcard_term=MIN_WILDCARD_TERM,
+)
+
+
+# Names kept for callers and tests that import them from this module.
+_SEARCHABLE_LABELS = ONET_LOCATE.searchable_labels
 
 
 def _query_terms(q: str) -> list[str]:
-    return [term for term in _TERM_SPLIT.split(q.lower()) if term]
+    return query_terms(q)
 
 
 def _lucene_phrase(q: str) -> str | None:
-    if not _query_terms(q):
-        return None
-    escaped = q.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
+    return lucene_phrase(q)
 
 
 def _lucene_infix(q: str) -> str | None:
-    terms = _query_terms(q)
-    if not terms or any(len(term) < MIN_WILDCARD_TERM for term in terms):
-        return None
-    return " ".join(f"+*{term}*" for term in terms)
+    return lucene_infix(q, ONET_LOCATE.min_wildcard_term)
 
 
 def _exact_pref_cypher(labels: list[str]) -> str:
-    arms = []
-    for label in labels:
-        if label not in _SEARCHABLE_LABELS:
-            raise ValueError(f"label is not searchable: {label!r}")
-        arms.append(
-            f"MATCH (n:{label})\n"
-            "WHERE n.source = $source AND n.pref_label = $q\n"
-            f"RETURN {_NODE_MAP} AS node\n"
-            "LIMIT $scan_cap"
-        )
-    return "\nUNION\n".join(arms)
+    return queries_for(ONET_LOCATE).exact_pref(labels)
 
 
-_VECTOR_INDEX = "onet_label_embedding"
-_VECTOR_K = 25
-#: Neo4j's cosine score is (1 + cos) / 2. Without a floor the ANN always returns
-#: its K nearest labels, so a nonsense query ("xyzzy") came back as a dozen
-#: occupations tagged hybrid_rrf. Measured with all-MiniLM-L6-v2 over the full
-#: graphs (2026-09-30): gibberish queries top out at 0.732 (ESCO) / 0.703
-#: (O*NET); natural-language job descriptions start at 0.739 / 0.742. Thin on
-#: ESCO — a better-embedded label text is the real fix — but it removes noise.
-_VECTOR_MIN_SCORE = 0.74
-
-
-def _embedding_available() -> bool:
-    try:
-        import sentence_transformers  # noqa: F401
-
-        return True
-    except ImportError:
-        return False
-
-
-@functools.lru_cache(maxsize=1)
-def _embedding_model() -> Any:
-    """Load the model once per process (it was reloaded on every search)."""
-    from sentence_transformers import SentenceTransformer
-
-    return SentenceTransformer("all-MiniLM-L6-v2")
+_SCAN_CONTAINS = queries_for(ONET_LOCATE).scan_contains
+_FULLTEXT_CONTAINS = queries_for(ONET_LOCATE).fulltext_contains
 
 
 def _embed_query(text: str) -> list[float] | None:
-    """Return a unit-norm embedding for ``text``, or None if unavailable."""
-    if not _embedding_available():
-        return None
-    vec = _embedding_model().encode([text], normalize_embeddings=True)
-    return vec[0].tolist()
-
-
-def _reciprocal_rank_fusion(
-    result_lists: list[list[dict[str, Any]]],
-    k: int = 60,
-) -> list[dict[str, Any]]:
-    """Merge ranked lists via RRF. Returns rows sorted by descending RRF score."""
-    scores: dict[str, float] = {}
-    by_id: dict[str, dict[str, Any]] = {}
-    for lst in result_lists:
-        for rank, row in enumerate(lst):
-            node_id = str(row.get("id") or "")
-            if not node_id:
-                continue
-            scores[node_id] = scores.get(node_id, 0.0) + 1.0 / (k + rank + 1)
-            if node_id not in by_id:
-                by_id[node_id] = row
-    return sorted(by_id.values(), key=lambda r: -scores[str(r.get("id") or "")])
-
-
-def _locate_sort_key(row: dict[str, Any]) -> tuple[int, str]:
-    return len(row.get("pref_label") or ""), str(row.get("id") or "")
+    """The suite's meaning-search hook; tests replace it to avoid the model."""
+    return embed_query(text)
 
 
 def _record_to_node(rec: dict[str, Any]) -> Node:
-    labels = list(rec.get("labels") or [])
-    kind = rec.get("kind") or (labels[0] if labels else "Node")
-    return Node(
-        id=rec["id"],
-        kind=str(kind),
-        label=rec.get("pref_label") or "",
-        source="onet",
-        # Never fall back to the suite-scoped graph id: onet:occupation:<code>
-        # is not a native source id, and downstream memory writes would double
-        # the suite prefix (onet:onet:occupation:...). Keep source_id empty so
-        # callers fall back to the label slug instead.
-        source_id=rec.get("source_id") or "",
-        properties={
-            k: v
-            for k, v in rec.items()
-            if k not in {"id", "pref_label", "source", "source_id", "labels", "kind"}
-            and v is not None
-        },
-    )
+    return record_to_node(ONET_LOCATE, rec)
 
 
 def _locate_result(
@@ -245,104 +175,8 @@ def _locate_result(
     *,
     ambiguous: bool = False,
 ) -> ToolResult:
-    candidates = [
-        Candidate(node=_record_to_node(row), confidence=confidence, method=method) for row in rows
-    ]
-    warnings = list(notes)
-    if ambiguous:
-        warnings.append("ambiguous")
-    pruned = max(0, total - len(candidates))
-    if pruned:
-        warnings.append("truncated")
-    if total >= SEARCH_SCAN_CAP:
-        warnings.append("match_count_capped")
-    return ToolResult(
-        candidates=candidates,
-        nodes=[candidate.node for candidate in candidates],
-        pruning=PruningStats(
-            considered=len(candidates) + pruned,
-            returned=len(candidates),
-            pruned=pruned,
-        ),
-        warnings=warnings,
-        evidence=[f"onet:search:{evidence_suffix}"],
-        meta={"limit": SEARCH_LIMIT, "matches": total},
-    )
-
-
-_ACRONYM_RE = re.compile(r"\b[A-Z]{2,3}\b")
-
-
-def _alias_needs_second_opinion(
-    q: str, alt_rows: list[dict[str, Any]], contains_rows: list[dict[str, Any]]
-) -> bool:
-    """An acronym query that matched only through aliases is not trusted alone.
-
-    ESCO lists "AI engineer" as an alias of "animal artificial insemination
-    technician"; "HR manager" is a correct alias of "human resources manager".
-    Only the meaning search can tell the two apart.
-    """
-    alt_ids = {row["id"] for row in alt_rows}
-    only_aliases = all(row["id"] in alt_ids for row in contains_rows)
-    return only_aliases and bool(_ACRONYM_RE.search(q))
-
-
-def _locate_merged_result(
-    alt_rows: list[dict[str, Any]],
-    contains_rows: list[dict[str, Any]],
-    total: int,
-    notes: list[str],
-    evidence_suffix: str,
-    *,
-    other_confidence: float = CONF_CONTAINS,
-    other_method: str = "contains",
-    extra_warnings: tuple[str, ...] = (),
-) -> ToolResult:
-    """Build a Locate result where each row keeps the tier that matched it.
-
-    Exact alt_label hits (row in ``alt_rows``) keep ``exact_alt`` 0.90;
-    pref_label substring hits (row in ``contains_rows`` only) stay
-    ``contains`` 0.70. Rows are deduped by id (alt wins). This keeps the
-    confidence scale honest when the two sets are merged: an alias that is
-    exactly the query is never demoted to a guess.
-    """
-    alt_by_id = {row["id"]: row for row in alt_rows}
-    merged_rows: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for row in alt_rows:
-        merged_rows.append(row)
-        seen.add(row["id"])
-    for row in contains_rows:
-        if row["id"] not in seen:
-            merged_rows.append(row)
-            seen.add(row["id"])
-    candidates = [
-        Candidate(
-            node=_record_to_node(row),
-            confidence=CONF_EXACT_ALT if row["id"] in alt_by_id else other_confidence,
-            method="exact_alt" if row["id"] in alt_by_id else other_method,
-        )
-        for row in merged_rows
-    ]
-    warnings = [*notes, *extra_warnings]
-    if len(merged_rows) > 1:
-        warnings.append("ambiguous")
-    pruned = max(0, total - len(merged_rows))
-    if pruned:
-        warnings.append("truncated")
-    if total >= SEARCH_SCAN_CAP:
-        warnings.append("match_count_capped")
-    return ToolResult(
-        candidates=candidates,
-        nodes=[candidate.node for candidate in candidates],
-        pruning=PruningStats(
-            considered=max(1, len(candidates) + pruned),
-            returned=len(candidates),
-            pruned=pruned,
-        ),
-        warnings=warnings,
-        evidence=[f"onet:search:{evidence_suffix}"],
-        meta={"limit": SEARCH_LIMIT, "matches": total},
+    return locate_result(
+        ONET_LOCATE, rows, total, confidence, method, evidence_suffix, notes, ambiguous=ambiguous
     )
 
 
@@ -400,265 +234,16 @@ class OnetSuite:
             group_node_kinds=frozenset(),
         )
 
+    def _locator(self) -> Locator:
+        return Locator(ONET_LOCATE, self._session, lambda q: _embed_query(q))
+
     def search_nodes(self, text: str, kind: str | None = None) -> ToolResult:
-        q = (text or "").strip()
-        if not q:
-            return ToolResult(warnings=["empty_query"])
+        """Locate: free text to O*NET nodes with confidence (see ``suites._locate``)."""
+        return self._locator().search_nodes(text, kind)
 
-        labels = list(_DEFAULT_SEARCH_LABELS)
-        if kind:
-            normalized_kind = kind.lower().replace(" ", "_")
-            mapped = KIND_ALIASES.get(normalized_kind)
-            if mapped is None:
-                return ToolResult(warnings=[f"unknown_kind:{kind}"])
-            labels = [mapped]
-
-        notes: list[str] = []
-        with self._session() as session:
-            total, rows = self._match_exact_pref(session, labels, q)
-            if rows:
-                return _locate_result(
-                    rows, total, CONF_EXACT_PREF, "exact_pref", f"exact_pref:{q}", notes
-                )
-
-            alt_total, alt_rows, cf_total, cf_rows = self._match_exact_alias_or_casefold(
-                session, labels, q, notes
-            )
-            if cf_total == 1:
-                return _locate_result(
-                    cf_rows,
-                    cf_total,
-                    CONF_CASEFOLD_UNIQUE,
-                    "casefold_pref",
-                    f"casefold_pref:{q}",
-                    notes,
-                )
-            if cf_rows:
-                return _locate_result(
-                    cf_rows,
-                    cf_total,
-                    CONF_CASEFOLD_AMBIGUOUS,
-                    "casefold_pref_ambiguous",
-                    f"casefold_pref:{q}",
-                    notes,
-                    ambiguous=True,
-                )
-
-            # Merge exact alt_label hits with pref_label substring matches so
-            # that a query whose answer lives in pref_label (e.g. "registered
-            # nurse") is not blocked by an unrelated node that has the query
-            # term as a historical alt_label (e.g. "nanny" → alt: "nurse").
-            # Each row keeps the tier that matched it (merging never demotes an
-            # exact alias to a guess).
-            total, rows = self._match_contains(session, labels, q, notes)
-            if alt_rows:
-                total = len(alt_rows) + sum(
-                    1 for row in rows if row["id"] not in {a["id"] for a in alt_rows}
-                )
-            if alt_rows and _alias_needs_second_opinion(q, alt_rows, rows):
-                query_vector = _embed_query(q)
-                meaning_rows = (
-                    self._match_vector(session, labels, query_vector, notes)
-                    if query_vector is not None
-                    else []
-                )
-                if meaning_rows and meaning_rows[0]["id"] not in {a["id"] for a in alt_rows}:
-                    # The meaning search disagrees with the alias: offer both.
-                    return _locate_merged_result(
-                        alt_rows,
-                        meaning_rows,
-                        len({row["id"] for row in [*alt_rows, *meaning_rows]}),
-                        notes,
-                        f"alias_unconfirmed:{q}",
-                        other_confidence=CONF_HYBRID,
-                        other_method="hybrid_rrf",
-                        extra_warnings=("alias_unconfirmed",),
-                    )
-            if alt_rows or rows:
-                if alt_rows:
-                    return _locate_merged_result(
-                        alt_rows,
-                        rows,
-                        total,
-                        notes,
-                        f"contains:{q}",
-                    )
-                return _locate_result(
-                    rows,
-                    total,
-                    CONF_CONTAINS,
-                    "contains",
-                    f"contains:{q}",
-                    notes,
-                    ambiguous=total > 1,
-                )
-
-            # 5) Hybrid BM25 + vector (semantic fallback for natural-language
-            # queries with no keyword overlap in any label). Only reached when
-            # Tiers 1–4 all returned nothing.
-            embedding = _embed_query(q)
-            bm25_rows: list[dict[str, Any]] = rows  # empty at this point
-            vector_rows: list[dict[str, Any]] = []
-            if embedding is not None:
-                vector_rows = self._match_vector(session, labels, embedding, notes)
-            hybrid_rows = _reciprocal_rank_fusion([bm25_rows, vector_rows])
-            if not hybrid_rows:
-                return ToolResult(
-                    warnings=["not_found", *notes],
-                    evidence=[f"onet:search:not_found:{q}"],
-                )
-            return _locate_result(
-                hybrid_rows[:SEARCH_LIMIT],
-                len(hybrid_rows),
-                CONF_HYBRID,
-                "hybrid_rrf",
-                f"hybrid:{q}",
-                notes,
-                ambiguous=len(hybrid_rows) > 1,
-            )
-
-    @staticmethod
-    def _match_exact_pref(
-        session: Session,
-        labels: list[str],
-        q: str,
-    ) -> tuple[int, list[dict[str, Any]]]:
-        result = session.run(
-            _exact_pref_cypher(labels),
-            q=q,
-            source=SOURCE,
-            scan_cap=SEARCH_SCAN_CAP,
-        )
-        rows = [dict(record["node"]) for record in result]
-        rows.sort(key=_locate_sort_key)
-        return len(rows), rows[:SEARCH_LIMIT]
-
-    def _match_exact_alias_or_casefold(
-        self,
-        session: Session,
-        labels: list[str],
-        q: str,
-        notes: list[str],
-    ) -> tuple[int, list[dict[str, Any]], int, list[dict[str, Any]]]:
-        phrase = _lucene_phrase(q)
-        record = None
-        if phrase is not None:
-            record = self._run_fulltext(
-                session,
-                _FULLTEXT_ALIAS_OR_CASEFOLD,
-                notes,
-                lucene=phrase,
-                q=q,
-                labels=labels,
-                source=SOURCE,
-                index=FULLTEXT_INDEX,
-                limit=SEARCH_LIMIT,
-                scan_cap=SEARCH_SCAN_CAP,
-            )
-        if record is None:
-            record = session.run(
-                _SCAN_ALIAS_OR_CASEFOLD,
-                q=q,
-                labels=labels,
-                source=SOURCE,
-                limit=SEARCH_LIMIT,
-                scan_cap=SEARCH_SCAN_CAP,
-            ).single()
-        if record is None:
-            return 0, [], 0, []
-        return (
-            int(record["alt_total"]),
-            [dict(row) for row in record["alt_top"]],
-            int(record["cf_total"]),
-            [dict(row) for row in record["cf_top"]],
-        )
-
-    def _match_contains(
-        self,
-        session: Session,
-        labels: list[str],
-        q: str,
-        notes: list[str],
-    ) -> tuple[int, list[dict[str, Any]]]:
-        lucene = _lucene_infix(q)
-        record = None
-        if lucene is not None:
-            record = self._run_fulltext(
-                session,
-                _FULLTEXT_CONTAINS,
-                notes,
-                lucene=lucene,
-                q=q,
-                labels=labels,
-                source=SOURCE,
-                index=FULLTEXT_INDEX,
-                limit=SEARCH_LIMIT,
-                scan_cap=SEARCH_SCAN_CAP,
-            )
-        if record is None:
-            record = session.run(
-                _SCAN_CONTAINS,
-                q=q,
-                labels=labels,
-                source=SOURCE,
-                limit=SEARCH_LIMIT,
-                scan_cap=SEARCH_SCAN_CAP,
-            ).single()
-        if record is None:
-            return 0, []
-        return int(record["total"]), [dict(row) for row in record["top"]]
-
-    def _match_vector(
-        self,
-        session: Session,
-        labels: list[str],
-        embedding: list[float],
-        notes: list[str],
-    ) -> list[dict[str, Any]]:
-        """Vector ANN search — returns top-K nodes by cosine similarity."""
-        try:
-            result = session.run(
-                f"""
-                CALL db.index.vector.queryNodes($index, $k, $embedding)
-                YIELD node AS n, score
-                WHERE score >= $min_score
-                  AND n.source = $source
-                  AND any(x IN labels(n) WHERE x IN $labels)
-                RETURN {_NODE_MAP} AS node
-                LIMIT $limit
-                """,
-                index=_VECTOR_INDEX,
-                k=_VECTOR_K,
-                min_score=_VECTOR_MIN_SCORE,
-                embedding=embedding,
-                source=SOURCE,
-                labels=labels,
-                limit=SEARCH_LIMIT,
-            )
-            return [dict(record["node"]) for record in result]
-        except Exception as exc:
-            msg = str(exc).lower()
-            if "no such index" in msg or "vector index" in msg or "no index" in msg:
-                if "vector_index_missing" not in notes:
-                    notes.append("vector_index_missing")
-                return []
-            raise
-
-    @staticmethod
-    def _run_fulltext(
-        session: Session,
-        cypher: str,
-        notes: list[str],
-        **params: Any,
-    ) -> Any:
-        try:
-            return session.run(cypher, **params).single()
-        except ClientError as exc:
-            if "no such fulltext" not in str(exc).lower():
-                raise
-            if "fulltext_index_missing" not in notes:
-                notes.append("fulltext_index_missing")
-            return None
+    def search_group(self, text: str, group: str) -> ToolResult:
+        """Occupations matching ``text`` inside one SOC major group from ``meta.groups``."""
+        return self._locator().search_group(text, group)
 
     def get_neighbors(
         self,

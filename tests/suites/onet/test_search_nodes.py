@@ -106,5 +106,7 @@ def test_neighbors_software_filter(suite: OnetSuite) -> None:
     )
     assert result.edges
     assert all(edge.type == "USES_SOFTWARE" for edge in result.edges)
-    labels = {node.label for node in result.nodes}
-    assert "Python" in labels or any("python" in lab.lower() for lab in labels)
+    # Every neighbour is a tool. (Not "Python is listed": the fixture keeps
+    # only the first ten tools per occupation, alphabetically.)
+    targets = {edge.to_id for edge in result.edges}
+    assert {node.kind for node in result.nodes if node.id in targets} == {"Software"}

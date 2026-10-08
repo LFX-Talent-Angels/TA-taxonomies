@@ -99,7 +99,9 @@ def test_rerun_fills_only_the_gaps(module: Any) -> None:
 
 
 def test_query_model_is_loaded_once_per_process(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Tier-5 search built a new SentenceTransformer on every query."""
+    """Tier-5 search built a new SentenceTransformer on every query; now one
+    model serves every suite (it is ~400 MB in memory)."""
+    from ta_taxonomies.suites import _locate
     from ta_taxonomies.suites.esco import tools as esco_tools
     from ta_taxonomies.suites.onet import tools as onet_tools
 
@@ -110,21 +112,20 @@ def test_query_model_is_loaded_once_per_process(monkeypatch: pytest.MonkeyPatch)
             built.append(name)
 
     monkeypatch.setattr(sys.modules["sentence_transformers"], "SentenceTransformer", Counting)
+    _locate.embedding_model.cache_clear()
     for module in (esco_tools, onet_tools):
-        module._embedding_model.cache_clear()
         module._embed_query("a")
         module._embed_query("b")
-        module._embedding_model.cache_clear()
-    assert len(built) == 2
+    _locate.embedding_model.cache_clear()
+    assert len(built) == 1
 
 
 @pytest.mark.parametrize("module_name", ["esco", "onet"])
 def test_vector_search_has_a_relevance_floor(module_name: str) -> None:
-    import inspect
+    from ta_taxonomies.suites._locate import queries_for
+    from ta_taxonomies.suites.esco.tools import ESCO_LOCATE
+    from ta_taxonomies.suites.onet.tools import ONET_LOCATE
 
-    from ta_taxonomies.suites.esco import tools as esco_tools
-    from ta_taxonomies.suites.onet import tools as onet_tools
-
-    module = {"esco": esco_tools, "onet": onet_tools}[module_name]
-    assert 0.7 < module._VECTOR_MIN_SCORE < 0.8
-    assert "score >= $min_score" in inspect.getsource(module)
+    config = {"esco": ESCO_LOCATE, "onet": ONET_LOCATE}[module_name]
+    assert 0.7 < config.vector_min_score < 0.8
+    assert "score >= $min_score" in queries_for(config).vector
