@@ -113,7 +113,29 @@ thousands of rating edges, especially Work Context) sit in one process.
 ESCO in the same database is untouched (suite-scoped wipe). Spot-check after load:
 `Software Developers` (`onet:occupation:15-1252.00`) should still have job-title aliases such as `Software Engineer`, and `HAS_SKILL` to Programming (`2.B.3.e`) with importance 4.0.
 
-## Locate indexes (schema, before tools)
+## Tools (`OnetSuite`)
+
+```python
+from ta_taxonomies.suites.onet.db import neo4j_driver
+from ta_taxonomies.suites.onet import OnetSuite
+
+with neo4j_driver() as (driver, database):
+    suite = OnetSuite(driver, database=database)
+    suite.search_nodes("Software Engineer", kind="occupation")
+    suite.get_neighbors("onet:occupation:15-1252.00", rel_types=["HAS_SKILL"])
+```
+
+Locate tiers match ESCO (exact preferred → exact alias → casefold → contains),
+capped at 25 with `truncated` when needed. Confidence is the match method, not
+a Lucene score. `score_paths` accepts only policy `onet-importance-v1` /
+version `1` (mean of `HAS_SKILL.importance`); any other policy returns
+`unknown_policy`.
+
+Live tool tests never wipe: `tests/suites/onet/test_search_nodes.py`.
+`test_load_validate.py` **does** wipe O*NET down to the fixture — do not run
+it against this demo graph.
+
+## Locate indexes
 
 `apply_schema` creates `onet_node_id` unique, range indexes on O*NET-owned
 labels, and full-text `onet_node_text` on `:OnetNode` (`pref_label` +

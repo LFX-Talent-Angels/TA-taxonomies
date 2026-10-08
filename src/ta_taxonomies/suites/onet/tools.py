@@ -1,14 +1,13 @@
-"""ESCO suite tools: query the loaded graph via the shared suite contract.
+"""O*NET suite tools: query the loaded graph via the shared suite contract.
 
-Use case: after load.py has populated Neo4j, callers (tests, CLIs, later
-TA-agents) use ``EscoSuite`` for Locate/Connect/Pathfind-style operations —
-``search_nodes``, ``get_neighbors``, ``enumerate_paths``. Returns contract
-``ToolResult`` models, not raw Neo4j records.
+Use case: after load.py has populated Neo4j, callers use ``OnetSuite`` for
+Locate/Connect/Pathfind-style operations. Returns contract ``ToolResult``
+models, not raw Neo4j records.
 
-Why it exists: keep Cypher and confidence policy in a library so agents do
-not reimplement graph access. LangGraph ``@tool`` wiring stays in TA-agents.
-``score_paths`` is a deliberate stub until a named TA scoring policy exists
-(ESCO occ–skill links are essential/optional only, not numeric weights).
+Locate retrieval copies ESCO/Albedo: range index for exact preferred label,
+full-text for alias/casefold/contains, original Cypher predicate re-applied,
+Lucene scores never become confidence. ``score_paths`` implements named
+policy ``onet-importance-v1`` (mean of ``HAS_SKILL.importance`` on a path).
 """
 
 from __future__ import annotations
@@ -26,10 +25,11 @@ from ta_taxonomies.contract.models import (
     Path,
     PolicyRef,
     PruningStats,
+    ScoredPath,
     ToolResult,
 )
 from ta_taxonomies.contract.schema import SuiteSchema
-from ta_taxonomies.suites.esco.config import (
+from ta_taxonomies.suites.onet.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
     CONF_CONTAINS,
@@ -37,46 +37,49 @@ from ta_taxonomies.suites.esco.config import (
     CONF_EXACT_PREF,
     FULLTEXT_INDEX,
     KIND_ALIASES,
-    LABEL_ESCO_NODE,
-    LABEL_ISCO_GROUP,
+    LABEL_ABILITY,
+    LABEL_INTEREST,
+    LABEL_KNOWLEDGE,
     LABEL_OCCUPATION,
+    LABEL_ONET_NODE,
     LABEL_SKILL,
-    LABEL_SKILL_GROUP,
+    LABEL_SOFTWARE,
+    LABEL_TASK,
+    LABEL_WORK_ACTIVITY,
     MAX_BRANCHING,
     MAX_FRONTIER_PATHS,
     MAX_PATH_DEPTH,
     MAX_PATHS,
     MIN_WILDCARD_TERM,
-    REL_BROADER_THAN,
-    REL_CLASSIFIED_UNDER,
-    REL_HAS_SKILL,
     SEARCH_LIMIT,
     SEARCH_SCAN_CAP,
     SOURCE,
     TRAVERSABLE_RELS,
 )
 
-# Labels search_nodes may interpolate into Cypher. Interpolation is required
-# because Cypher cannot parameterise a label, and matching the concrete label
-# is the whole point — so the set is closed here rather than trusted.
-_SEARCHABLE_LABELS: frozenset[str] = frozenset(
-    {LABEL_OCCUPATION, LABEL_SKILL, LABEL_ISCO_GROUP, LABEL_SKILL_GROUP}
+_SEARCHABLE_LABELS: frozenset[str] = frozenset(KIND_ALIASES.values())
+_DEFAULT_SEARCH_LABELS = (
+    LABEL_OCCUPATION,
+    LABEL_SKILL,
+    LABEL_TASK,
+    LABEL_SOFTWARE,
+    LABEL_KNOWLEDGE,
+    LABEL_ABILITY,
+    LABEL_WORK_ACTIVITY,
+    LABEL_INTEREST,
 )
 
-# Everything Locate returns about a node, as a Cypher map, so a branch can
-# collect its full result set and hand back both the count and the top slice.
+IMPORTANCE_POLICY = PolicyRef(name="onet-importance-v1", version="1")
+
 _NODE_MAP = """{
                 id: n.id, pref_label: n.pref_label, source: n.source,
-                source_id: n.source_id, uri: n.uri, kind: n.kind,
+                source_id: n.source_id, kind: n.kind,
                 code: n.code, description: n.description,
                 alt_labels: n.alt_labels, labels: labels(n)
             }"""
 
-# Retrieval heads: the full-text index, or the label scan it replaced. The
-# predicates below are identical in both, which is what makes the fallback
-# safe — it is slower, never different.
 _FULLTEXT_HEAD = "CALL db.index.fulltext.queryNodes($index, $lucene) YIELD node AS n"
-_SCAN_HEAD = f"MATCH (n:{LABEL_ESCO_NODE})"
+_SCAN_HEAD = f"MATCH (n:{LABEL_ONET_NODE})"
 
 _ALIAS_OR_CASEFOLD_BODY = f"""
 WHERE n.source = $source
@@ -111,10 +114,6 @@ _SCAN_ALIAS_OR_CASEFOLD = _SCAN_HEAD + _ALIAS_OR_CASEFOLD_BODY
 _FULLTEXT_CONTAINS = _FULLTEXT_HEAD + _CONTAINS_BODY
 _SCAN_CONTAINS = _SCAN_HEAD + _CONTAINS_BODY
 
-# Split on anything that is not a letter or digit. Two things follow: the terms
-# line up with what the analyzer indexes, and none of them can contain a Lucene
-# metacharacter (+ - && ! ( ) [ ] ^ " ~ * ? : \\ /), so wildcard terms built
-# from them never need escaping.
 _TERM_SPLIT = re.compile(r"[\W_]+", re.UNICODE)
 
 
@@ -123,27 +122,13 @@ def _query_terms(q: str) -> list[str]:
 
 
 def _lucene_phrase(q: str) -> str | None:
-    """Quoted phrase query for the exact-match tiers, or None if unusable.
-
-    None means "nothing here the index can find" — a query of pure punctuation
-    ("+++") indexes to no terms, so the caller must scan instead of concluding
-    there is no match.
-    """
     if not _query_terms(q):
         return None
-    # Inside a phrase only the quote and the backslash keep meaning.
     escaped = q.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
 
 
 def _lucene_infix(q: str) -> str | None:
-    """Infix-wildcard query mirroring CONTAINS, or None if it would not pay.
-
-    Every term is required (``+``) and wrapped in ``*`` because CONTAINS
-    matches inside a word, not just at its start. A term below
-    ``MIN_WILDCARD_TERM`` expands over most of the term dictionary and costs
-    more than the scan, so those queries decline the index instead.
-    """
     terms = _query_terms(q)
     if not terms or any(len(term) < MIN_WILDCARD_TERM for term in terms):
         return None
@@ -151,7 +136,6 @@ def _lucene_infix(q: str) -> str | None:
 
 
 def _exact_pref_cypher(labels: list[str]) -> str:
-    """One index seek per concrete label, unioned in a single round trip."""
     arms = []
     for label in labels:
         if label not in _SEARCHABLE_LABELS:
@@ -166,8 +150,25 @@ def _exact_pref_cypher(labels: list[str]) -> str:
 
 
 def _locate_sort_key(row: dict[str, Any]) -> tuple[int, str]:
-    """Mirror the Cypher ordering (shortest label first, then id)."""
     return len(row.get("pref_label") or ""), str(row.get("id") or "")
+
+
+def _record_to_node(rec: dict[str, Any]) -> Node:
+    labels = list(rec.get("labels") or [])
+    kind = rec.get("kind") or (labels[0] if labels else "Node")
+    return Node(
+        id=rec["id"],
+        kind=str(kind),
+        label=rec.get("pref_label") or "",
+        source="onet",
+        source_id=rec.get("source_id") or rec["id"],
+        properties={
+            k: v
+            for k, v in rec.items()
+            if k not in {"id", "pref_label", "source", "source_id", "labels", "kind"}
+            and v is not None
+        },
+    )
 
 
 def _locate_result(
@@ -180,12 +181,6 @@ def _locate_result(
     *,
     ambiguous: bool = False,
 ) -> ToolResult:
-    """Build a Locate result that says how much of the match set it is showing.
-
-    ``pruning`` carries the counts; ``truncated`` is the flag an agent can
-    branch on without reading them. Before this, a query with 900 matches and
-    a query with 25 were indistinguishable in the response.
-    """
     candidates = [
         Candidate(node=_record_to_node(row), confidence=confidence, method=method) for row in rows
     ]
@@ -196,7 +191,6 @@ def _locate_result(
     if pruned:
         warnings.append("truncated")
     if total >= SEARCH_SCAN_CAP:
-        # The total itself stopped at the cap; report it as a floor, not a fact.
         warnings.append("match_count_capped")
     return ToolResult(
         candidates=candidates,
@@ -207,34 +201,8 @@ def _locate_result(
             pruned=pruned,
         ),
         warnings=warnings,
-        evidence=[f"esco:search:{evidence_suffix}"],
+        evidence=[f"onet:search:{evidence_suffix}"],
         meta={"limit": SEARCH_LIMIT, "matches": total},
-    )
-
-
-def _record_to_node(rec: dict[str, Any]) -> Node:
-    labels = list(rec.get("labels") or [])
-    kind = rec.get("kind") or (labels[0] if labels else "Node")
-    return Node(
-        id=rec["id"],
-        kind=str(kind),
-        label=rec.get("pref_label") or "",
-        source="esco",
-        source_id=rec.get("source_id") or rec.get("uri") or rec["id"],
-        properties={
-            k: v
-            for k, v in rec.items()
-            if k
-            not in {
-                "id",
-                "pref_label",
-                "source",
-                "source_id",
-                "labels",
-                "kind",
-            }
-            and v is not None
-        },
     )
 
 
@@ -243,14 +211,12 @@ def _fetch_by_ids(session: Session, ids: list[str]) -> dict[str, Node]:
         return {}
     result = session.run(
         f"""
-        MATCH (n:{LABEL_ESCO_NODE})
+        MATCH (n:{LABEL_ONET_NODE})
         WHERE n.source = $source AND n.id IN $ids
         RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-               n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
+               n.source_id AS source_id, n.kind AS kind,
                n.code AS code, n.description AS description,
-               n.alt_labels AS alt_labels, n.skill_type AS skill_type,
-               n.reuse_level AS reuse_level, n.isco_group AS isco_group,
-               labels(n) AS labels
+               n.alt_labels AS alt_labels, labels(n) AS labels
         """,
         ids=ids,
         source=SOURCE,
@@ -262,12 +228,19 @@ def _fetch_by_ids(session: Session, ids: list[str]) -> dict[str, Node]:
     return out
 
 
-class EscoSuite:
-    """ESCO implementation of the suite contract (read path against Neo4j).
+def _importance_values(path: Path) -> list[float]:
+    values: list[float] = []
+    for edge in path.edges:
+        raw = (edge.properties or {}).get("importance")
+        if isinstance(raw, bool):
+            continue
+        if isinstance(raw, (int, float)):
+            values.append(float(raw))
+    return values
 
-    Construct with a neo4j ``Driver`` from ``db.neo4j_driver`` (Docker or Aura).
-    Call after the graph has been loaded; does not ingest xlsx/fixture data.
-    """
+
+class OnetSuite:
+    """O*NET implementation of the suite contract (read path against Neo4j)."""
 
     name = SOURCE
 
@@ -281,36 +254,18 @@ class EscoSuite:
     @property
     def suite_schema(self) -> SuiteSchema:
         return SuiteSchema(
-            skill_rel_types=("HAS_SKILL",),
-            optional_rel_values=frozenset({"optional"}),
-            group_rel_type="CLASSIFIED_UNDER",
-            group_node_kinds=frozenset({"ISCOGroup", "isco group"}),
+            skill_rel_types=("HAS_SKILL", "USES_SOFTWARE"),
+            optional_rel_values=frozenset({"optional", "transferable"}),
+            group_rel_type=None,
+            group_node_kinds=frozenset(),
         )
 
     def search_nodes(self, text: str, kind: str | None = None) -> ToolResult:
-        """Locate: resolve free text to ESCO nodes with confidence.
-
-        Order: exact preferred label → exact alt label → case-insensitive
-        preferred → substring on pref/alts. Never invents hits (``not_found``).
-        ``kind`` optionally restricts labels (see ``KIND_ALIASES`` in config).
-
-        The four tiers and their confidences are unchanged; only how candidates
-        are *retrieved* changed. Tier 1 seeks the concrete-label range index;
-        tiers 2–4 retrieve through the full-text index and then re-apply the
-        original predicate, so the answer set is the same one the old scan
-        produced. Results are capped at ``SEARCH_LIMIT`` and the cap is now
-        reported (``pruning`` + ``truncated``) instead of applied silently.
-        """
         q = (text or "").strip()
         if not q:
             return ToolResult(warnings=["empty_query"])
 
-        labels = [
-            LABEL_OCCUPATION,
-            LABEL_SKILL,
-            LABEL_ISCO_GROUP,
-            LABEL_SKILL_GROUP,
-        ]
+        labels = list(_DEFAULT_SEARCH_LABELS)
         if kind:
             normalized_kind = kind.lower().replace(" ", "_")
             mapped = KIND_ALIASES.get(normalized_kind)
@@ -320,15 +275,12 @@ class EscoSuite:
 
         notes: list[str] = []
         with self._session() as session:
-            # 1) exact preferredLabel (case-sensitive) — concrete-label seek
             total, rows = self._match_exact_pref(session, labels, q)
             if rows:
                 return _locate_result(
                     rows, total, CONF_EXACT_PREF, "exact_pref", f"exact_pref:{q}", notes
                 )
 
-            # 2+3) exact alt_label, then case-insensitive preferred label.
-            # Both need the same candidate pool, so they share one round trip.
             alt_total, alt_rows, cf_total, cf_rows = self._match_exact_alias_or_casefold(
                 session, labels, q, notes
             )
@@ -356,12 +308,11 @@ class EscoSuite:
                     ambiguous=True,
                 )
 
-            # 4) substring on pref_label or alt_labels (case-insensitive)
             total, rows = self._match_contains(session, labels, q, notes)
             if not rows:
                 return ToolResult(
                     warnings=["not_found", *notes],
-                    evidence=[f"esco:search:not_found:{q}"],
+                    evidence=[f"onet:search:not_found:{q}"],
                 )
             return _locate_result(
                 rows,
@@ -373,25 +324,12 @@ class EscoSuite:
                 ambiguous=total > 1,
             )
 
-    # -- Locate retrieval ---------------------------------------------------
-    #
-    # Each helper returns (total_matches, capped_rows). The total is what makes
-    # truncation reportable; before this it was unknowable, because the query
-    # stopped at LIMIT 25 and nobody counted the rest.
-
     @staticmethod
     def _match_exact_pref(
         session: Session,
         labels: list[str],
         q: str,
     ) -> tuple[int, list[dict[str, Any]]]:
-        """Exact preferred label, one range-index seek per concrete label.
-
-        The umbrella ``:EscoNode`` + ``labels(n)`` filter this replaces could
-        not reach the per-label ``pref_label`` index and scanned every node.
-        Ordering and the cap are applied here rather than in Cypher so the
-        query stays a plain UNION, which is stable across Cypher versions.
-        """
         result = session.run(
             _exact_pref_cypher(labels),
             q=q,
@@ -409,15 +347,6 @@ class EscoSuite:
         q: str,
         notes: list[str],
     ) -> tuple[int, list[dict[str, Any]], int, list[dict[str, Any]]]:
-        """Exact alias membership and case-insensitive preferred label at once.
-
-        Retrieval is a Lucene phrase query, which is a superset of both
-        predicates: a node whose alias equals ``q`` (or whose preferred label
-        equals it apart from case) necessarily contains ``q``'s terms in that
-        order. The exact predicates are then re-applied in Cypher, so the
-        result is identical to the scan's — just over a few hundred candidates
-        instead of the whole graph.
-        """
         phrase = _lucene_phrase(q)
         record = None
         if phrase is not None:
@@ -434,8 +363,6 @@ class EscoSuite:
                 scan_cap=SEARCH_SCAN_CAP,
             )
         if record is None:
-            # No indexable terms in the query, or no full-text index on this
-            # graph. Fall back to the original scan: slower, same answer.
             record = session.run(
                 _SCAN_ALIAS_OR_CASEFOLD,
                 q=q,
@@ -460,14 +387,6 @@ class EscoSuite:
         q: str,
         notes: list[str],
     ) -> tuple[int, list[dict[str, Any]]]:
-        """Case-insensitive substring on pref_label or any alt label.
-
-        Retrieval uses infix wildcards (``+*data* +*scien*``) rather than
-        prefix ones, because CONTAINS is an infix predicate: ``"data scien"``
-        matches "metadata science", which ``+data*`` would miss. The CONTAINS
-        predicate itself is re-applied in Cypher, so this returns the same
-        nodes as the scan did.
-        """
         lucene = _lucene_infix(q)
         record = None
         if lucene is not None:
@@ -503,12 +422,6 @@ class EscoSuite:
         notes: list[str],
         **params: Any,
     ) -> Any:
-        """Run a full-text query, returning None if the index is not there.
-
-        A graph loaded before this index existed must keep working rather than
-        raise at query time; the caller falls back to the scan and the warning
-        says why the call was slow.
-        """
         try:
             return session.run(cypher, **params).single()
         except ClientError as exc:
@@ -535,22 +448,22 @@ class EscoSuite:
 
         with self._session() as session:
             result = session.run(
-                """
-                MATCH (a:EscoNode {id: $id})-[r]->(b:EscoNode)
+                f"""
+                MATCH (a:{LABEL_ONET_NODE} {{id: $id}})-[r]->(b:{LABEL_ONET_NODE})
                 WHERE a.source = $source AND b.source = $source AND type(r) IN $types
                 RETURN a.id AS from_id, b.id AS to_id, type(r) AS rel_type,
                        properties(r) AS rel_props,
                        b.pref_label AS pref_label, b.source AS source,
-                       b.source_id AS source_id, b.uri AS uri, b.kind AS kind,
+                       b.source_id AS source_id, b.kind AS kind,
                        b.code AS code, b.description AS description,
                        b.alt_labels AS alt_labels, labels(b) AS labels
                 UNION
-                MATCH (b:EscoNode)-[r]->(a:EscoNode {id: $id})
+                MATCH (b:{LABEL_ONET_NODE})-[r]->(a:{LABEL_ONET_NODE} {{id: $id}})
                 WHERE a.source = $source AND b.source = $source AND type(r) IN $types
                 RETURN b.id AS from_id, a.id AS to_id, type(r) AS rel_type,
                        properties(r) AS rel_props,
                        b.pref_label AS pref_label, b.source AS source,
-                       b.source_id AS source_id, b.uri AS uri, b.kind AS kind,
+                       b.source_id AS source_id, b.kind AS kind,
                        b.code AS code, b.description AS description,
                        b.alt_labels AS alt_labels, labels(b) AS labels
                 """,
@@ -561,9 +474,9 @@ class EscoSuite:
             rows = [dict(r) for r in result]
             rows.sort(key=lambda row: (row["rel_type"], row["from_id"], row["to_id"]))
             if not rows:
-                # check node exists
                 exists = session.run(
-                    "MATCH (n:EscoNode {id: $id}) WHERE n.source = $source RETURN n.id AS id",
+                    f"MATCH (n:{LABEL_ONET_NODE} {{id: $id}}) "
+                    "WHERE n.source = $source RETURN n.id AS id",
                     id=node_id,
                     source=SOURCE,
                 ).single()
@@ -573,13 +486,11 @@ class EscoSuite:
 
             nodes_map: dict[str, Node] = {}
             edges: list[Edge] = []
-            # include center node
             center = _fetch_by_ids(session, [node_id]).get(node_id)
             if center:
                 nodes_map[node_id] = center
 
             for r in rows:
-                # neighbor may be from_id or to_id depending on direction
                 neighbor_id = r["to_id"] if r["from_id"] == node_id else r["from_id"]
                 nodes_map[neighbor_id] = _record_to_node(
                     {
@@ -587,7 +498,6 @@ class EscoSuite:
                         "pref_label": r.get("pref_label"),
                         "source": r.get("source"),
                         "source_id": r.get("source_id"),
-                        "uri": r.get("uri"),
                         "kind": r.get("kind"),
                         "code": r.get("code"),
                         "description": r.get("description"),
@@ -607,7 +517,7 @@ class EscoSuite:
             return ToolResult(
                 nodes=list(nodes_map.values()),
                 edges=edges,
-                evidence=[f"esco:neighbors:{node_id}"],
+                evidence=[f"onet:neighbors:{node_id}"],
             )
 
     def enumerate_paths(
@@ -618,7 +528,6 @@ class EscoSuite:
         max_depth: int = 4,
         max_paths: int = 20,
     ) -> ToolResult:
-        """Return bounded, cycle-free routes with explicit pruning counts."""
         if max_depth < 1 or max_depth > MAX_PATH_DEPTH:
             return ToolResult(warnings=["invalid_max_depth"])
         if max_paths < 1 or max_paths > MAX_PATHS:
@@ -662,7 +571,7 @@ class EscoSuite:
                     "max_frontier_paths": MAX_FRONTIER_PATHS,
                 },
                 warnings=warnings,
-                evidence=[f"esco:paths:{from_id}->{to_id}"],
+                evidence=[f"onet:paths:{from_id}->{to_id}"],
             )
 
     @staticmethod
@@ -674,7 +583,6 @@ class EscoSuite:
         max_depth: int,
         max_paths: int,
     ) -> tuple[list[Path], int]:
-        """Breadth-first expansion with deterministic per-node and frontier caps."""
         frontier: list[Path] = [Path(node_ids=[from_id])]
         found: list[Path] = []
         pruned = 0
@@ -686,8 +594,8 @@ class EscoSuite:
             result = session.run(
                 f"""
                 UNWIND $frontier_ids AS current_id
-                MATCH (current:{LABEL_ESCO_NODE} {{id: current_id}})
-                      -[r]-(neighbor:{LABEL_ESCO_NODE})
+                MATCH (current:{LABEL_ONET_NODE} {{id: current_id}})
+                      -[r]-(neighbor:{LABEL_ONET_NODE})
                 WHERE current.source = $source AND neighbor.source = $source
                   AND type(r) IN $types AND neighbor.id IS NOT NULL
                 RETURN current_id, neighbor.id AS neighbor_id,
@@ -695,7 +603,9 @@ class EscoSuite:
                        startNode(r).id AS from_id, endNode(r).id AS to_id
                 ORDER BY current_id,
                          CASE coalesce(r.relation_type, '')
-                           WHEN 'essential' THEN 0 WHEN 'optional' THEN 1 ELSE 2
+                           WHEN 'essential' THEN 0
+                           WHEN 'transferable' THEN 1
+                           ELSE 2
                          END,
                          type(r), neighbor.id
                 """,
@@ -745,27 +655,36 @@ class EscoSuite:
                 next_frontier = next_frontier[:MAX_FRONTIER_PATHS]
             frontier = next_frontier
 
-        # Branches still present were cut by max_depth or because max_paths was reached.
         pruned += len(frontier)
         return found, pruned
 
     def score_paths(self, paths: list[Path], policy: PolicyRef) -> ToolResult:
+        if policy.name != IMPORTANCE_POLICY.name or policy.version != IMPORTANCE_POLICY.version:
+            return ToolResult(
+                paths=paths,
+                warnings=[f"unknown_policy:{policy.name}"],
+                meta={"policy": policy.model_dump()},
+            )
+
+        scored: list[ScoredPath] = []
+        for path in paths:
+            values = _importance_values(path)
+            score = sum(values) / len(values) if values else 0.0
+            scored.append(ScoredPath(path=path, score=score, policy=policy))
+        scored.sort(key=lambda item: (-item.score, tuple(item.path.node_ids)))
         return ToolResult(
             paths=paths,
-            warnings=[
-                "score_paths_not_implemented",
-                "ESCO edges are binary (essential/optional); scoring is a declared "
-                "policy decision, not source data. "
-                f"Requested policy={policy.name!r} version={policy.version!r}.",
-            ],
-            meta={"policy": policy.model_dump()},
+            scored_paths=scored,
+            meta={
+                "policy": policy.model_dump(),
+                "note": (
+                    "onet-importance-v1 is a declared Talent Angels policy: "
+                    "mean of HAS_SKILL.importance on edges that carry it. "
+                    "It is not an O*NET-published path score."
+                ),
+            },
+            evidence=[f"onet:score:{policy.name}:{policy.version}"],
         )
 
 
-# re-export rel constants for tests
-__all__ = [
-    "EscoSuite",
-    "REL_BROADER_THAN",
-    "REL_CLASSIFIED_UNDER",
-    "REL_HAS_SKILL",
-]
+__all__ = ["IMPORTANCE_POLICY", "OnetSuite"]

@@ -59,3 +59,6 @@ python -m ta_taxonomies.suites.onet.load --mode fixture  # CI only
 
 Same Neo4j as ESCO (`ta-neo4j`, `bolt://localhost:7687`). O*NET nodes carry
 `:OnetNode` and `source="onet"`; wipe is suite-scoped.
+
+Browser cheat-sheet: [`queries.cypher`](./queries.cypher). Load/repro:
+[`NOTES.md`](./NOTES.md).
