@@ -44,6 +44,4 @@ levels, 22 subcategories, 6 categories). If SFIA changes the page layout,
 
 ## Open items
 
-- No embedding job yet (`sfia_label_embedding` is absent); Tier 5 is
-  keyword-only.
 - Skill-to-skill crosswalks (to ESCO / O*NET skills) belong in `crosswalks/`.

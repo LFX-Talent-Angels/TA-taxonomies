@@ -43,6 +43,9 @@ python -m ta_taxonomies.suites.sfia.load --mode fixture
 python -m ta_taxonomies.suites.sfia.fetch --out data/sfia/sfia9_structure.json
 export SFIA_DATA_PATH=data/sfia/sfia9_structure.json   # the default
 python -m ta_taxonomies.suites.sfia.load --mode full
+
+# Then embed the labels for meaning-based search (needs the [embed] extra)
+python -m ta_taxonomies.suites.sfia.embed
 ```
 
 Both modes read the same JSON shape, so one `normalize_document` serves both.
@@ -88,8 +91,9 @@ case-insensitive and word-start label matches. SFIA has no aliases, so the
 alias tier never fires. Skill levels are left out of the default search (each
 shares its skill's name); ask with `kind="level"`, by level code, or walk
 `HAS_LEVEL` with `get_neighbors`. `search_group` always answers
-`unknown_group`: SFIA has no occupation groups. There is no embedding job yet,
-so the last-resort tier uses keywords only.
+`unknown_group`: SFIA has no occupation groups. The last-resort tier mixes keywords
+with meaning (`sfia_label_embedding`, built by `sfia.embed`); without that index
+it falls back to keywords with a `vector_index_missing` note.
 
 Path enumeration uses the same bounded, cycle-free BFS as ESCO (depth ≤ 6,
 ≤ 25 expansions per node, 500-path frontier, ≤ 100 paths); on SFIA's small

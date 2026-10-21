@@ -96,8 +96,8 @@ SFIA_LOCATE = LocateConfig(
     default_labels=(LABEL_SKILL, LABEL_SUBCATEGORY, LABEL_CATEGORY),
     kind_aliases=KIND_ALIASES,
     fulltext_index=FULLTEXT_INDEX,
-    # No embed job for SFIA yet: the index is absent and Tier 5 runs on
-    # keywords alone (with a "vector_index_missing" note when the model is).
+    # Built by `sfia.embed` (levels skipped). Without it, Tier 5 runs on
+    # keywords alone with a "vector_index_missing" note.
     vector_index="sfia_label_embedding",
     confidences=Confidences(
         exact_pref=CONF_EXACT_PREF,
