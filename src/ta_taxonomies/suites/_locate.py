@@ -824,7 +824,8 @@ class Locator:
             return [dict(record["node"]) for record in result]
         except Exception as exc:
             msg = str(exc).lower()
-            if "no such index" in msg or "vector index" in msg or "no index" in msg:
+            # Neo4j 5 says "There is no such vector schema index: <name>".
+            if ("no such" in msg and "index" in msg) or "vector index" in msg or "no index" in msg:
                 if "vector_index_missing" not in notes:
                     notes.append("vector_index_missing")
                 return []
