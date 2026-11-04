@@ -165,3 +165,9 @@ def test_esco_match_guards(suite: JobtechSuite) -> None:
     ]
     assert suite.search_by_esco(["x' OR 1=1"]).warnings == ["empty_query"]
     assert suite.search_by_esco([BAKER], kind="task").warnings == ["unknown_kind:task"]
+
+
+def test_an_ssyk_code_is_found_whatever_kind_is_asked(suite: JobtechSuite) -> None:
+    for text in ("7612", "SSYK 7612"):
+        result = suite.search_nodes(text, kind="occupation")
+        assert [c.node.id for c in result.candidates] == ["jobtech:ssyk:7612"], text

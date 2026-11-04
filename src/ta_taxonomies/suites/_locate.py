@@ -540,6 +540,11 @@ class Locator:
             codes = self.config.codes_for(q) if self.config.codes_for else []
             if codes:
                 rows = self.match_code(session, labels, codes)
+                if not rows:
+                    # A code names one record whatever kind was asked for: the
+                    # planner asks for an occupation, but "SSYK 7612" and
+                    # "SOC 15-1250" are groups. Never let the kind hide it.
+                    rows = self.match_code(session, sorted(self.config.searchable_labels), codes)
                 if rows:
                     return locate_result(
                         self.config,
