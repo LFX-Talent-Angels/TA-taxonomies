@@ -87,17 +87,6 @@ def training_id(name: str) -> str:
     return f"{SOURCE}:training:{slugify(name)}"
 
 
-def parent_codes(code: str) -> tuple[str, str, str]:
-    """(broad, minor, major) codes of a detailed SOC code.
-
-    ``15-1252`` → (``15-1250``, ``15-1200``, ``15-0000``). Valid for every SOC
-    2018 code: the hierarchy is in the digits, so no lookup table is needed.
-    """
-    code = soc_code(code)
-    major, tail = code[:2], code[3:]
-    return f"{major}-{tail[:3]}0", f"{major}-{tail[:2]}00", f"{major}-0000"
-
-
 def codes_in_query(text: str) -> list[str]:
     """SOC codes a search query names: ``15-1252`` or ``15-1252.00`` → ``15-1252``."""
     q = text.strip()

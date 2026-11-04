@@ -115,10 +115,49 @@ def test_structure_finds_its_header_and_levels() -> None:
     ]
     assert parse_structure(rows) == [
         {"code": "15-0000", "title": "Computer and Mathematical Occupations", "level": "major"},
-        {"code": "15-1200", "title": "Computer Occupations", "level": "minor"},
-        {"code": "15-1250", "title": "Software and Web Developers", "level": "broad"},
-        {"code": "15-1252", "title": "Software Developers", "level": "detailed"},
+        {"code": "15-1200", "title": "Computer Occupations", "level": "minor", "parent": "15-0000"},
+        {
+            "code": "15-1250",
+            "title": "Software and Web Developers",
+            "level": "broad",
+            "parent": "15-1200",
+        },
+        {
+            "code": "15-1252",
+            "title": "Software Developers",
+            "level": "detailed",
+            "parent": "15-1250",
+        },
     ]
+
+
+def test_structure_parents_come_from_the_file_order_not_the_digits() -> None:
+    # Real SOC 2018: broad group 29-1140 (Registered Nurses) is in minor group
+    # 29-1000, although its digits would suggest "29-1100".
+    rows = [
+        ("Major Group",),
+        ("29-0000", None, None, None, "Healthcare Practitioners and Technical Occupations"),
+        (None, "29-1000", None, None, "Healthcare Diagnosing or Treating Practitioners"),
+        (None, None, "29-1140", None, "Registered Nurses"),
+        (None, None, None, "29-1141", "Registered Nurses"),
+    ]
+    parents = {e["code"]: e.get("parent") for e in parse_structure(rows)}
+    assert parents == {
+        "29-0000": None,
+        "29-1000": "29-0000",
+        "29-1140": "29-1000",
+        "29-1141": "29-1140",
+    }
+
+
+def test_structure_refuses_an_orphan() -> None:
+    rows = [
+        ("Major Group",),
+        ("15-0000", None, None, None, "x"),
+        (None, None, "15-1250", None, "y"),
+    ]
+    with pytest.raises(BlsFetchError, match="no minor group"):
+        parse_structure(rows)
 
 
 def test_structure_refuses_a_changed_layout() -> None:
@@ -244,7 +283,10 @@ def test_skill_crosswalk_groups_elements_under_their_skill() -> None:
 
 
 def _structure(*detailed: str) -> list[dict[str, str]]:
-    return [{"code": c, "title": f"Title {c}", "level": "detailed"} for c in detailed]
+    return [
+        {"code": c, "title": f"Title {c}", "level": "detailed", "parent": c[:6] + "0"}
+        for c in detailed
+    ]
 
 
 def _projection(code: str) -> dict[str, object]:

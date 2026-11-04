@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from ta_taxonomies.suites.bls.config import PROJECTION_CYCLE, SOC_VERSION, WAGE_PERIOD
-from ta_taxonomies.suites.bls.ids import SOC_CODE, parent_codes, soc_level
+from ta_taxonomies.suites.bls.ids import SOC_CODE, soc_level
 
 DEFAULT_RAW_DIR = Path("data/bls/raw")
 DEFAULT_OUT = Path("data/bls/bls_document.json")
@@ -224,10 +224,13 @@ def parse_structure(rows: Iterable[Row]) -> list[dict[str, str]]:
     """SOC 2018 structure → groups and detailed occupations, in file order.
 
     Each row puts its code in the column of its level (major, minor, broad,
-    detailed) and its title in the fifth column.
+    detailed) and its title in the fifth column. ``parent`` is the group one
+    level up, taken from the file's order: the digits do not always say it
+    (broad group 29-1140 sits in minor group 29-1000, not "29-1100").
     """
     levels = ("major", "minor", "broad", "detailed")
     out: list[dict[str, str]] = []
+    current: dict[str, str] = {}
     for row in _rows_after_header(rows, "Major Group"):
         cells = [_text(c) for c in (list(row) + [None] * 5)[:5]]
         title = cells[4]
@@ -236,7 +239,16 @@ def parse_structure(rows: Iterable[Row]) -> list[dict[str, str]]:
             if code and SOC_CODE.fullmatch(code):
                 if soc_level(code) != level:
                     raise BlsFetchError(f"SOC {code} sits in the {level} column")
-                out.append({"code": code, "title": title, "level": level})
+                entry = {"code": code, "title": title, "level": level}
+                if index:
+                    parent = current.get(levels[index - 1])
+                    if parent is None or parent[:2] != code[:2]:
+                        raise BlsFetchError(f"SOC {code} has no {levels[index - 1]} group above it")
+                    entry["parent"] = parent
+                current[level] = code
+                for lower in levels[index + 1 :]:
+                    current.pop(lower, None)
+                out.append(entry)
                 break
     return out
 
@@ -369,14 +381,14 @@ COMBINED_CODES: dict[str, tuple[str, ...]] = {
 }
 
 
-def _projection_code(code: str, projections: dict[str, dict[str, Any]]) -> str:
-    """The EP code whose figures cover detailed SOC ``code``."""
+def _projection_code(code: str, broad: str, projections: dict[str, dict[str, Any]]) -> str:
+    """The EP code whose figures cover detailed SOC ``code`` (in broad group ``broad``)."""
     if code in projections:
         return code
     for combined, members in COMBINED_CODES.items():
         if code in members and combined in projections:
             return combined
-    return parent_codes(code)[0]
+    return broad
 
 
 def assemble(
@@ -408,7 +420,7 @@ def assemble(
         if entry["level"] != "detailed":
             continue
         code = entry["code"]
-        projection_code = _projection_code(code, projections)
+        projection_code = _projection_code(code, entry["parent"], projections)
         projection = projections.get(projection_code)
         if projection is not None:
             used_projection_codes.add(projection_code)
@@ -420,6 +432,7 @@ def assemble(
         occupations.append(
             {
                 "code": code,
+                "group": entry["parent"],
                 "title": entry["title"],
                 "definition": definitions.get(code, ""),
                 "alt_titles": own_titles,
