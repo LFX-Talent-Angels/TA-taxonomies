@@ -70,6 +70,11 @@ KIND_ALIASES: dict[str, str] = {
 #: ESCO match kinds JobTech publishes, strongest first, as stored property names.
 ESCO_MATCH_KINDS: tuple[str, ...] = ("exact", "close", "broad", "narrow")
 
+#: Declared confidence of a JobTech node found through one of JobTech's own
+#: ESCO matches (``search_by_esco``): lower than any word match, because the
+#: words matched an ESCO record, not this one.
+CONF_ESCO_MATCH: dict[str, float] = {"exact": 0.65, "close": 0.6, "broad": 0.55, "narrow": 0.55}
+
 CONF_EXACT_PREF = 0.95
 CONF_EXACT_ALT = 0.90
 CONF_CASEFOLD_UNIQUE = 0.85

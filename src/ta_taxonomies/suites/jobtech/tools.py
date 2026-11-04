@@ -13,7 +13,15 @@ from typing import Any
 
 from neo4j import Driver, Session
 
-from ta_taxonomies.contract.models import Edge, Node, Path, PolicyRef, PruningStats, ToolResult
+from ta_taxonomies.contract.models import (
+    Candidate,
+    Edge,
+    Node,
+    Path,
+    PolicyRef,
+    PruningStats,
+    ToolResult,
+)
 from ta_taxonomies.contract.schema import SuiteSchema
 from ta_taxonomies.suites._locate import (
     Confidences,
@@ -27,9 +35,11 @@ from ta_taxonomies.suites.jobtech.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
     CONF_CONTAINS,
+    CONF_ESCO_MATCH,
     CONF_EXACT_ALT,
     CONF_EXACT_PREF,
     CONF_HYBRID,
+    ESCO_MATCH_KINDS,
     FULLTEXT_INDEX,
     KIND_ALIASES,
     LABEL_JOBTECH_NODE,
@@ -189,6 +199,64 @@ class JobtechSuite:
     def search_group(self, text: str, group: str) -> ToolResult:
         """Occupations matching ``text`` inside one SSYK major group from ``meta.groups``."""
         return self._locator().search_group(text, group)
+
+    def search_by_esco(self, uris: list[str], kind: str = "occupation") -> ToolResult:
+        """JobTech nodes that JobTech itself matches to these ESCO URIs.
+
+        Strongest match first (exact, close, broad, narrow). This is how an
+        English question can reach a Swedish record: find the ESCO record in
+        English, then follow JobTech's published match. The candidates' method
+        names the match (``esco_exact_match``) so callers can say so.
+        """
+        label = KIND_ALIASES.get(kind.casefold().strip())
+        if label not in (LABEL_OCCUPATION, LABEL_SKILL):
+            return ToolResult(warnings=[f"unknown_kind:{kind}"])
+        uris = [u for u in dict.fromkeys(uris) if isinstance(u, str) and u.startswith("http")]
+        if not uris:
+            return ToolResult(warnings=["empty_query"])
+        with self._session() as session:
+            rows = [
+                dict(r)
+                for r in session.run(
+                    f"""
+                    MATCH (n:{label}:{LABEL_JOBTECH_NODE})
+                    WHERE n.source = $source
+                      AND any(u IN $uris WHERE u IN coalesce(n.esco_exact, [])
+                              OR u IN coalesce(n.esco_close, [])
+                              OR u IN coalesce(n.esco_broad, [])
+                              OR u IN coalesce(n.esco_narrow, []))
+                    RETURN {_fields("n")}
+                    """,
+                    uris=uris,
+                    source=SOURCE,
+                )
+            ]
+        wanted = set(uris)
+        found: list[tuple[int, str, Candidate]] = []
+        for row in rows:
+            node = _record_to_node(row)
+            for rank, match in enumerate(ESCO_MATCH_KINDS):
+                if wanted & set(row.get(f"esco_{match}") or []):
+                    candidate = Candidate(
+                        node=node,
+                        confidence=CONF_ESCO_MATCH[match],
+                        method=f"esco_{match}_match",
+                    )
+                    found.append((rank, node.label, candidate))
+                    break
+        found.sort(key=lambda item: (item[0], item[1]))
+        candidates = [c for _r, _l, c in found][:SEARCH_LIMIT]
+        warnings: list[str] = []
+        if not candidates:
+            warnings.append("not_found")
+        elif len(candidates) > 1:
+            warnings.append("ambiguous")
+        return ToolResult(
+            nodes=[c.node for c in candidates],
+            candidates=candidates,
+            warnings=warnings,
+            evidence=[f"jobtech:esco_match:{uri}" for uri in uris],
+        )
 
     def get_neighbors(self, node_id: str, rel_types: list[str] | None = None) -> ToolResult:
         allowed = TRAVERSABLE_RELS
