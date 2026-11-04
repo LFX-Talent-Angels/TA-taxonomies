@@ -78,3 +78,14 @@ and waits one second between files.
 - **Not for:** fine-grained skills. 17 broad skills make routes between jobs
   coarse (most jobs share "Adaptability"), so Pathfinder on BLS gives few
   meaningful routes. Use ESCO or O*NET for skill detail.
+
+## Search
+
+- **Meaning search** (embedded 2026-11-04, 1,464 nodes; education and training are
+  skipped) keeps the shared 0.74 cut-off. Gibberish tops out at 0.65, and paraphrases
+  score 0.74–0.94 ("someone who fixes cars" → Automotive Technicians, 0.84).
+- **Codes:** `15-1252`, `15-1252.00`, `SOC 15-1252` and group codes (`SOC 15-1250`) are
+  found whatever kind is asked.
+- **Routes:** the branching cap never cuts an edge that reaches the target. A BLS
+  skill links about 800 occupations, so without this every route through a
+  shared skill was lost.

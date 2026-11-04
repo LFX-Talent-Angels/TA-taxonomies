@@ -63,11 +63,13 @@ CC0 needs no attribution, but we credit the source anyway.
    presents a group skill as essential. The unit group also carries its own
    `HAS_SKILL` edges (`relation_type: "group"`).
 3. **Substitutability:** `(A)-[:SUBSTITUTES {substitutability_pct}]->(B)`
-   when JobTech lists B under A's `substitutes` (its `substituted_by` list is
-   the exact inverse, checked: 4,394 pairs both ways). The percentages are 25
-   or 75. This is a natural Pathfinder step between occupations. JobTech's
-   documentation should be checked for which way a person can move before
-   routes are phrased as advice.
+   when JobTech lists B under A's `substitutes`. Its `substituted_by` list is the
+   exact inverse (checked: 4,394 pairs both ways). The percentages are 25 or 75.
+   **Reading: "a person in A can do B's job to that degree".** This is inferred
+   from the data, because the API docs don't define it. A basic nurse (Sjuksköterska,
+   grundutbildad) substitutes a geriatric nurse at 75% and a children's nurse at
+   25%, which only fits that reading. Chat answers "what can A move to?" with A's
+   outgoing edges.
 4. **ESCO matches are data, not identity.** Each occupation and skill stores
    `esco_exact`, `esco_close`, `esco_broad` and `esco_narrow` (lists of ESCO
    URIs). Nothing links to an ESCO node, and suites never import each other.
@@ -83,6 +85,18 @@ CC0 needs no attribution, but we credit the source anyway.
 6. **Full-text analyzer:** `standard-no-stop-words`, not `swedish`. Locate's
    contains tier sends wildcard terms, which Lucene does not stem, so a stemmed
    index would miss them.
+
+## Search
+
+- **Meaning search** (embedded 2026-11-04, 9,518 nodes) requires a score of **0.88**,
+  not the shared 0.74. The model is English and the labels are Swedish:
+  - gibberish reached 0.756
+  - English words landed on junk ("baker" → Kantning, 0.75)
+  - Swedish near-matches score 0.90+ ("sjukskoterska" → Sjuksköterska)
+- **Compound words:** `compound_min_len=5`. "utvecklare" also finds
+  *Mjukvaruutvecklare*, after the word-start titles, flagged `compound_part`.
+- **English questions** reach JobTech through its own ESCO matches (TA-agents
+  `assistant/crosswalk.py`), never through meaning search.
 
 ## Known limits
 
