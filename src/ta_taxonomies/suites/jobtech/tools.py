@@ -115,6 +115,9 @@ JOBTECH_LOCATE = LocateConfig(
     ),
     # SSYK codes ("7612") and JobTech concept ids ("XugJ_6hw_wVV").
     codes_for=codes_in_query,
+    # Swedish writes compounds as one word: "utvecklare" must reach
+    # "Mjukvaruutvecklare", "lärare" must reach "Grundskollärare".
+    compound_min_len=5,
     search_limit=SEARCH_LIMIT,
     scan_cap=SEARCH_SCAN_CAP,
     min_wildcard_term=MIN_WILDCARD_TERM,
