@@ -31,9 +31,12 @@ as a **versioned library** and may import only the contract surface.
 | `esco` | ESCO (EU) | one mentee per suite — |
 | `onet` | O*NET (US DoL) | the Sprint 1 author of |
 | `sfia` | SFIA | that taxonomy's graph |
-| `bls`  | BLS / SOC | owns its suite |
+| `bls`  | BLS / SOC 2018 + Employment Projections (US, public domain) | owns its suite |
+| `jobtech` | JobTech Taxonomy v31 (Sweden, CC0; Swedish labels) | |
 
-The **fifth suite** is **Sweden JobTech** (live-postings signal, CC0) — decided in TA-workspace ADR-0006; it joins after the first four are ported. SFIA is **structure only** (codes, names, levels — never its descriptive text).
+SFIA is **structure only** (codes, names, levels — never its descriptive text).
+BLS adds wage, outlook and education facts to each occupation; JobTech keeps its
+own ESCO matches as URIs (see each suite's `NOTES.md` and TA-workspace ADR-0009).
 
 ## Hard rules (licensing & provenance — see ARCHITECTURE.md)
 
