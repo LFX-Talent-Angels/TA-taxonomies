@@ -118,6 +118,12 @@ JOBTECH_LOCATE = LocateConfig(
     # Swedish writes compounds as one word: "utvecklare" must reach
     # "Mjukvaruutvecklare", "lärare" must reach "Grundskollärare".
     compound_min_len=5,
+    # The shared model is English and these labels are Swedish. Measured on
+    # the v31 graph (2026-11-04): gibberish reaches 0.756 ("zzqxv plonkwurst"
+    # -> a plastics skill) and English words land on junk ("baker" -> Kantning,
+    # 0.75), while Swedish near-matches score 0.90+ ("sjuksköterska" 0.94).
+    # English questions reach JobTech through its ESCO matches instead.
+    vector_min_score=0.88,
     search_limit=SEARCH_LIMIT,
     scan_cap=SEARCH_SCAN_CAP,
     min_wildcard_term=MIN_WILDCARD_TERM,

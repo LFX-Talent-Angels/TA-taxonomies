@@ -44,3 +44,12 @@ def test_codes_in_query() -> None:
     assert codes_in_query(" 5qT8_z9d_8rw ") == ["5qT8_z9d_8rw"]
     for text in ("bagare", "76123", "5qT8_z9d_8r", ""):
         assert codes_in_query(text) == []
+
+
+def test_jobtech_meaning_search_needs_a_near_match() -> None:
+    # English model, Swedish labels: gibberish scored 0.756 on the full graph.
+    from ta_taxonomies.suites._locate import LocateConfig
+    from ta_taxonomies.suites.jobtech.tools import JOBTECH_LOCATE
+
+    assert JOBTECH_LOCATE.vector_min_score >= 0.85
+    assert LocateConfig.__dataclass_fields__["vector_min_score"].default == 0.74
