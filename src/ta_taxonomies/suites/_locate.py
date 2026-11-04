@@ -264,7 +264,13 @@ class LocateQueries:
         alias_body = f"""
 WHERE n.source = $source
   AND any(x IN labels(n) WHERE x IN $labels)
-  AND ($q IN coalesce(n.alt_labels, []) OR toLower(n.pref_label) = toLower($q))
+  AND (
+    any(a IN coalesce(n.alt_labels, []) WHERE toLower(a) = toLower($q))
+    OR toLower(n.pref_label) = toLower($q)
+  )
+// An alias that differs only in case ("software engineer" for BLS's "Software
+// Engineer") is a casefold match, one tier below an exact alias, the same rule
+// as for preferred labels. It fell through to word-start (0.70) before.
 WITH n, ($q IN coalesce(n.alt_labels, [])) AS is_alt
 ORDER BY size(n.pref_label), n.id
 LIMIT $scan_cap

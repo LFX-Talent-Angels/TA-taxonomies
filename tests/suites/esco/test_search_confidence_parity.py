@@ -74,7 +74,8 @@ PARITY: list[tuple[str, str | None, str | None, float | None, int, list[str]]] =
     ("ict security administrator", None, "casefold_pref", CONF_CASEFOLD_UNIQUE, 1, []),
     # partial text stays at the loose tier, and says it is ambiguous
     ("data scien", "occupation", "contains", CONF_CONTAINS, 1, []),
-    ("ciso", None, "contains", CONF_CONTAINS, 1, []),
+    # an alias apart from case is a casefold match, like a preferred label
+    ("ciso", None, "casefold_pref", CONF_CASEFOLD_UNIQUE, 1, []),
     ("developer", "occupation", "contains", CONF_CONTAINS, 2, ["ambiguous"]),
     ("data", None, "contains", CONF_CONTAINS, 11, ["ambiguous"]),
     ("web", None, "contains", CONF_CONTAINS, 6, ["ambiguous"]),
