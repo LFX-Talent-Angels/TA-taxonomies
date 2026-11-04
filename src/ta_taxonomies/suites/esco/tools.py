@@ -425,8 +425,14 @@ class EscoSuite:
             next_frontier: list[Path] = []
             for path in frontier:
                 rows = by_node.get(path.node_ids[-1], [])
-                pruned += max(0, len(rows) - MAX_BRANCHING)
-                for row in expansions.get(path.node_ids[-1], []):
+                # The cap trims hubs, but an edge that reaches the target is
+                # never the one cut (O*NET "no_path" for Software Developers ->
+                # Web Developers pruned even their direct RELATED_TO edge).
+                kept = expansions.get(path.node_ids[-1], []) + [
+                    row for row in rows[MAX_BRANCHING:] if row["neighbor_id"] == to_id
+                ]
+                pruned += len(rows) - len(kept)
+                for row in kept:
                     neighbor_id = row["neighbor_id"]
                     if neighbor_id in path.node_ids:
                         pruned += 1
