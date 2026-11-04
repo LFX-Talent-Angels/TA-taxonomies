@@ -38,6 +38,9 @@ def test_bad_ssyk_codes(bad: object) -> None:
 
 def test_codes_in_query() -> None:
     assert codes_in_query("7612") == ["7612"]
+    for named in ("SSYK 7612", "ssyk-kod 7612", "SSYK: 7612", "SSYK 2012 7612"):
+        assert codes_in_query(named) == ["7612"], named
+    assert codes_in_query("SSYK bagare") == []
     assert codes_in_query(" 5qT8_z9d_8rw ") == ["5qT8_z9d_8rw"]
     for text in ("bagare", "76123", "5qT8_z9d_8r", ""):
         assert codes_in_query(text) == []
