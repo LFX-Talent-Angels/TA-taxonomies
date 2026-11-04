@@ -268,10 +268,10 @@ WHERE n.source = $source
     any(a IN coalesce(n.alt_labels, []) WHERE toLower(a) = toLower($q))
     OR toLower(n.pref_label) = toLower($q)
   )
-// An alias that differs only in case ("software engineer" for BLS's "Software
-// Engineer") is a casefold match, one tier below an exact alias, the same rule
-// as for preferred labels. It fell through to word-start (0.70) before.
-WITH n, ($q IN coalesce(n.alt_labels, [])) AS is_alt
+// An alias in any case ("software engineer" for BLS's "Software Engineer") is
+// an alias hit: merged with the word-start titles, never an early answer, so
+// O*NET's alias "Baker" on Chefs and Head Cooks cannot hide "Bakers".
+WITH n, any(a IN coalesce(n.alt_labels, []) WHERE toLower(a) = toLower($q)) AS is_alt
 ORDER BY size(n.pref_label), n.id
 LIMIT $scan_cap
 WITH collect({{node: {self.node_map}, is_alt: is_alt}}) AS rows
