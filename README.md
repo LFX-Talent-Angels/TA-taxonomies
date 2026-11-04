@@ -76,6 +76,10 @@ python -m ta_taxonomies.suites.sfia.load --mode full
 BLS_USER_AGENT="TalentAngels-loader/0.1 (you@example.org)" python -m ta_taxonomies.suites.bls.fetch
 python -m ta_taxonomies.suites.bls.load --mode full
 
+# JobTech (Sweden), taxonomy version 31 (see suites/jobtech/NOTES.md)
+python -m ta_taxonomies.suites.jobtech.fetch
+python -m ta_taxonomies.suites.jobtech.load --mode full
+
 # Then embed each suite's labels for meaning-based search (needs the [embed]
 # extra). Idempotent; rerun after any bulk re-load.
 python -m ta_taxonomies.suites.esco.embed
