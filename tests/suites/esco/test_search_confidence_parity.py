@@ -115,7 +115,9 @@ def test_confidence_is_unchanged(
     result = loaded_suite.search_nodes(query, kind=kind)
 
     assert len(result.candidates) == count
-    assert sorted(result.warnings) == warnings
+    # The fixture DB has no ESCO vectors; with the query model installed the
+    # meaning tier says so. That note is the environment, not the parity.
+    assert sorted(w for w in result.warnings if w != "vector_index_missing") == warnings
     if method is None:
         assert result.candidates == []
         return
