@@ -9,3 +9,7 @@ SOC-native, like O*NET: the SOC code is a property, never a shared node, so a
 crosswalk joins the two suites on the code and nothing else. Public domain
 (BLS), with the EP skill scores credited to O*NET. See NOTES.md.
 """
+
+from ta_taxonomies.suites.bls.tools import BlsSuite
+
+__all__ = ["BlsSuite"]
