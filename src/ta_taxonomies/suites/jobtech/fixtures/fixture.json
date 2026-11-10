@@ -1,0 +1,2401 @@
+{
+ "meta": {
+  "taxonomy_version": 31,
+  "files": {
+   "concepts-and-common-relations": "634fd9d848a172747e54e3e487160a912ae6c0fcb8219c50998767c8c9aacbcc",
+   "substitutability-relations-between-occupations": "8761f938505ab9f276b8054d235c9a574bf2da1ff56c3761d9ce836f6fc93c60"
+  },
+  "direct_skills": true,
+  "fixture": "subset of jobtech_document.json; see fixtures/README.md"
+ },
+ "ssyk_groups": [
+  {
+   "concept_id": "KwoA_9tp_f7q",
+   "code": "1",
+   "level": 1,
+   "label": "Chefsyrken",
+   "definition": "Chefsyrken",
+   "parent": null
+  },
+  {
+   "concept_id": "tFq4_83q_aww",
+   "code": "2",
+   "level": 1,
+   "label": "Yrken med krav på fördjupad högskolekompetens",
+   "definition": "Yrken med krav på fördjupad högskolekompetens",
+   "parent": null
+  },
+  {
+   "concept_id": "qjsN_7xY_41K",
+   "code": "3",
+   "level": 1,
+   "label": "Yrken med krav på högskolekompetens eller motsvarande",
+   "definition": "Yrken med krav på högskolekompetens eller motsvarande",
+   "parent": null
+  },
+  {
+   "concept_id": "Ps1i_4PB_pR3",
+   "code": "4",
+   "level": 1,
+   "label": "Yrken inom administration och kundtjänst",
+   "definition": "Yrken inom administration och kundtjänst",
+   "parent": null
+  },
+  {
+   "concept_id": "u1RN_Fih_rgS",
+   "code": "5",
+   "level": 1,
+   "label": "Service-, omsorgs- och försäljningsyrken",
+   "definition": "Service-, omsorgs- och försäljningsyrken",
+   "parent": null
+  },
+  {
+   "concept_id": "2xXe_2KC_Nf2",
+   "code": "7",
+   "level": 1,
+   "label": "Yrken inom byggverksamhet och tillverkning",
+   "definition": "Yrken inom byggverksamhet och tillverkning",
+   "parent": null
+  },
+  {
+   "concept_id": "w4sV_nXn_C5W",
+   "code": "17",
+   "level": 2,
+   "label": "Chefer inom övrig servicenäring",
+   "definition": "Chefer inom övrig servicenäring",
+   "parent": "1"
+  },
+  {
+   "concept_id": "1szr_rbs_fEW",
+   "code": "22",
+   "level": 2,
+   "label": "Yrken med krav på fördjupad högskolekompetens inom hälso- och sjukvård",
+   "definition": "Yrken med krav på fördjupad högskolekompetens inom hälso- och sjukvård",
+   "parent": "2"
+  },
+  {
+   "concept_id": "foYE_bJp_uue",
+   "code": "25",
+   "level": 2,
+   "label": "Yrken med krav på fördjupad högskolekompetens inom IT",
+   "definition": "Yrken med krav på fördjupad högskolekompetens inom IT",
+   "parent": "2"
+  },
+  {
+   "concept_id": "vUnL_4Dc_EHG",
+   "code": "34",
+   "level": 2,
+   "label": "Yrken med krav på högskolekompetens eller motsvarande inom kultur, friskvård och socialt arbete m.m.",
+   "definition": "Yrken med krav på högskolekompetens eller motsvarande inom kultur, friskvård och socialt arbete m.m.",
+   "parent": "3"
+  },
+  {
+   "concept_id": "pnmQ_WRp_712",
+   "code": "41",
+   "level": 2,
+   "label": "Kontorsassistenter och sekreterare",
+   "definition": "Kontorsassistenter och sekreterare",
+   "parent": "4"
+  },
+  {
+   "concept_id": "UVxV_4Bz_JeR",
+   "code": "51",
+   "level": 2,
+   "label": "Serviceyrken",
+   "definition": "Serviceyrken",
+   "parent": "5"
+  },
+  {
+   "concept_id": "2U3x_Aub_tg1",
+   "code": "53",
+   "level": 2,
+   "label": "Omsorgsyrken",
+   "definition": "Omsorgsyrken",
+   "parent": "5"
+  },
+  {
+   "concept_id": "dFYr_pBA_sZh",
+   "code": "76",
+   "level": 2,
+   "label": "Livsmedelsförädlare",
+   "definition": "Livsmedelsförädlare",
+   "parent": "7"
+  },
+  {
+   "concept_id": "YD1U_wmM_ntb",
+   "code": "172",
+   "level": 3,
+   "label": "Restaurang- och kökschefer",
+   "definition": "Restaurang- och kökschefer",
+   "parent": "17"
+  },
+  {
+   "concept_id": "jzaN_Vqk_TP1",
+   "code": "222",
+   "level": 3,
+   "label": "Sjuksköterskor",
+   "definition": "Sjuksköterskor",
+   "parent": "22"
+  },
+  {
+   "concept_id": "wLnH_pob_1uk",
+   "code": "251",
+   "level": 3,
+   "label": "IT-arkitekter, systemutvecklare och testledare m.fl.",
+   "definition": "IT-arkitekter, systemutvecklare och testledare m.fl.",
+   "parent": "25"
+  },
+  {
+   "concept_id": "1TX3_nGQ_zu8",
+   "code": "342",
+   "level": 3,
+   "label": "Idrottsutövare och fritidsledare m.fl.",
+   "definition": "Idrottsutövare och fritidsledare m.fl.",
+   "parent": "34"
+  },
+  {
+   "concept_id": "f3qv_7cZ_KGX",
+   "code": "411",
+   "level": 3,
+   "label": "Kontorsassistenter och sekreterare",
+   "definition": "Kontorsassistenter och sekreterare",
+   "parent": "41"
+  },
+  {
+   "concept_id": "sN7W_rxm_nwA",
+   "code": "512",
+   "level": 3,
+   "label": "Kockar och kallskänkor",
+   "definition": "Kockar och kallskänkor",
+   "parent": "51"
+  },
+  {
+   "concept_id": "DvKy_gyT_dAv",
+   "code": "531",
+   "level": 3,
+   "label": "Barnskötare och elevassistenter m.fl.",
+   "definition": "Barnskötare och elevassistenter m.fl.",
+   "parent": "53"
+  },
+  {
+   "concept_id": "UPRq_HaD_c1M",
+   "code": "761",
+   "level": 3,
+   "label": "Slaktare, bagare och livsmedelsförädlare m.fl.",
+   "definition": "Slaktare, bagare och livsmedelsförädlare m.fl.",
+   "parent": "76"
+  },
+  {
+   "concept_id": "hZLv_S5f_jo2",
+   "code": "1720",
+   "level": 4,
+   "label": "Restaurang- och kökschefer",
+   "definition": "Formulerar och ansvarar för mål och strategier för verksamhet inom restaurang och kök. Utformar riktlinjer, följer upp och utvärderar verksamheten mot uppsatta mål. Svarar för budget samt fördelar resurserna inom verksamheten. Har personalansvar.\r\n\r\nHit hör inte\r\nKöksmästare (3450)\r\nSouschef (3450)\r\n\r\n",
+   "parent": "172"
+  },
+  {
+   "concept_id": "Z8ci_bBE_tmx",
+   "code": "2221",
+   "level": 4,
+   "label": "Grundutbildade sjuksköterskor",
+   "definition": "Behandlar och vårdar samt ansvarar för den medicinska omvårdnaden och läkemedelshantering.",
+   "parent": "222"
+  },
+  {
+   "concept_id": "7XXd_4St_nit",
+   "code": "2222",
+   "level": 4,
+   "label": "Barnmorskor",
+   "definition": "Har vårdansvar vid förlossningar. Vårdar nyblivna mammor och barn på sjukhusens förlossnings- och BB-avdelningar samt mödravårdscentraler. Gör hälsoundersökningar samt svarar för föräldrautbildning. Informerar om sex och samlevnad samt skriver ut preventivmedel.",
+   "parent": "222"
+  },
+  {
+   "concept_id": "DJh5_yyF_hEM",
+   "code": "2512",
+   "level": 4,
+   "label": "Mjukvaru- och systemutvecklare m.fl.",
+   "definition": "Analyserar, designar och utvecklar IT-system eller delar av system. Utformar och utvecklar lösningar för programvara, applikationer, system och databaser.",
+   "parent": "251"
+  },
+  {
+   "concept_id": "aA2Z_9XX_R1v",
+   "code": "3423",
+   "level": 4,
+   "label": "Fritidsledare m.fl.",
+   "definition": "Planerar, organiserar och leder fritidsverksamhet för barn, ungdomar och äldre på fritidsgårdar, föreningar, organisationer, företag, inom äldreomsorg eller församlingar.",
+   "parent": "342"
+  },
+  {
+   "concept_id": "p16X_44f_rwZ",
+   "code": "4114",
+   "level": 4,
+   "label": "Marknads- och försäljningsassistenter",
+   "definition": "Bevakar och bereder marknads- och försäljningsärenden. Sköter administration för marknads- och försäljningsaktiviteter. Kontrollerar och redigerar texter. Bokar utrymme för annonser och kampanjer samt kontrollerar införande med avseende på tidpunkt, innehåll, plats, storlek och form. Sköter samordning mellan reklambyrå, tryckeri och medieföretag.",
+   "parent": "411"
+  },
+  {
+   "concept_id": "BStc_SJh_DKG",
+   "code": "5120",
+   "level": 4,
+   "label": "Kockar och kallskänkor",
+   "definition": "Lagar, lägger upp och garnerar mat inom hotell- och restaurangnäringen, inom storkök, provkök, på ett fartyg eller i en butik.",
+   "parent": "512"
+  },
+  {
+   "concept_id": "XW9L_tA9_WaX",
+   "code": "5312",
+   "level": 4,
+   "label": "Elevassistenter m.fl.",
+   "definition": "Hjälper, stödjer och stimulerar elever i grund- och gymnasieskola med behov av särskilt stöd i skolarbetet, enskilt och i gruppsammanhang. Bistår lärare i undervisningen.\r\n\r\nHit hör inte\r\nBarnskötare (5311)",
+   "parent": "531"
+  },
+  {
+   "concept_id": "5qT8_z9d_8rw",
+   "code": "7612",
+   "level": 4,
+   "label": "Bagare och konditorer",
+   "definition": "Bakar matbröd och kaffebröd i ett bageri, konditori eller livsmedelsbutik. Tillverkar tårtor, bakelser och kakor samt desserter, handgjord choklad och konfekt.\r\n\r\nHit hör inte\r\nMaskinoperatör, bageri (8163)",
+   "parent": "761"
+  }
+ ],
+ "occupations": [
+  {
+   "concept_id": "XugJ_6hw_wVV",
+   "label": "Bagare/Konditor",
+   "alt_labels": [
+    "Bagare",
+    "Konditor"
+   ],
+   "definition": "Bagare och konditorer bakar bland annat matbröd, bullar, kakor, tårtor eller andra bakverk.\n\nIdag arbetar de flesta både som bagare och konditorer. Som bagare gör man ofta många olika sorters matbröd eller kaffebröd. Man väger man upp ingredienser, jäser degar och formar bröd och eller kakor som gräddas. Arbetet sker både för hand och med hjälp av maskiner. En konditor bakar och tillverkar olika kakor, tårtor eller bakelser. Man arbetar på större bagerier och säljer vidare bakverk till bland annat restauranger och livmsedelsbutiker. Vid industribagerier övervakar man maskinell, automatiserad bakning.\n\nKälla: Sveriges bagare och konditorer, Arbetsförmedlingen",
+   "ssyk_code": "7612",
+   "isco_codes": [
+    "7512"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/1aadb308-432a-4d01-b54b-b4f7f76dd419",
+     "http://data.europa.eu/esco/occupation/8f10ea9b-bfdf-4a4c-9fa7-b6e02daa93e5",
+     "http://data.europa.eu/esco/occupation/b10dc548-10e1-4447-8406-5101ff170bbf",
+     "http://data.europa.eu/esco/occupation/e00c46c4-bd3c-4d88-8d30-fc6f951554bd"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/occupation/35f62568-eb4e-4a09-9d83-ecc73116f94c",
+     "http://data.europa.eu/esco/occupation/ff42d44c-34f8-46be-ad3a-2aad9a5e43f0"
+    ]
+   },
+   "essential": [],
+   "optional": [
+    "5uQE_Ru6_oqJ",
+    "Fvdi_Xn6_TB6",
+    "Qi3j_qCf_LAL",
+    "RTeX_GL6_e6h",
+    "btqh_hCy_bRi"
+   ]
+  },
+  {
+   "concept_id": "JbJw_as4_S93",
+   "label": "Kock à la carte",
+   "alt_labels": [],
+   "definition": "À la carte-kockar tillagar måltider enligt gästers beställning, exempelvis på hotell och restauranger.\n\nI arbetet ingår bland annat att utforma menyer och att planera, förbereda och lägga upp gästers måltider.\n\nArbetsupgifter: tillaga måltider enligt beställning, utforma menyer, presentera måltider på ett tilltalande sätt, köpa in varor, planera och förbereda måltider\n\nKälla: ISCO, Skolverket",
+   "ssyk_code": "5120",
+   "isco_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/1009be17-7efd-45f1-a033-566bf179c588",
+     "http://data.europa.eu/esco/occupation/a256838b-0843-4ad2-a2fb-4531f94e63d8"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/occupation/b9de6d8b-1cf6-4722-bf8c-d73aad03bf87",
+     "http://data.europa.eu/esco/occupation/bbaa1444-2c0a-4f76-8375-d72e3ea968fd"
+    ]
+   },
+   "essential": [],
+   "optional": [
+    "Bb4Q_Vou_pbq",
+    "Dxqv_2WA_TYt",
+    "EeYs_uSG_BUb",
+    "UTLe_4xJ_KEG",
+    "kj4Q_nLh_u8Q"
+   ]
+  },
+  {
+   "concept_id": "XSBp_5wD_VaU",
+   "label": "Restaurangchef",
+   "alt_labels": [],
+   "definition": "Restaurangchef",
+   "ssyk_code": "1720",
+   "isco_codes": [
+    "1412"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/d5eb6150-bbff-4a9c-9d0c-21eab4dbe2b6"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   },
+   "essential": [],
+   "optional": []
+  },
+  {
+   "concept_id": "DEDi_wap_ntF",
+   "label": "Barnmorska",
+   "alt_labels": [],
+   "definition": "Barnmorska är specialistutbildad sjuksköterska som arbetar med förlossningsvård eller sex- och samlevnad, preventivmedel och sexuellt överförbara infektioner.\n\nBarnmorska är en skyddad titel med legitimationskrav. Vanliga arbetsuppgifter är att genomföra medicinska undersökningar under graviditet, ansvara för vård och stöd vid förlossning, ge smärtlindring och instruera om amning samt hålla föräldrautbildningar och ge rådgivning om sexuell och reproduktiv hälsa. Barnmorskan arbetar även med att skriva ut preventivmedel, utföra gynekologiska kontroller och ge stöd vid abort. \n\nKälla: Arbetsförmedlingen, Saco, Socialstyrelsen, Svenska Barnmorskeförbundet",
+   "ssyk_code": "2222",
+   "isco_codes": [
+    "2222"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/95cda6a9-a70a-4a93-9442-11d573cb4a02"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   },
+   "essential": [
+    "hAZR_5Ho_Jdw",
+    "uqTa_YUV_uAi"
+   ],
+   "optional": []
+  },
+  {
+   "concept_id": "bXNH_MNX_dUR",
+   "label": "Sjuksköterska, grundutbildad",
+   "alt_labels": [],
+   "definition": "Sjuksköterskornas arbetsuppgifter och arbetsplatser varierar, men innebär framförallt att främja hälsa samt förebygga sjukdom och ohälsa.\n\nSjuksköterskan är omvårdnadsexperten i patientens närhet. Det innebär att sjuksköterskan ansvarar för att medicinska ordinationer blir genomförda och att patienterna får den omvårdnad de behöver. Sjuksköterskan leder och planerar omvårdnadsarbetet, sköter medicinering, provtagning, undersökningar och för journalanteckningar över patienternas tillstånd. Utför arbetsuppgifter för vilka det inte krävs vidare-/specialistutbildning. Sjuksköterska är en skyddad yrkestitel enligt Socialstyrelsen. Legitimation krävs för yrket.\n\nKälla: Arbetsförmedlingen, Sveriges kommuner och regioner",
+   "ssyk_code": "2221",
+   "isco_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/87d0795a-d41f-47ee-979f-0ab7d73836e7",
+     "http://data.europa.eu/esco/occupation/8d3e8aaa-791b-4c75-a465-f3f827028f50"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   },
+   "essential": [
+    "dJa5_Nao_mDS"
+   ],
+   "optional": [
+    "73kE_uFW_vvT",
+    "FJjr_4pF_LEY",
+    "GYz6_5Jt_Wmy",
+    "NbjJ_WBY_FoA",
+    "TuUX_3Jo_wyq"
+   ]
+  },
+  {
+   "concept_id": "rQds_YGd_quU",
+   "label": "Mjukvaruutvecklare",
+   "alt_labels": [],
+   "definition": "Mjukvaruutvecklare utvecklar, testar och underhåller programvara för olika plattformar och användningsområden. \n\nArbetsuppgifterna omfattar programmering, systemdesign, kravanalys och dokumentation av kod. Mjukvaruutvecklare arbetar med att skapa nya applikationer eller vidareutveckla befintliga system, samt felsöker och åtgärdar buggar. I rollen ingår även att samarbeta med andra utvecklare, systemarkitekter och testare för att säkerställa att programvaran uppfyller tekniska och funktionella krav. Mjukvaruutvecklare deltar ofta i hela utvecklingsprocessen, från idé och prototyp till lansering och vidareutveckling.\n\nKällor: Arbetsförmedlingen, SACO, Academic Work, Wise IT, Tekniksprånget",
+   "ssyk_code": "2512",
+   "isco_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/f2b15a0e-e65a-438a-affb-29b9d50b77d1"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/occupation/24135b84-cbdd-4d42-9ed2-02fd982d15b2",
+     "http://data.europa.eu/esco/occupation/349ee6f6-c295-4c38-9b98-48765b55280e",
+     "http://data.europa.eu/esco/occupation/781a6350-e686-45b9-b075-e4c8d5a05ff7"
+    ]
+   },
+   "essential": [],
+   "optional": [
+    "2kEw_jWL_6Zz",
+    "A5HJ_aMw_BQt",
+    "HKdN_aaP_pQK",
+    "iUew_moc_BRk"
+   ]
+  },
+  {
+   "concept_id": "fg7B_yov_smw",
+   "label": "Systemutvecklare/Programmerare",
+   "alt_labels": [
+    "Programmerare",
+    "Systemutvecklare"
+   ],
+   "definition": "Programmerare analyserar, designar och bygger mjukvara.\n\nOfta får programmeraren instruktioner i form av en kravspecifikation som kommit från en behovsanalys. Programmeraren avgör i vilken ordning systemet bör byggas och översätter kraven till programmeringsspråk.\n\nKälla: SACO, ISCO",
+   "ssyk_code": "2512",
+   "isco_codes": [
+    "2511"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/a7c1d23d-aeca-4bee-9a08-5993ed98b135"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/occupation/349ee6f6-c295-4c38-9b98-48765b55280e",
+     "http://data.europa.eu/esco/occupation/6ce5f7e3-a534-4aa2-ab23-255408ddb53a"
+    ]
+   },
+   "essential": [],
+   "optional": [
+    "4f1v_w91_qVM",
+    "D7Ns_RG6_hD2",
+    "iUew_moc_BRk",
+    "xAbu_uKA_Jeu"
+   ]
+  },
+  {
+   "concept_id": "Sbzf_iBA_MAS",
+   "label": "Elevassistent",
+   "alt_labels": [],
+   "definition": "Elevassistenter stödjer elever och lärare för att göra lärandet lättare.\n\nElevassistenter ger extra hjälp i klassrummet under undervisningen, stöd på raster, i omklädningsrum och på utflykter till enskilda elever, en klass eller en fritidsgrupp. Arbetsuppgifter varierar beroende på det stöd eleven är i behov av. Elevassistentens grunduppgift är att finnas som stöd och resurs för en eller flera elever. Arbetet kan innebära att hjälpa eleven att få studiero och kunna delta i undervisningen. I vissa fall handlar det om hjälp vid måltider, raster eller vid ombyte.\n\nKälla: Arbetsförmedlingen",
+   "ssyk_code": "5312",
+   "isco_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/1f137f0b-7097-4583-9d1b-b69e57369319"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   },
+   "essential": [],
+   "optional": [
+    "1MZ8_Wjc_wvE",
+    "TsH1_ePz_fpf",
+    "qMfa_U8e_Lto",
+    "tg1e_QpF_xdX",
+    "w2ok_LT3_BXa"
+   ]
+  },
+  {
+   "concept_id": "17FS_XzU_AQ4",
+   "label": "Skolvärd",
+   "alt_labels": [
+    "Skolvärdinna"
+   ],
+   "definition": "Skolvärdar arbetar i skolans gemensamma utrymmen med att stödja elever och personal under skoldagen.\n\nArbetsuppgifter inkluderar att ge praktisk hjälp till elever vid behov, bidra till en trygg och säker skolmiljö samt hantera enklare konflikter. Skolvärd samarbetar med skolpersonal och deltar i aktiviteter och raster för att skapa en trivsam miljö. Beroende på arbetsplats kan det även ingå att följa med under bussresor till och från skola. Skolvärdar har god kännedom om skolans rutiner och arbetar för att förebygga och hantera situationer som kan uppstå under skoldagen.\n\nKälla: Arbetsförmedlingen",
+   "ssyk_code": "5312",
+   "isco_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/occupation/00674f21-2f8f-4a41-9896-133f7cbe2a6e",
+     "http://data.europa.eu/esco/occupation/4d27152a-a8ee-4f5a-9f93-a2fb4fb2b2e3",
+     "http://data.europa.eu/esco/occupation/79c2e54e-26e8-4cdc-a7f1-908e000bfb83"
+    ],
+    "broad": [],
+    "narrow": []
+   },
+   "essential": [],
+   "optional": [
+    "CGBF_fgA_qnj"
+   ]
+  },
+  {
+   "concept_id": "r2Gv_ft9_p51",
+   "label": "Assistent i församlingsarbete",
+   "alt_labels": [],
+   "definition": "En assistent i församlingsarbete, även kallad församlingsassistent, har en mångsidig roll som innefattar stöd till olika verksamheter och att skapa en trivsam miljö. \n\nDet kan inkludera allt från att förbereda enklare måltider och fika till att ansvara för inköp och se till att lokalerna är välkomnande. Arbetet är både socialt och andligt, och assistenten samarbetar nära med andra i församlingen, som präster, diakoner, och ideella krafter.\n\nKälla: Svenska kyrkan",
+   "ssyk_code": "3423",
+   "isco_codes": [
+    "3423"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/occupation/665266cb-50dd-44a5-a920-ab04c67e251a"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   },
+   "essential": [],
+   "optional": []
+  },
+  {
+   "concept_id": "it81_Tvc_eV7",
+   "label": "AD-assistent",
+   "alt_labels": [],
+   "definition": "AD-assistenter planerar, producerar och koordinerar visuellt marknadsmaterial och reklamuttryck inom kreativa team, ofta i samarbete med art directors och marknadsförare.\n\nArbetsuppgifter innefattar bland annat grafisk design, digital produktion, layoutarbete, bildredigering, samt projektkoordinering och kommunikation med interna och externa parter. AD-assistent deltar i utvecklingen av reklamkampanjer och producerar presentationsmaterial, annonser och digitalt innehåll för olika plattformar. Rollens uppgifter överlappar ofta med grafisk designer och projektledare inom marknadskommunikation.\n\nKälla: Arbetsförmedlingen",
+   "ssyk_code": "4114",
+   "isco_codes": [
+    "4419"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/occupation/54cba39a-5bb8-4e4c-89cd-d6097d3c6c3a"
+    ],
+    "narrow": []
+   },
+   "essential": [],
+   "optional": [
+    "NMZ1_bCs_WcR",
+    "Y2t4_aS8_tGo",
+    "dTK5_R7G_p56",
+    "wXRm_Aq3_9D8",
+    "xNyv_PTi_fSa"
+   ]
+  }
+ ],
+ "skills": [
+  {
+   "concept_id": "13ad_dCC_Tn6",
+   "label": "OOS, styr- och utvecklingsmodell",
+   "alt_labels": [
+    "OOS"
+   ],
+   "definition": "OOS, styr- och utvecklingsmodell",
+   "headline": "MYnV_auQ_kcS",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "16ZN_3Zp_bYV",
+   "label": "Odoo, molnplattform",
+   "alt_labels": [],
+   "definition": "Odoo, molnplattform",
+   "headline": "TdNz_dnv_jzb",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "19PK_uxU_Wzy",
+   "label": "Bower, pakethanterare",
+   "alt_labels": [
+    "Bower"
+   ],
+   "definition": "Bower, pakethanterare",
+   "headline": "JErj_EuK_69L",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1AXt_ijw_q2B",
+   "label": "Comal, programmeringsspråk",
+   "alt_labels": [
+    "Comal"
+   ],
+   "definition": "Comal, programmeringsspråk",
+   "headline": "ShQw_McG_oti",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1CmG_8hR_igc",
+   "label": "Bluetooth-teknik",
+   "alt_labels": [],
+   "definition": "Bluetooth-teknik",
+   "headline": "QkYc_pTH_tDk",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/6e4f75b4-c60f-4623-a9ba-760c8245753b"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1FS5_pZc_X5o",
+   "label": "WAN",
+   "alt_labels": [],
+   "definition": "WAN",
+   "headline": "nHDU_dpj_R9H",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/2164e860-7f20-48bc-b98c-5d9f8a561550"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1MZ8_Wjc_wvE",
+   "label": "Gymnasieutbildning",
+   "alt_labels": [],
+   "definition": "Gymnasieutbildning är en högskoleförberedande utbildning eller ett yrkesprogram.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1Zwa_X6Q_Dyk",
+   "label": "Fast food/snabbmat",
+   "alt_labels": [],
+   "definition": "Fast food avser snabbmat som tillverkas och serveras med fokus på effektivitet och korta väntetider. Kompetensen omfattar kunskaper i tillagning och hantering av livsmedel anpassade för snabbservering, vilket inkluderar en rad yrkesroller inom restaurang- och livsmedelsbranschen.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/555d83ff-dbf9-481a-b726-2d502a11904e",
+     "http://data.europa.eu/esco/skill/cca74e2b-e680-4184-9a95-5c560cbfeefd",
+     "http://data.europa.eu/esco/skill/f19f0cda-73f4-417e-8ec9-c0cacf5e7149"
+    ]
+   }
+  },
+  {
+   "concept_id": "1abT_LRk_fg2",
+   "label": "Pizzabakning",
+   "alt_labels": [],
+   "definition": "Pizzabakning avser processen att tillaga pizza genom att förbereda deg, sås och toppings samt baka den i en ugn till önskad konsistens och smak. Kompetensen omfattar kunskaper i ingredienser, tillagningsmetoder och bakningstekniker.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/298ead56-f11b-4c5d-a4d9-282f7a1489b6"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1dHC_SwK_1ge",
+   "label": "Reggio Emila-pedagogik, erfarenhet",
+   "alt_labels": [],
+   "definition": "Reggio Emila-pedagogik, erfarenhet",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/59eb177a-2f30-4943-8b30-5f87dd51a80d"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1eKe_zFj_QAa",
+   "label": "Barnsjukvård",
+   "alt_labels": [],
+   "definition": "Barnsjukvård avser vård och behandling av sjuka och skadade barn och ungdomar, inklusive akutsjukvård, barnmedicin och barnkirurgi. Denna kompetens omfattar även stöd och vägledning till föräldrar samt genomförande av hälsokontroller för barn, där barnsjuksköterskor och andra vårdpersoner spelar en central roll.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/8671290a-ab17-42c2-9114-adcb741e7257"
+    ]
+   }
+  },
+  {
+   "concept_id": "1gdf_dsH_cFZ",
+   "label": "Radarnavigering, erfarenhet",
+   "alt_labels": [],
+   "definition": "Radarnavigering, erfarenhet",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "3423"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/0a776a56-6ec1-4790-84b3-46d0be706806"
+    ],
+    "close": [
+     "http://data.europa.eu/esco/skill/a833fceb-c552-4a5c-a5cf-4163313995c9"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "1pLs_Lfr_UUZ",
+   "label": "Försäkringstjänster, produktkunskap",
+   "alt_labels": [],
+   "definition": "Försäkringstjänster, produktkunskap avser förståelsen av olika försäkringsprodukter och deras egenskaper, samt de villkor och regler som är kopplade till dessa produkter. Denna kompetens innefattar även förmåga att analysera kunders behov och risker för att kunna rekommendera lämpliga försäkringslösningar.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/547c6c19-aaad-4321-9740-26b157319499",
+     "http://data.europa.eu/esco/skill/c65c58d0-bcb9-4b90-b20e-a4490178e42c"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/5dc193da-e018-457a-b7b2-c8b315660e16",
+     "http://data.europa.eu/esco/skill/fcd02121-ae3e-4d20-92ee-e2e368658a45",
+     "http://data.europa.eu/esco/skill/fce3268c-c944-4a5f-8b9c-034a72d5df13"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/77a3198a-d862-4dd0-80fe-ee127da845cf",
+     "http://data.europa.eu/esco/skill/bc24fe02-d93c-4191-8897-ca2c593bc84b"
+    ]
+   }
+  },
+  {
+   "concept_id": "1xHU_W9z_CT9",
+   "label": "Konteringsvana",
+   "alt_labels": [],
+   "definition": "Konteringsvana",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/faf8943c-72ff-4736-a587-25508695d6f0"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "2GuF_gtz_xfW",
+   "label": "Instruktörskurs i medicinsk simulering",
+   "alt_labels": [],
+   "definition": "Instruktörskurs i medicinsk simulering",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/436b8f31-1a12-408a-be5f-a951942fbf92"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "2ZFC_6de_YSB",
+   "label": "Zoho Office Suite",
+   "alt_labels": [],
+   "definition": "Zoho Office Suite",
+   "headline": "ifHn_wrW_bFV",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/cf310cff-0d28-4dbc-9dbb-cc500a3196c2"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "2kEw_jWL_6Zz",
+   "label": "Testning, mjukvara/Verifiering, mjukvara",
+   "alt_labels": [
+    "Testning, mjukvara",
+    "Verifiering, mjukvara"
+   ],
+   "definition": "Testning, mjukvara/Verifiering, mjukvara avser processen att utvärdera mjukvaruprodukter för att säkerställa att de uppfyller specifikationer och krav. Denna kompetens innefattar planering, genomförande och dokumentation av tester för att verifiera och validera funktionaliteten hos programvara och system.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/913e7e83-b8f8-4574-b1ca-1b38f3fd974a"
+    ],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/334e3e49-fb02-4051-809a-f06adfdc1c40"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/85f46538-ae70-498a-bfbc-b8ddafe96c7d",
+     "http://data.europa.eu/esco/skill/978db6a1-7297-4c89-819a-47605f2c3ba8"
+    ]
+   }
+  },
+  {
+   "concept_id": "2sGi_rhe_wet",
+   "label": "Utåtagerande beteende, erfarenhet",
+   "alt_labels": [],
+   "definition": "Utåtagerande beteende, erfarenhet avser kunskap och praktisk erfarenhet av att hantera och förstå uttryck för utåtagerande beteenden hos individer, särskilt i utbildnings- och stödjande sammanhang. Denna kompetens innebär insikt i beteendemönster och strategier för effektivt bemötande och stödgivning för att främja ett positivt beteendeutveckling.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/1b8872bd-d869-4b08-b9b2-296d2b1c644c"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/bcb02777-45be-4166-9448-74a15b6f8136"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "3HjW_1BP_k3S",
+   "label": "AbiWord",
+   "alt_labels": [],
+   "definition": "AbiWord",
+   "headline": "ifHn_wrW_bFV",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/cf310cff-0d28-4dbc-9dbb-cc500a3196c2"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "3XT9_cf8_UNt",
+   "label": "Försäkringsadministration",
+   "alt_labels": [],
+   "definition": "Försäkringsadministration innebär att hantera och registrera försäkringsärenden, dokumentera avtal och förändringar samt löpande uppdatera kundinformation och försäkringsuppgifter i digitala system. Arbetsuppgifterna omfattar handläggning av nyteckning och ändringar av försäkringar, in- och utflytt av kapital, diarieföring, koordination med försäkringsbolag och stöd till kundservice.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/e92f4673-1dec-41ec-b6ec-36fef226359c"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "3Z9i_jNu_wnT",
+   "label": "Mat- och menykunskap",
+   "alt_labels": [],
+   "definition": "Mat- och menykunskap avser kunskap om olika typer av maträtter, ingredienser, tillagningsmetoder och menyer inom restaurang- och livsmedelsbranschen. Denna kompetens omfattar förmågan att förstå och förmedla information om matens ursprung, smakprofiler och presentation, vilket är centralt för yrken som kockar, kallskänkor, hovmästare och servitörer.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/6d1532b4-b649-4089-b665-cf80debf159b"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/746f24ea-4fee-45aa-8042-12af91ce0959",
+     "http://data.europa.eu/esco/skill/b1c75cc1-968f-4167-abdb-dca1bcbfd1aa",
+     "http://data.europa.eu/esco/skill/f4a30153-2b27-4c15-82ea-e0216bd0012f"
+    ]
+   }
+  },
+  {
+   "concept_id": "3tZd_NwT_XNt",
+   "label": "Teppanyaki-kök",
+   "alt_labels": [],
+   "definition": "Teppanyaki-kök",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/f3934441-4bff-4076-9945-e6c51a01c467"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "3vYj_Rhf_Voh",
+   "label": "MS Works",
+   "alt_labels": [],
+   "definition": "MS Works",
+   "headline": "ifHn_wrW_bFV",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/f683ae1d-cb7c-4aa1-b9fe-205e1bd23535"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "4QAE_wtY_gJh",
+   "label": "Yrkesetik inom hälso- och sjukvård",
+   "alt_labels": [],
+   "definition": "Källa: Vårdförbundet",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/8b3aefd2-5021-418f-b069-828fb7abc598"
+    ],
+    "close": [
+     "http://data.europa.eu/esco/skill/6c77aeef-327e-440f-8510-74ce5a73bd8a",
+     "http://data.europa.eu/esco/skill/9fcf9918-fdef-49c3-aedc-518eb1e7e1f5"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/76395873-7fe2-4f9a-b4b6-9932f8cbd0b4"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "4f1v_w91_qVM",
+   "label": "Systemförvaltning",
+   "alt_labels": [],
+   "definition": "Systemförvaltning avser hantering och underhåll av IT-system som är i drift, vilket inkluderar både drift och förbättring av dessa system för att säkerställa deras funktionalitet och effektivitet. Kompetensen omfattar även ansvar för att den tekniska arkitekturen stödjer verksamhetens behov.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/397da142-ab35-48fe-b154-7c38f447adfb"
+    ],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/5063a99f-975b-4a7c-85e3-69ecb375b4d3"
+    ]
+   }
+  },
+  {
+   "concept_id": "4fRg_DA4_Dj3",
+   "label": "Avtalsutformning/Kontraktsutformning",
+   "alt_labels": [
+    "Avtalsutformning",
+    "Kontraktsutformning"
+   ],
+   "definition": "Avtalsutformning/Kontraktsutformning avser processen att skapa juridiskt bindande avtal mellan parter, vilket inkluderar formulering av villkor och bestämmelser som reglerar ett överenskommet samarbete. Kompetensen innebär förståelse för relevanta lagar, riktlinjer och administrativa krav som styr avtalsprocessen.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "1720"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/1279a2e8-e44f-49b6-9a7f-9241d07d2ed3",
+     "http://data.europa.eu/esco/skill/3a7c95ef-0adc-4dff-a1a3-1e56f1e9ea03",
+     "http://data.europa.eu/esco/skill/3d1b1cfe-a182-480a-b4dd-f482c6b4e6a4",
+     "http://data.europa.eu/esco/skill/738f77f0-8e47-4a15-9fa4-5ee40dec94ec",
+     "http://data.europa.eu/esco/skill/b7dbaaab-ea76-4f23-b45c-69d715b52f43",
+     "http://data.europa.eu/esco/skill/d0586c39-a2d9-4492-a970-c566a64ffd86"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/5c606d18-6404-4047-b235-350f18e11827"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/2b5528bc-9613-4ee4-9cd5-d59acf9a2c47",
+     "http://data.europa.eu/esco/skill/379ec127-c158-4ce3-90dc-9996678bf05c",
+     "http://data.europa.eu/esco/skill/6766e2e3-425b-4c6b-963d-82f9b2846e21",
+     "http://data.europa.eu/esco/skill/6f9ac146-8bbd-4b9d-9514-d85586caf17a",
+     "http://data.europa.eu/esco/skill/7fd31729-10e9-434c-ba7c-002246b0f644",
+     "http://data.europa.eu/esco/skill/9ea42b8b-1eb5-4984-8877-6a39ba49cc85",
+     "http://data.europa.eu/esco/skill/a1380a9d-a659-42c7-885b-4c1d2fea6bef",
+     "http://data.europa.eu/esco/skill/a703b581-ad64-4791-8bb3-624aea569fa5",
+     "http://data.europa.eu/esco/skill/c5646d72-c082-44fd-b47e-c4b0ec59ebbd",
+     "http://data.europa.eu/esco/skill/fc3cdc2c-7b79-4b5c-a4b0-f3b996fef849"
+    ]
+   }
+  },
+  {
+   "concept_id": "55EM_sdj_hja",
+   "label": "Mångkulturell förskola, erfarenhet/Mångkulturell skola, erfarenhet",
+   "alt_labels": [
+    "Mångkulturell förskola, erfarenhet",
+    "Mångkulturell skola, erfarenhet"
+   ],
+   "definition": "Mångkulturell förskola, erfarenhet/Mångkulturell skola, erfarenhet",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/59eb177a-2f30-4943-8b30-5f87dd51a80d"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "5AC4_y1Q_qLq",
+   "label": "Näringslära",
+   "alt_labels": [],
+   "definition": "Näringslära",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/13d96098-2ff0-46b8-b326-b7c0e18cc1f1"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/2846ad39-6535-48cf-a4c4-64f0ae9066c1",
+     "http://data.europa.eu/esco/skill/d5fd84ba-8200-4b29-8802-857017575b18"
+    ]
+   }
+  },
+  {
+   "concept_id": "5B8u_HJf_V1E",
+   "label": "Libanesiskt kök",
+   "alt_labels": [],
+   "definition": "Libanesiskt kök",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/555d83ff-dbf9-481a-b726-2d502a11904e",
+     "http://data.europa.eu/esco/skill/f19f0cda-73f4-417e-8ec9-c0cacf5e7149"
+    ]
+   }
+  },
+  {
+   "concept_id": "5Kym_2ad_Pqi",
+   "label": "Schemaläggning, hälso- och sjukvård",
+   "alt_labels": [],
+   "definition": "Schemaläggning inom hälso- och sjukvård avser planenlig organisering av arbetsuppgifter och personalresurser för att säkerställa effektiv och kontinuerlig vård. Den omfattar fördelning av arbetstid och resurser för att möta patienternas behov samt optimera arbetsflöden inom vårdinrättningar.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/add39442-b8ca-4412-8156-391db53b0c5d"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "5agw_dEi_Ag4",
+   "label": "Legitimation som fysioterapeut",
+   "alt_labels": [
+    "Legitimation som sjukgymnast"
+   ],
+   "definition": "Legitimation som krävs för att kunna arbeta som fysioterapeut i Sverige. Utfärdas av Socialstyrelsen.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "5uQE_Ru6_oqJ",
+   "label": "Mästarbrev, bagare och konditor",
+   "alt_labels": [],
+   "definition": "Mästarbrev, bagare och konditor är ett bevis på högsta kompetensnivå inom ett hantverksyrke där innehavaren har uppnått mästarnivå, oftast genom ett mästarprov och uppfyllande av samtliga krav enligt branschens regler. Utfärdas av Sveriges hantverksråd i samråd med aktuell branschorganisation.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "7612"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/2f1168be-b456-4d47-ba56-f122d0b79085",
+     "http://data.europa.eu/esco/skill/ae8fc9d3-8940-4e5a-ac9f-4a42498cd7b5",
+     "http://data.europa.eu/esco/skill/d6f48dbb-057e-41b2-a59a-d6b86b5aa884"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "73kE_uFW_vvT",
+   "label": "Primärvård",
+   "alt_labels": [],
+   "definition": "Primärvård avser medicinsk bedömning och behandling, omvårdnad, förebyggande arbete och rehabilitering som inte kräver särskilda medicinska eller tekniska resurser eller någon annan särskild kompetens. Källa: Kunskapsguiden",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221",
+    "2222"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/9c1e94ad-6c81-4fce-bc16-f7cf2e730cf0"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/b34a15fe-dc14-43eb-9eb3-c227238a029c"
+    ]
+   }
+  },
+  {
+   "concept_id": "8tYq_EXD_Xwm",
+   "label": "Presskontakter, vana",
+   "alt_labels": [],
+   "definition": "Presskontakter, vana",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "1720"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/3c8c9fe5-bbc6-4a0b-8cf2-a839aeef585c"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/2e046d83-a38a-453c-a26d-64114ed2e036",
+     "http://data.europa.eu/esco/skill/4d313147-b39d-413f-a5e2-b12d5f0dc9e6",
+     "http://data.europa.eu/esco/skill/c55caed2-de9e-4a25-819e-a0b0e83fba1b"
+    ]
+   }
+  },
+  {
+   "concept_id": "9CLK_TYc_cud",
+   "label": "Konditionstestning",
+   "alt_labels": [],
+   "definition": "Konditionstestning",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "3423"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/ef07f206-1ea8-4dc6-a4b0-1b312a9db47c"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "9VJ1_rdc_oCi",
+   "label": "Barn- och ungdomsidrott, ledarerfarenhet",
+   "alt_labels": [],
+   "definition": "Barn- och ungdomsidrott, ledarerfarenhet avser kompetens att planera och leda idrottsaktiviteter för barn och ungdomar i olika sammanhang. Denna kompetens omfattar förmåga att skapa en trygg och motiverande miljö, samt att anpassa träning efter deltagarnas behov och nivåer.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "3423"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/dbadb531-2fb9-4361-b80b-9be8c3c54229"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/5895a0b8-da35-482d-bf25-1017b4a03632",
+     "http://data.europa.eu/esco/skill/733db58b-f62e-4548-8078-b0f4e5182383",
+     "http://data.europa.eu/esco/skill/9bb41cd3-eb0e-4fb3-a345-c9c6ed5d43dd",
+     "http://data.europa.eu/esco/skill/9efc639c-712f-4857-acf9-ad311b7d69f3",
+     "http://data.europa.eu/esco/skill/b6e84c79-b9a3-415a-a1af-6149b3fba650",
+     "http://data.europa.eu/esco/skill/b75131fa-3b2d-4b51-9cf0-ca256015fe03",
+     "http://data.europa.eu/esco/skill/c668b9b2-0c11-43a5-a75f-c4b2eaa302cf",
+     "http://data.europa.eu/esco/skill/d1c6c21d-52bc-4aac-8666-2bf92f8244ac",
+     "http://data.europa.eu/esco/skill/d596e3d0-5bae-4d1f-87bf-bd5c3442c690",
+     "http://data.europa.eu/esco/skill/e4edb520-b083-4685-92cd-00f6964cb372",
+     "http://data.europa.eu/esco/skill/ece81686-331c-4381-bf3f-5ea610d47a7f"
+    ]
+   }
+  },
+  {
+   "concept_id": "A5HJ_aMw_BQt",
+   "label": "Mjukvaruutveckling",
+   "alt_labels": [],
+   "definition": "Mjukvaruutveckling avser processen att analysera, designa och skapa programvara och applikationer som körs på datorer och andra elektroniska enheter. Denna kompetens omfattar olika steg i utvecklingscykeln, inklusive kravinsamling, kodning, testning och underhåll av mjukvara för att säkerställa funktionalitet och effektivitet.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/5b26f08b-88bc-45f0-b901-530d7786466b"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/3e40c7d0-0e36-4b33-bc33-0aa87eda0561",
+     "http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/12274664-b642-4945-b88f-d7787dc3c9dd",
+     "http://data.europa.eu/esco/skill/71746a0b-e58d-4dc4-ad03-bd84082eae21",
+     "http://data.europa.eu/esco/skill/ab20726a-14dd-4536-9aa1-6166bc1a5832",
+     "http://data.europa.eu/esco/skill/ae6c1227-dd33-4df0-a64e-439cfdf948ea",
+     "http://data.europa.eu/esco/skill/f7e2eb04-3e50-4561-bce1-7e51a1fec308"
+    ]
+   }
+  },
+  {
+   "concept_id": "AmSg_wbt_ZzD",
+   "label": "Inkontinenshjälpmedel",
+   "alt_labels": [],
+   "definition": "Inkontinenshjälpmedel",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221",
+    "2222"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/9d5e2143-08db-44d6-83d3-12c87dc23586"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "Aq3e_Bdv_v45",
+   "label": "Fritidshem",
+   "alt_labels": [],
+   "definition": "Fritidshem",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "3423",
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/e517f098-dce4-4ecd-9371-499936c0f947"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "Bb4Q_Vou_pbq",
+   "label": "A la carte",
+   "alt_labels": [],
+   "definition": "A la carte avser en metod inom restaurangbranschen där gäster kan välja rätter individuellt från en meny i stället för att få en förbestämd måltid. Denna kompetens omfattar kunskaper om menyplanering, måltidsförberedelser och upplysning om de olika rätternas ingredienser och tillagningsmetoder.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/555d83ff-dbf9-481a-b726-2d502a11904e",
+     "http://data.europa.eu/esco/skill/73b97efd-49fe-49d7-89dd-444f870cd210",
+     "http://data.europa.eu/esco/skill/f19f0cda-73f4-417e-8ec9-c0cacf5e7149",
+     "http://data.europa.eu/esco/skill/fd728a62-6be0-4874-9d68-5946b87f29da"
+    ]
+   }
+  },
+  {
+   "concept_id": "BvGm_Zuj_VLF",
+   "label": "Omvårdnadsplanering",
+   "alt_labels": [],
+   "definition": "Omvårdnadsplanering",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221",
+    "2222"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/6acf652c-33b2-4e28-8f79-1e553f255229"
+    ],
+    "close": [
+     "http://data.europa.eu/esco/skill/13724e7d-b946-4773-915e-9621340237bc",
+     "http://data.europa.eu/esco/skill/3859901a-e2b4-446a-b2ee-fd32f6d9db6f"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/a5a21732-eb04-4f94-a72f-c138b3f7c33f"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/04880044-9668-45b8-b888-f3d9894bac9f"
+    ]
+   }
+  },
+  {
+   "concept_id": "C4Cp_CmY_QJh",
+   "label": "Frikyrklig funktionärsutbildning",
+   "alt_labels": [],
+   "definition": "Frikyrklig funktionärsutbildning",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "3423"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "CGBF_fgA_qnj",
+   "label": "Barn och ungdomar med behov av särskilt stöd",
+   "alt_labels": [],
+   "definition": "Barn och ungdomar med behov av särskilt stöd avser individer som har olika typer av svårigheter eller funktionsnedsättningar som påverkar deras möjlighet att delta i utbildning och sociala sammanhang. Denna kompetens omfattar insatser och strategier för att identifiera, förstå och stödja dessa individers unika behov samt skapa inkluderande och anpassade miljöer för deras utveckling.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/07090471-265a-48ec-b744-72b357e801ed",
+     "http://data.europa.eu/esco/skill/bcb02777-45be-4166-9448-74a15b6f8136"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/54411e8e-d62f-46d8-b87b-fce23f8e3bc8",
+     "http://data.europa.eu/esco/skill/a13566a2-4461-4dcc-82b2-8280fb5bb993"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/fb608942-5bf8-4d5f-b22b-7f888b07f849"
+    ]
+   }
+  },
+  {
+   "concept_id": "D7Ns_RG6_hD2",
+   "label": "Systemutveckling",
+   "alt_labels": [],
+   "definition": "Systemutveckling avser processen att analysera, designa, utveckla och implementera IT-system och mjukvarulösningar. Denna kompetens inkluderar en förståelse för programmering, systemarkitektur och användarcentrerad design för att skapa effektiva och användarvänliga digitala lösningar.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/20c920d4-7ff7-4676-ba61-3f04490d9416",
+     "http://data.europa.eu/esco/skill/418a56a2-7cfc-4b6d-8cf5-5c2add99a849"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/98f14bc9-4eb6-4628-92d2-ed79a649d5c8",
+     "http://data.europa.eu/esco/skill/b105ec9b-0857-41d6-8d07-a83e58b73d90"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/00c04e40-35ea-4ed1-824c-82f936c8f876",
+     "http://data.europa.eu/esco/skill/07e47d58-dd0e-4302-9e68-70a188e89065",
+     "http://data.europa.eu/esco/skill/21e0cad8-4eef-42be-b18b-0f8e37f0dbd0",
+     "http://data.europa.eu/esco/skill/2b7a79e5-84d8-4880-be66-3d9bb05bea17",
+     "http://data.europa.eu/esco/skill/446d29ed-9eaa-4798-bb91-5f196651ad0a",
+     "http://data.europa.eu/esco/skill/4840338b-ac6c-486a-be1d-9ddfe00b8bdf",
+     "http://data.europa.eu/esco/skill/64db87c7-2360-4e20-88d3-d222402e477c",
+     "http://data.europa.eu/esco/skill/6a876489-7ad8-4a13-b09c-c9b8e97a302e",
+     "http://data.europa.eu/esco/skill/6b643893-0a1f-4f6c-83a1-e7eef75849b9",
+     "http://data.europa.eu/esco/skill/7f0b1a66-ebaf-4c8a-b606-4c1844eb692e",
+     "http://data.europa.eu/esco/skill/861313ba-3a1a-4d33-842a-1b8e45e2415b",
+     "http://data.europa.eu/esco/skill/8b94aa1e-89c9-459d-b3b4-1dfab8dec2df",
+     "http://data.europa.eu/esco/skill/8ff015a0-98ea-4d80-a23e-1f68110a919e",
+     "http://data.europa.eu/esco/skill/a8b3957f-08b4-4a76-927d-0b2e3d0dbd39",
+     "http://data.europa.eu/esco/skill/b1604a2d-c26a-427d-bda9-b8073a319fe9",
+     "http://data.europa.eu/esco/skill/bf298db2-b90e-4739-85ca-9c3003103fab",
+     "http://data.europa.eu/esco/skill/cbe2c304-1e7d-489a-97d9-a7d3e37a9db6",
+     "http://data.europa.eu/esco/skill/cdd8b6b2-2fd9-453c-8d62-8a1dc6efcd49",
+     "http://data.europa.eu/esco/skill/d8726a5a-0614-4dc6-ad03-cf5e3b3caaa5",
+     "http://data.europa.eu/esco/skill/f28617ad-afdd-4041-814c-216153a38998",
+     "http://data.europa.eu/esco/skill/f88002a8-6355-4d33-9496-285c166ff375",
+     "http://data.europa.eu/esco/skill/fafe0b9d-dbd9-46bd-b770-26299539ce66",
+     "http://data.europa.eu/esco/skill/fc2f1d4f-a46f-471e-a618-cbd4d0496a53"
+    ]
+   }
+  },
+  {
+   "concept_id": "Dw5E_saX_brz",
+   "label": "Kyrkans barnverksamhet",
+   "alt_labels": [],
+   "definition": "Kyrkans barnverksamhet avser aktiviteter och program som riktar sig till barn inom kyrkliga sammanhang, med fokus på att stödja deras utveckling och andliga tillväxt. Kompetensen omfattar planering, organisering och ledning av verksamheter som syftar till att engagera barn i kyrkans liv och gemenskap.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "3423"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/0b0c4b57-9034-490f-9071-5f761ec93d38"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/94b01483-f13d-48ba-b8a9-ef8f18fcb2dc"
+    ]
+   }
+  },
+  {
+   "concept_id": "Dxqv_2WA_TYt",
+   "label": "Restaurangkök",
+   "alt_labels": [],
+   "definition": "Restaurangkök avser den strukturerade och organiserade miljön för matlagning och tillagning inom restaurangbranschen. Kompetensen innefattar kunskap om köksorganisation, hygienstandarder och kulinariska tekniker för att säkerställa effektiv matproduktion och kvalitetssäkring.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/0c4ab800-2daf-4feb-b34e-4e86a2eff2ce",
+     "http://data.europa.eu/esco/skill/5c6ca864-76d5-4217-b3e1-9a7ba7f8f47b"
+    ],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/1316577b-31f7-437f-97ce-27c408b87a55",
+     "http://data.europa.eu/esco/skill/32adf439-5bbc-4759-8f05-fbaacdac60a6",
+     "http://data.europa.eu/esco/skill/36a48e03-4466-4ea3-b463-cbce02cbd7bb",
+     "http://data.europa.eu/esco/skill/555d83ff-dbf9-481a-b726-2d502a11904e",
+     "http://data.europa.eu/esco/skill/b1c87aa4-f4f8-4ca5-a844-c44516483b29",
+     "http://data.europa.eu/esco/skill/c42d2a2a-2f55-45ac-beb1-0a8a76412457",
+     "http://data.europa.eu/esco/skill/e265e4e2-f031-4012-a7bf-54cac48fb846",
+     "http://data.europa.eu/esco/skill/f19f0cda-73f4-417e-8ec9-c0cacf5e7149",
+     "http://data.europa.eu/esco/skill/fad85f11-e21d-41f4-b221-2f8ab318d4ed",
+     "http://data.europa.eu/esco/skill/fd60eb61-262e-4719-bb5c-e5ff4b531ae8"
+    ]
+   }
+  },
+  {
+   "concept_id": "E25i_PEi_rQh",
+   "label": "Föräldrautbildning",
+   "alt_labels": [],
+   "definition": "Föräldrautbildning",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2222"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/cc94f454-56d1-41b9-a82e-2aed9ed4f72e"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/624e82e5-1424-4ef1-8aa9-de19f8117249",
+     "http://data.europa.eu/esco/skill/68f909bf-1b0f-45f4-bbea-b5edb6747740",
+     "http://data.europa.eu/esco/skill/8762380a-893e-459c-a028-44122c94b737"
+    ]
+   }
+  },
+  {
+   "concept_id": "EeYs_uSG_BUb",
+   "label": "Egenkontroll, erfarenhet",
+   "alt_labels": [],
+   "definition": "Egenkontroll, erfarenhet, avser den färdighet och kunskap som krävs för att självständigt övervaka och utvärdera egna arbetsprocesser eller produkter i syfte att säkerställa efterlevnad av krav och standarder. Denna kompetens omfattar både praktisk erfarenhet av att genomföra kontroller och teoretisk förståelse för gällande föreskrifter och rutiner.",
+   "headline": "Ka2f_mQd_FvC",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/0ff99f51-40d9-42f1-a1ec-377b2bb5e15f",
+     "http://data.europa.eu/esco/skill/f7f56b20-8f05-4731-a1bf-79fdcffc72ce",
+     "http://data.europa.eu/esco/skill/fb40d2c6-fe3c-4e49-9289-49e98900b315"
+    ]
+   }
+  },
+  {
+   "concept_id": "Ektq_nPz_4YF",
+   "label": "Specialistsjuksköterskeexamen",
+   "alt_labels": [],
+   "definition": "Specialistsjuksköterskeexamen är en specialistutbildning på universitet/högskola med inriktning till specialistsjuksköterska.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "2221",
+    "2222"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "FJjr_4pF_LEY",
+   "label": "Vårdcentral",
+   "alt_labels": [],
+   "definition": "Vårdcentral avser en vårdinrättning som erbjuder öppen hälso- och sjukvård till patienter inom ett visst geografiskt område. Denna kompetens omfattar verksamheter som distriktssköterskor och grundutbildade sjuksköterskor som bedömer och behandlar patienters hälsotillstånd och behov av vård.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/9b63d92b-5a3a-46b0-b2ba-c98b39ea5aaf"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "Fvdi_Xn6_TB6",
+   "label": "Maskinskötsel, industribageri",
+   "alt_labels": [],
+   "definition": "Maskinskötsel, industribageri avser hantering och övervakning av maskiner i industribagerier som bearbetar råvaror för att producera olika typer av bröd och bakverk. Kompetensen innefattar att styra maskingruppers arbete, säkerställa kvalitet i produktionen med hjälp av automatiserade system samt att genomföra löpande underhåll och åtgärder för att optimera produktionseffektiviteten.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "7612"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/07e6231e-fbd4-4876-8ab5-346710dabe85"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/61d9ad65-6a78-4c72-9824-aeca20d9a102"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/067a0c6d-4d8b-4e62-bce1-fc27c26f08c6",
+     "http://data.europa.eu/esco/skill/77250067-81bd-4e18-865e-2be6ca26c8a8",
+     "http://data.europa.eu/esco/skill/c44c5e78-6647-406c-84f0-b6e626877fc2",
+     "http://data.europa.eu/esco/skill/ce37e233-64c4-4b48-a09a-04ec08fb9740",
+     "http://data.europa.eu/esco/skill/d87653a0-87b0-4c03-a44a-bf0a217431a2",
+     "http://data.europa.eu/esco/skill/ef067155-4970-4b87-8799-c7ad549bf7e9"
+    ]
+   }
+  },
+  {
+   "concept_id": "GYz6_5Jt_Wmy",
+   "label": "Sjuksköterskeexamen",
+   "alt_labels": [],
+   "definition": "Sjuksköterskeexamen är en yrkesexamen på högskolenivå kopplad till utbildning med inriktning mot sjuksköterska.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "2221",
+    "2222"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/ef1e6c93-2a90-4abf-951b-a8ae283d368d"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "GdFM_7x5_eZc",
+   "label": "Verksamhetsledning, livsmedelsproduktion",
+   "alt_labels": [
+    "Verksamhetsledning, livsmedelstillverkning"
+   ],
+   "definition": "Verksamhetsledning, livsmedelsproduktion",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "7612"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/9a77486b-4cb2-4b84-9a78-dc6c4e2bd545"
+    ],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/24783286-361a-44db-b0f1-aaabe35aef5d",
+     "http://data.europa.eu/esco/skill/4548416b-2310-4afc-bd6a-c022d3e41014",
+     "http://data.europa.eu/esco/skill/6828d641-3703-4379-a43b-375fe8278757",
+     "http://data.europa.eu/esco/skill/764db027-9063-4468-acb3-c73ecfc76f35",
+     "http://data.europa.eu/esco/skill/77558a0f-5e48-44bb-80d2-6380592080de",
+     "http://data.europa.eu/esco/skill/f2536b0a-068b-48ed-910f-231bfa0ec032",
+     "http://data.europa.eu/esco/skill/fd6aa2f5-b061-4ba2-a047-23d35d77f9cf"
+    ]
+   }
+  },
+  {
+   "concept_id": "GerE_Exs_HoP",
+   "label": "Finbröd",
+   "alt_labels": [],
+   "definition": "Finbröd",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "7612"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/50db2b5e-edda-496d-8a6e-aff91dc243d9"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "Gt5f_wdi_FSJ",
+   "label": "Budgetansvar",
+   "alt_labels": [],
+   "definition": "Budgetansvar avser hantering och övervakning av budgetar inom en verksamhet, vilket inkluderar planering, fördelning av resurser och uppföljning av ekonomiska mål. Kompetensen innefattar också att säkerställa att verksamheten håller sig inom de fastställda budgetramarna.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "1720",
+    "2512"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/21c5790c-0930-4d74-b3b0-84caf5af12ea"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/36b04285-6b9d-47e6-bcf9-e6a9ac2612aa",
+     "http://data.europa.eu/esco/skill/3a01bfd1-6c8f-4705-b485-2501e1ed0657",
+     "http://data.europa.eu/esco/skill/3b902c9f-3def-4c0b-b940-02924d698675",
+     "http://data.europa.eu/esco/skill/3d28dfc8-1565-4298-8fed-8a27512322ca",
+     "http://data.europa.eu/esco/skill/3e28860e-f520-461d-8282-a32264c4f4a1",
+     "http://data.europa.eu/esco/skill/f077719c-82ff-4035-9426-47c5eb554454"
+    ]
+   }
+  },
+  {
+   "concept_id": "HKdN_aaP_pQK",
+   "label": "Mjukvarukonstruktion",
+   "alt_labels": [],
+   "definition": "Mjukvarukonstruktion avser processer för design och utveckling av programvara och IT-system. Kompetensen inkluderar bland annat analys, programmering och dokumentation, med fokus på att skapa effektiva och användarvänliga lösningar för olika applikationer och system.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/3e40c7d0-0e36-4b33-bc33-0aa87eda0561"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "NMZ1_bCs_WcR",
+   "label": "Projektadministration",
+   "alt_labels": [],
+   "definition": "Projektadministration avser processen att planera, organisera och följa upp administrativa uppgifter kopplade till projekt, vilket inkluderar dokumentation, resursallokering och kommunikation inom projektteamet. Kompetensen omfattar förmåga att hantera tidslinjer och budgetar, samt att säkerställa att alla administrativa rutiner följs för att stödja projektets mål.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/130d8246-5d34-4cbf-93c6-c02990a26532",
+     "http://data.europa.eu/esco/skill/5cbfa47c-5363-46f2-91e7-01909e4f3b15"
+    ],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/06e347f2-2504-4ee8-b7f7-8d9542f56207",
+     "http://data.europa.eu/esco/skill/22902bf9-cc3f-495b-811a-c441e28e23f6",
+     "http://data.europa.eu/esco/skill/382ed835-8958-4d86-8471-cff55c6df3e7",
+     "http://data.europa.eu/esco/skill/4d38b095-6730-4157-9807-8049dd7b43b8",
+     "http://data.europa.eu/esco/skill/5436f06d-4cc0-42a6-8e5b-63b842cce03b",
+     "http://data.europa.eu/esco/skill/770d4956-b5e0-4d44-bf42-3a766b232c5d",
+     "http://data.europa.eu/esco/skill/baecd6d9-6db9-45d7-838c-0d192561a9f1",
+     "http://data.europa.eu/esco/skill/f17f94f1-88cb-4815-873a-2a9639f10729",
+     "http://data.europa.eu/esco/skill/fdf15b35-9028-4acb-bfd2-43f00a015cd9"
+    ]
+   }
+  },
+  {
+   "concept_id": "NbjJ_WBY_FoA",
+   "label": "Hemsjukvård",
+   "alt_labels": [],
+   "definition": "Hemsjukvård avser den vård och omsorg som ges till patienter i deras hem, vilket innefattar både medicinska och omvårdnadsuppgifter för att stödja individens hälsa och livskvalitet.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/0bb3792c-0a17-4e48-a8b3-5603bb12a660"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/04880044-9668-45b8-b888-f3d9894bac9f",
+     "http://data.europa.eu/esco/skill/c5b56e63-9cd6-470d-97aa-6e3148752312"
+    ]
+   }
+  },
+  {
+   "concept_id": "Nksx_4oe_fEQ",
+   "label": "Arbetsmiljöansvar",
+   "alt_labels": [],
+   "definition": "Arbetsmiljöansvar",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "1720"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/db9050db-ae5d-4be8-8114-c26f272c3bda"
+    ],
+    "close": [
+     "http://data.europa.eu/esco/skill/20a7df5e-f388-4073-b3e2-4bf7a4c46f28",
+     "http://data.europa.eu/esco/skill/37ab8cef-8abf-43be-a71f-1e45aef610b8"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/81079e09-228b-4476-9bc4-279d7e2152c2"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/5a70f4b8-0e70-4432-b052-6aa33345154f",
+     "http://data.europa.eu/esco/skill/81d47290-6046-44c9-96e0-7d54542072b5",
+     "http://data.europa.eu/esco/skill/a276b1ad-c0b7-4b33-899c-0fbfcdbe0eee",
+     "http://data.europa.eu/esco/skill/c4180af3-befd-4bd8-9a65-6a496f9d9f15",
+     "http://data.europa.eu/esco/skill/fb40d2c6-fe3c-4e49-9289-49e98900b315"
+    ]
+   }
+  },
+  {
+   "concept_id": "Qi3j_qCf_LAL",
+   "label": "Gesällbrev, bagare och konditor",
+   "alt_labels": [],
+   "definition": "Gesällbrev, bagare och konditor är ett bevis på att en hantverkare har genomgått utbildning och avlagt de delprov som krävs inom det specifika hantverksyrket, och därigenom uppnått ett erkännande av färdigheter och kompetens inom yrket. Utfärdas av Sveriges hantverksråd i samråd med aktuell branschorganisation.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "7612"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "RTeX_GL6_e6h",
+   "label": "Yrkesutbildning, bagare och konditor",
+   "alt_labels": [],
+   "definition": "Yrkesutbildning, bagare och konditor är en gymnasial eller eftergymnasial yrkesinriktad utbildning med inriktning till bagare och konditor.",
+   "headline": "YtGj_FEB_Hjd",
+   "ssyk_codes": [
+    "7612"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "SJaZ_pXy_771",
+   "label": "Restaurangekonomi",
+   "alt_labels": [],
+   "definition": "Restaurangekonomi",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "1720",
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/210827e3-3129-45a2-8683-70399f3f561f",
+     "http://data.europa.eu/esco/skill/3b902c9f-3def-4c0b-b940-02924d698675",
+     "http://data.europa.eu/esco/skill/9e9a4209-c7cf-4f6e-973e-dc2ffadccc74",
+     "http://data.europa.eu/esco/skill/e2161b42-46f4-4b62-8136-c190edce56fc"
+    ]
+   }
+  },
+  {
+   "concept_id": "SmZd_Jaa_BeY",
+   "label": "Upphandlingsbestämmelser",
+   "alt_labels": [],
+   "definition": "Upphandlingsbestämmelser avser regler och riktlinjer som styr hur offentlig och privat sektor ska genomföra upphandlingar av varor, tjänster och byggentreprenader.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "1720"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/9b862976-aa05-4bde-8ed6-8f39790edd0f"
+    ],
+    "close": [
+     "http://data.europa.eu/esco/skill/1ccf5bda-d904-4d00-9c71-9b8f0196e9f9",
+     "http://data.europa.eu/esco/skill/3bc08c26-2f98-4730-bbb6-ec4a8566e3cf",
+     "http://data.europa.eu/esco/skill/d0586c39-a2d9-4492-a970-c566a64ffd86",
+     "http://data.europa.eu/esco/skill/d2564da5-c21f-4c02-8887-c78a001bb183"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/4b2c4de9-43d7-4905-9d58-bc2e7d84b2e1",
+     "http://data.europa.eu/esco/skill/6789d5a3-34ca-4417-bb93-331319b01da3",
+     "http://data.europa.eu/esco/skill/a9dc9e40-14a6-4899-93ec-29d5c79c2ebd"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/8faefbc1-4745-4b3f-9889-81cd1d40b67c",
+     "http://data.europa.eu/esco/skill/a1f2e26f-b2ba-47dc-a0e8-8c53424a508d"
+    ]
+   }
+  },
+  {
+   "concept_id": "TsH1_ePz_fpf",
+   "label": "Barn- och fritidsprogrammet",
+   "alt_labels": [],
+   "definition": "Barn- och fritidsprogrammet är gymnasial yrkesinriktad utbildning med inriktning mot arbete med barn, ungdomar eller vuxna inom pedagogiska och sociala yrkesområden eller i fritids- och friskvårdssektorn. Källa: Skolverket",
+   "headline": "YtGj_FEB_Hjd",
+   "ssyk_codes": [
+    "3423",
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/28ca596e-5e2f-4149-a28d-42d2c4c20227",
+     "http://data.europa.eu/esco/skill/44da96fe-26a3-4a32-9a0f-c49614bb7298"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "TuUX_3Jo_wyq",
+   "label": "Vårdavdelning/Mottagning",
+   "alt_labels": [
+    "Mottagning",
+    "Vårdavdelning"
+   ],
+   "definition": "Vårdavdelning/mottagning avser verksamheten inom hälso- och sjukvård där patienter tas emot, vårdas och behandlas i olika former av avdelningar och mottagningar.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2221"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/3be9e2fe-d793-4f35-91ed-61fbc55ae7db"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/9b63d92b-5a3a-46b0-b2ba-c98b39ea5aaf"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "UTLe_4xJ_KEG",
+   "label": "Kockutbildning",
+   "alt_labels": [],
+   "definition": "Kockutbildning är en gymnasial eller eftergymnasial yrkesinriktad utbildning med inriktning till kock.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/4b15a965-9bb4-42f1-8e44-1024aeb0b08c",
+     "http://data.europa.eu/esco/skill/f3934441-4bff-4076-9945-e6c51a01c467"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "Y2t4_aS8_tGo",
+   "label": "Layout-Adobe InDesign",
+   "alt_labels": [],
+   "definition": "Layout-Adobe InDesign avser kompetensen att använda programmet Adobe InDesign för att skapa och designa layout för tryckt och digital media. Denna kompetens innefattar färdigheter i att organisera text och bilder, samt i att välja typografi och färgscheman för att producera visuellt tilltalande och funktionella dokument.",
+   "headline": "5LZb_Hdk_QCU",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/9b30c8fd-6467-4d16-99e0-32899a9ceec0"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "btqh_hCy_bRi",
+   "label": "Bageriarbete",
+   "alt_labels": [],
+   "definition": "Bageriarbete avser processer och tekniker för att skapa olika typer av bröd och bakverk, vilket inkluderar både matbröd och kaffebröd. Kompetensen omfattar även tillverkning av tårtor, bakelser, kakor, desserter samt handgjord choklad och konfekt.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "7612"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/c13f66f5-26ab-465f-80d8-c5484d941cc6"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/50db2b5e-edda-496d-8a6e-aff91dc243d9"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/1a369b5d-cf7a-4dc6-8d65-18b4e16949a2",
+     "http://data.europa.eu/esco/skill/3fa0a100-66ea-4bb3-a33e-2044d4a43df3",
+     "http://data.europa.eu/esco/skill/4170dc71-def4-41be-9001-43fcb3ea1c29",
+     "http://data.europa.eu/esco/skill/6bf4f085-82d2-4b21-9aa5-9c1f955becab",
+     "http://data.europa.eu/esco/skill/79c96922-6032-40d6-b391-0f4a0d85e620",
+     "http://data.europa.eu/esco/skill/8f96b592-24c4-40c3-bb88-189ae3a1e405",
+     "http://data.europa.eu/esco/skill/a0d96ce8-aeeb-4ffb-bd78-21c0598179ff",
+     "http://data.europa.eu/esco/skill/adcde86b-023a-4865-afec-45e1c343388e",
+     "http://data.europa.eu/esco/skill/c44c5e78-6647-406c-84f0-b6e626877fc2",
+     "http://data.europa.eu/esco/skill/ce37e233-64c4-4b48-a09a-04ec08fb9740",
+     "http://data.europa.eu/esco/skill/d87653a0-87b0-4c03-a44a-bf0a217431a2",
+     "http://data.europa.eu/esco/skill/e33ad426-d088-4136-b9f4-8e9c70522932",
+     "http://data.europa.eu/esco/skill/f404dcb3-4ed1-404e-9ab8-992918d836ac"
+    ]
+   }
+  },
+  {
+   "concept_id": "dJa5_Nao_mDS",
+   "label": "Legitimation som sjuksköterska",
+   "alt_labels": [],
+   "definition": "Legitimation som krävs för att kunna arbeta som sjuksköterska i Sverige. Utfärdas av Socialstyrelsen.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "2221",
+    "2222"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/0646be77-a425-40da-8577-f77d1198c67f",
+     "http://data.europa.eu/esco/skill/0ec5d049-5269-458b-8f02-15a597f320a4",
+     "http://data.europa.eu/esco/skill/11e2378a-ccc0-45a5-993c-23eb65f9e1ce",
+     "http://data.europa.eu/esco/skill/2b1ce548-4e16-45fb-bfb2-f3141c8efe8d",
+     "http://data.europa.eu/esco/skill/52047630-b880-4939-bb19-6700187af031",
+     "http://data.europa.eu/esco/skill/cf6ca1fc-f2be-4deb-bb35-1fffe4099023"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "dTK5_R7G_p56",
+   "label": "Grafisk design",
+   "alt_labels": [],
+   "definition": "Grafisk design avser processen att skapa visuella kommunikationslösningar genom användning av text, bilder och grafik för att förmedla specifika budskap eller idéer. Denna kompetens omfattar kunskaper inom färgteori, typografi och layout, samt förmågan att använda digitala designverktyg och programvaror för att producera visuellt effektiva och estetiskt tilltalande material.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/7fb699d9-182a-430e-b7a0-6d8ed05c284b"
+    ],
+    "close": [
+     "http://data.europa.eu/esco/skill/86f7126d-97fd-4da5-be96-d1cf6ecd54e6"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/f058bf62-70d1-4f5e-be2a-8b26fac24a96"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/1bc718b6-ed90-4a9d-9fa7-8cec928a4581",
+     "http://data.europa.eu/esco/skill/4f3e2026-e76d-4ce2-96fd-52eeade965b1",
+     "http://data.europa.eu/esco/skill/7abf5b24-8f18-49c5-a64b-5a5870a03a56"
+    ]
+   }
+  },
+  {
+   "concept_id": "hAZR_5Ho_Jdw",
+   "label": "Legitimation som barnmorska",
+   "alt_labels": [],
+   "definition": "Legitimation som krävs för att kunna arbeta som barnmorska i Sverige. Utfärdas av Socialstyrelsen.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "2221",
+    "2222"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/103770db-5ed7-4208-ac72-cf174dd677e9",
+     "http://data.europa.eu/esco/skill/1c218559-82fd-45f9-b2db-1734321b3edc",
+     "http://data.europa.eu/esco/skill/2e2e0231-b8d7-4819-be7b-8e453bf5f0f7",
+     "http://data.europa.eu/esco/skill/3f13dda5-f504-4997-a595-f0d60719897c",
+     "http://data.europa.eu/esco/skill/49ba1b34-ae1a-4a6d-8d66-8f1f029d361d",
+     "http://data.europa.eu/esco/skill/5b671d86-f1fa-4468-947c-374dc6cdf6b8",
+     "http://data.europa.eu/esco/skill/6aa0f78f-2d68-432b-ab08-e3f504571076",
+     "http://data.europa.eu/esco/skill/acd54bcb-4c69-4ee9-a27f-732aec62804d",
+     "http://data.europa.eu/esco/skill/bdee6867-b76a-4652-bd15-824fce9dc792",
+     "http://data.europa.eu/esco/skill/be1b93a1-dda7-436e-b291-7fe28ae9a450",
+     "http://data.europa.eu/esco/skill/d562c400-953a-4620-a191-ffefb5c322b8",
+     "http://data.europa.eu/esco/skill/dcf69ae9-a56e-4563-ad2c-c61dda8215f9",
+     "http://data.europa.eu/esco/skill/ec04e800-4f4a-4c53-994d-316215daf9c6"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "iUew_moc_BRk",
+   "label": "Programmering",
+   "alt_labels": [],
+   "definition": "Programmering avser processen att skriva och utveckla kod för att skapa programvara och applikationer som utför specifika uppgifter eller löser problem. Kompetensen inkluderar förståelse för olika programmeringsspråk, algoritmer, datastrukturer och mjukvaruutvecklingsmetoder.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/00c04e40-35ea-4ed1-824c-82f936c8f876",
+     "http://data.europa.eu/esco/skill/013441c1-1f13-47e9-80c4-9a53e8e1bc05",
+     "http://data.europa.eu/esco/skill/2522a6ce-3202-4ac8-9f5b-b9cb5a3a83a1",
+     "http://data.europa.eu/esco/skill/4b88b1ee-c2d9-473a-9fe8-ba3b9c0c179a",
+     "http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38",
+     "http://data.europa.eu/esco/skill/5ef0c719-5bcb-49f8-b8eb-824388225333",
+     "http://data.europa.eu/esco/skill/697dcc9f-ae92-4506-b5f2-e770d7589f74",
+     "http://data.europa.eu/esco/skill/6b643893-0a1f-4f6c-83a1-e7eef75849b9",
+     "http://data.europa.eu/esco/skill/7961413f-61d0-4722-9cd9-20a050a29899",
+     "http://data.europa.eu/esco/skill/797a4416-0b8d-44f3-8fcd-eb10bd0be6b4",
+     "http://data.europa.eu/esco/skill/85616cc4-98bf-4355-9cf1-72ff11752848",
+     "http://data.europa.eu/esco/skill/8b94aa1e-89c9-459d-b3b4-1dfab8dec2df",
+     "http://data.europa.eu/esco/skill/9d1b08b3-ba1e-41f6-a466-1ac1e62eb5f0",
+     "http://data.europa.eu/esco/skill/9d2f77af-4307-4ac5-bc50-a9980cec7e83",
+     "http://data.europa.eu/esco/skill/a7a14be2-78b5-4b4a-ba77-2658285e2756",
+     "http://data.europa.eu/esco/skill/bb165899-d95f-4433-95f2-173fefd716d2",
+     "http://data.europa.eu/esco/skill/bf4d884f-c848-402a-b130-69c266b04164",
+     "http://data.europa.eu/esco/skill/f6868852-9bf6-4899-a5d6-5f9532fb877d",
+     "http://data.europa.eu/esco/skill/f9670490-8aa4-4540-b121-d440a8294aab"
+    ]
+   }
+  },
+  {
+   "concept_id": "kj4Q_nLh_u8Q",
+   "label": "Livsmedelshygien",
+   "alt_labels": [],
+   "definition": "Livsmedelshygien avser de åtgärder och rutiner som syftar till att säkerställa säker hantering av livsmedel för att förebygga hälsofaror och kontaminering. Kompetensen omfattar kunskap om sanitära standarder samt regler för hantering och förvaring av livsmedel, i enlighet med Livsmedelsverket.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5120"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/3f4e4eab-a8e0-4aed-b8bb-79afe7c890e3",
+     "http://data.europa.eu/esco/skill/a34f4fd4-1aff-4941-82d5-542ac94f81c3"
+    ],
+    "close": [
+     "http://data.europa.eu/esco/skill/07469451-ae47-49af-98ea-99f8ef9d283c",
+     "http://data.europa.eu/esco/skill/089ee650-297e-4716-87d1-440743b70a0d",
+     "http://data.europa.eu/esco/skill/1289bd81-8daf-4e7c-bb46-6bbfe9141c49",
+     "http://data.europa.eu/esco/skill/2d7bf28a-2487-4443-9115-47478080b1a4",
+     "http://data.europa.eu/esco/skill/713f1ba8-c7a8-43e5-a5cc-0b869474efe7",
+     "http://data.europa.eu/esco/skill/9b67cbf3-085c-4578-8a8e-8d130ed3fced",
+     "http://data.europa.eu/esco/skill/f66b2fc3-2952-41e5-89bf-a9157ea29420"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/bf7a45c4-0d72-4e6e-9da7-127b2b6656b7"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/2465763d-2bc8-4d76-8705-4755a2a120ce",
+     "http://data.europa.eu/esco/skill/41235c52-558f-4f94-9f14-dc69154e5081",
+     "http://data.europa.eu/esco/skill/48e10631-64c1-4831-8518-a6a992ae0a13",
+     "http://data.europa.eu/esco/skill/540ecf14-71ac-4675-aa3c-0ce19969d669",
+     "http://data.europa.eu/esco/skill/756e7f39-d48d-4f42-a900-b09e0c34aa8c",
+     "http://data.europa.eu/esco/skill/791fa659-3382-49f8-a8dd-505226d0da48",
+     "http://data.europa.eu/esco/skill/c29fed5c-f03b-4389-b110-29b6db00cd01",
+     "http://data.europa.eu/esco/skill/dacaebb5-5d85-4f3e-9adb-7c82b4f53189"
+    ]
+   }
+  },
+  {
+   "concept_id": "qMfa_U8e_Lto",
+   "label": "Pedagogiskt förhållningssätt/Tydliggörande pedagogik",
+   "alt_labels": [
+    "Pedagogiskt förhållningssätt, Tydliggörande pedagogik"
+   ],
+   "definition": "Pedagogiskt förhållningssätt/Tydliggörande pedagogik avser en metodologi som syftar till att skapa en miljö där individer kan förstå och delta i lärande och kommunikation. Kompetensen innebär att anpassa och tydliggöra information och aktiviteter för att främja engagemang och lärande hos personer, särskilt inom kontexter relaterade till socialt arbete och utbildning.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/30d49832-84bd-4d97-9441-aef97a76a8d0"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/4e3db6d7-88b8-492d-89e5-a93d01c3e369"
+    ]
+   }
+  },
+  {
+   "concept_id": "tg1e_QpF_xdX",
+   "label": "Neuropsykologisk funktionsnedsättning/NPF, erfarenhet",
+   "alt_labels": [
+    "NPF, erfarenhet",
+    "Neuropsykologisk funktionsnedsättning, erfarenhet"
+   ],
+   "definition": "Neuropsykologisk funktionsnedsättning/NPF, erfarenhet, avser kunskap och praktisk erfarenhet av att stödja och arbeta med individer som har neuropsykologiska funktionsnedsättningar, såsom ADHD och autism. Denna kompetens inkluderar förståelse för specifika behov och strategier som kan underlätta för individens lärande och välbefinnande.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/54411e8e-d62f-46d8-b87b-fce23f8e3bc8"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "uqTa_YUV_uAi",
+   "label": "Barnmorskeexamen",
+   "alt_labels": [],
+   "definition": "Barnmorskeexamen är en examen på högskolenivå kopplad till utbildning med inriktning mot barnmorska.",
+   "headline": "HjPN_99i_cFD",
+   "ssyk_codes": [
+    "2222"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/297acfd7-3efd-4d35-8204-bb3f217fc4ca",
+     "http://data.europa.eu/esco/skill/4a8492b8-55ba-4ffa-b187-4b16d20bacc4",
+     "http://data.europa.eu/esco/skill/7666e121-32a4-40c9-90a7-6dc024985475",
+     "http://data.europa.eu/esco/skill/b459f803-ddbf-4a90-9419-fb92acf12e14",
+     "http://data.europa.eu/esco/skill/cb871f4d-d878-43f6-97a2-b334824146fd",
+     "http://data.europa.eu/esco/skill/d9a6e7e5-5519-4e1e-b9c8-0d04b303f509",
+     "http://data.europa.eu/esco/skill/f7f41688-c430-41e5-a19a-46d5588c374c"
+    ],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "w2ok_LT3_BXa",
+   "label": "Barn och ungdomar med funktionsnedsättning, erfarenhet",
+   "alt_labels": [],
+   "definition": "Barn och ungdomar med funktionsnedsättning, erfarenhet, handlar om kunskap och färdighet att arbeta med barn och ungdomar som har olika typer av funktionsnedsättningar. Kompetensen omfattar förståelse för deras behov och förmåga att anpassa aktiviteter och stödinsatser för att främja deras utveckling och delaktighet i olika sammanhang.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "3423",
+    "5312"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [
+     "http://data.europa.eu/esco/skill/0f2cd213-1f80-4c02-96c9-bf183834f7d6",
+     "http://data.europa.eu/esco/skill/135192cb-84e4-4b70-8946-fbe5041b26cd"
+    ],
+    "broad": [
+     "http://data.europa.eu/esco/skill/ef1e63c9-f8c1-46ad-8c74-3cea311c9377"
+    ],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "wXRm_Aq3_9D8",
+   "label": "Adobe Illustrator",
+   "alt_labels": [],
+   "definition": "Adobe Illustrator är en grafisk designprogramvara som används för att skapa vektorgrafik, illustrera och designa olika typer av visuella material. Kompetensen innefattar kunskap om verktyg och funktioner i programmet för att producera professionella och anpassade designlösningar.",
+   "headline": "5LZb_Hdk_QCU",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/27b913f0-3c52-448b-ad27-fc6ef08fb326"
+    ],
+    "close": [],
+    "broad": [],
+    "narrow": []
+   }
+  },
+  {
+   "concept_id": "xAbu_uKA_Jeu",
+   "label": "Systemtestning",
+   "alt_labels": [],
+   "definition": "Systemtestning avser processen att verifiera och validera funktioner och prestanda hos ett IT-system som helhet. Detta inkluderar tester för att säkerställa att systemet uppfyller specificerade krav och fungerar felfritt under olika scenarier och användarfall.",
+   "headline": "zmYu_aAM_TuF",
+   "ssyk_codes": [
+    "2512"
+   ],
+   "esco": {
+    "exact": [
+     "http://data.europa.eu/esco/skill/ce354460-500e-4eaa-8e95-8f243fcea3db"
+    ],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/334e3e49-fb02-4051-809a-f06adfdc1c40"
+    ],
+    "narrow": [
+     "http://data.europa.eu/esco/skill/0e8a19c5-2f06-4a7c-b228-d4ef1021c5d0",
+     "http://data.europa.eu/esco/skill/78a74fd1-efc6-49dc-adb1-1b0fbe35c22c",
+     "http://data.europa.eu/esco/skill/9190d87f-9792-42e0-bb7f-64294a656bcd",
+     "http://data.europa.eu/esco/skill/fbbcb9ab-4b95-4e57-a756-30d08b7da7a5"
+    ]
+   }
+  },
+  {
+   "concept_id": "xNyv_PTi_fSa",
+   "label": "2D-grafik-Adobe Photoshop",
+   "alt_labels": [],
+   "definition": "2D-grafik-Adobe Photoshop avser kompetens i att använda Adobe Photoshop för att skapa, redigera och manipulera tvådimensionell grafik. Denna kompetens innefattar behärskning av verktyg och tekniker för att utveckla visuellt material för olika ändamål som tryck och digital media.",
+   "headline": "5LZb_Hdk_QCU",
+   "ssyk_codes": [
+    "4114"
+   ],
+   "esco": {
+    "exact": [],
+    "close": [],
+    "broad": [
+     "http://data.europa.eu/esco/skill/14ced458-5f4b-495f-bd3d-9c240614bda0"
+    ],
+    "narrow": []
+   }
+  }
+ ],
+ "headlines": [
+  {
+   "concept_id": "5LZb_Hdk_QCU",
+   "label": "Programvara för digitalt skapande"
+  },
+  {
+   "concept_id": "HjPN_99i_cFD",
+   "label": "Yrkesbevis/examen"
+  },
+  {
+   "concept_id": "JErj_EuK_69L",
+   "label": "Programmerings- och systemutvecklingsverktyg"
+  },
+  {
+   "concept_id": "Ka2f_mQd_FvC",
+   "label": "Yrkesövergripande kompetenser"
+  },
+  {
+   "concept_id": "MYnV_auQ_kcS",
+   "label": "Styr- och utvecklingsmodeller"
+  },
+  {
+   "concept_id": "QkYc_pTH_tDk",
+   "label": "Kommunikationsprotokoll"
+  },
+  {
+   "concept_id": "ShQw_McG_oti",
+   "label": "Datorspråk"
+  },
+  {
+   "concept_id": "TdNz_dnv_jzb",
+   "label": "Applikationsplattformar"
+  },
+  {
+   "concept_id": "YtGj_FEB_Hjd",
+   "label": "Yrkesutbildning"
+  },
+  {
+   "concept_id": "ifHn_wrW_bFV",
+   "label": "Allmänna datakunskaper"
+  },
+  {
+   "concept_id": "nHDU_dpj_R9H",
+   "label": "Nätverk"
+  },
+  {
+   "concept_id": "zmYu_aAM_TuF",
+   "label": "Övriga kompetenser"
+  }
+ ],
+ "substitutions": [
+  {
+   "from": "17FS_XzU_AQ4",
+   "to": "Sbzf_iBA_MAS",
+   "pct": 75
+  },
+  {
+   "from": "Sbzf_iBA_MAS",
+   "to": "17FS_XzU_AQ4",
+   "pct": 75
+  }
+ ]
+}
