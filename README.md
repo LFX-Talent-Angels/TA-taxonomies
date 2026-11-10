@@ -71,6 +71,11 @@ python -m ta_taxonomies.suites.onet.load --mode full
 python -m ta_taxonomies.suites.sfia.fetch --out data/sfia/sfia9_structure.json
 python -m ta_taxonomies.suites.sfia.load --mode full
 
+# BLS: SOC 2018 + Employment Projections (see suites/bls/NOTES.md). bls.gov
+# needs a contact in the User-Agent; building reads xlsx (the [bls-xlsx] extra).
+BLS_USER_AGENT="TalentAngels-loader/0.1 (you@example.org)" python -m ta_taxonomies.suites.bls.fetch
+python -m ta_taxonomies.suites.bls.load --mode full
+
 # Then embed each suite's labels for meaning-based search (needs the [embed]
 # extra). Idempotent; rerun after any bulk re-load.
 python -m ta_taxonomies.suites.esco.embed

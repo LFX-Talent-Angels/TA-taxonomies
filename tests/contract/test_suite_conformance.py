@@ -69,7 +69,14 @@ def _load_onet() -> object:
     return run_load(mode="fixture", wipe=True)
 
 
+def _load_bls() -> object:
+    from ta_taxonomies.suites.bls.load import run_load
+
+    return run_load(mode="fixture", wipe=True)
+
+
 def _cases() -> list[SuiteCase]:
+    from ta_taxonomies.suites.bls.tools import BLS_LOCATE, BlsSuite
     from ta_taxonomies.suites.esco.tools import ESCO_LOCATE, EscoSuite
     from ta_taxonomies.suites.onet.tools import ONET_LOCATE, OnetSuite
 
@@ -95,6 +102,18 @@ def _cases() -> list[SuiteCase]:
             # Every fixture title sharing a word sits in SOC 15: no live group query.
             group_query=None,
             sample_code=("15-1252.00", "Software Developers"),
+        ),
+        SuiteCase(
+            name="bls",
+            config=BLS_LOCATE,
+            suite_class=BlsSuite,
+            load_fixture=_load_bls,
+            exact_title="Software Developers",
+            broad_query="developers",
+            sample_group_code="15",
+            # Physician Assistants (SOC 29), Nursing and Medical Assistants (SOC 31).
+            group_query="assistants",
+            sample_code=("15-1252", "Software Developers"),
         ),
         # Add your suite here.
     ]
