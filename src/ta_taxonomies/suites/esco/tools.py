@@ -13,12 +13,12 @@ not reimplement graph access. LangGraph ``@tool`` wiring stays in TA-agents.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from neo4j import Driver, Session
 
 from ta_taxonomies.contract.models import (
-    Candidate,
     Edge,
     Node,
     Path,
@@ -26,12 +26,28 @@ from ta_taxonomies.contract.models import (
     PruningStats,
     ToolResult,
 )
+from ta_taxonomies.contract.schema import SuiteSchema
+from ta_taxonomies.suites._locate import (
+    Confidences,
+    GroupScheme,
+    LocateConfig,
+    Locator,
+    embed_query,
+    locate_result,
+    lucene_infix,
+    lucene_phrase,
+    queries_for,
+    query_terms,
+    record_to_node,
+)
 from ta_taxonomies.suites.esco.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
     CONF_CONTAINS,
     CONF_EXACT_ALT,
     CONF_EXACT_PREF,
+    CONF_HYBRID,
+    FULLTEXT_INDEX,
     KIND_ALIASES,
     LABEL_ESCO_NODE,
     LABEL_ISCO_GROUP,
@@ -42,37 +58,113 @@ from ta_taxonomies.suites.esco.config import (
     MAX_FRONTIER_PATHS,
     MAX_PATH_DEPTH,
     MAX_PATHS,
+    MIN_WILDCARD_TERM,
     REL_BROADER_THAN,
     REL_CLASSIFIED_UNDER,
     REL_HAS_SKILL,
+    SEARCH_LIMIT,
+    SEARCH_SCAN_CAP,
     SOURCE,
     TRAVERSABLE_RELS,
 )
 
+# Everything ESCO's Locate needs; the tiers themselves live in suites._locate.
+_ISCO_CODE = re.compile(r"[0-9]{1,4}")
+_ESCO_CODE = re.compile(r"[0-9]{1,4}(?:\.[0-9]+)*")
+
+
+def _isco_names(session: Session, codes: list[str]) -> dict[str, dict[str, Any]]:
+    return {
+        record["code"]: {"id": record["id"], "label": record["label"]}
+        for record in session.run(
+            f"MATCH (g:{LABEL_ISCO_GROUP}) WHERE g.source = $source AND g.code IN $codes "
+            "RETURN g.code AS code, g.id AS id, g.pref_label AS label",
+            codes=codes,
+            source=SOURCE,
+        )
+    }
+
+
+ESCO_LOCATE = LocateConfig(
+    source=SOURCE,
+    node_label=LABEL_ESCO_NODE,
+    occupation_label=LABEL_OCCUPATION,
+    default_labels=(LABEL_OCCUPATION, LABEL_SKILL, LABEL_ISCO_GROUP, LABEL_SKILL_GROUP),
+    kind_aliases=KIND_ALIASES,
+    fulltext_index=FULLTEXT_INDEX,
+    vector_index="esco_label_embedding",
+    confidences=Confidences(
+        exact_pref=CONF_EXACT_PREF,
+        exact_alt=CONF_EXACT_ALT,
+        casefold_unique=CONF_CASEFOLD_UNIQUE,
+        casefold_ambiguous=CONF_CASEFOLD_AMBIGUOUS,
+        contains=CONF_CONTAINS,
+        hybrid=CONF_HYBRID,
+    ),
+    extra_node_fields=("uri",),
+    # An ESCO node always has a URI; fall back to it, then the graph id.
+    source_id_fallbacks=("uri", "id"),
+    groups=GroupScheme(
+        name="isco-08",
+        code_expr="n.isco_group",
+        member_expr="n.isco_group",
+        # A shorter code covers its sub-groups ("214" holds "2142").
+        prefix_for=lambda code: code if _ISCO_CODE.fullmatch(code) else None,
+        names_for=_isco_names,
+    ),
+    # ISCO group codes ("2512") and ESCO occupation codes ("2512.4").
+    codes_for=lambda q: [q] if _ESCO_CODE.fullmatch(q) else [],
+    search_limit=SEARCH_LIMIT,
+    scan_cap=SEARCH_SCAN_CAP,
+    min_wildcard_term=MIN_WILDCARD_TERM,
+)
+
+
+# Names kept for callers and tests that import them from this module.
+_SEARCHABLE_LABELS = ESCO_LOCATE.searchable_labels
+
+
+def _query_terms(q: str) -> list[str]:
+    return query_terms(q)
+
+
+def _lucene_phrase(q: str) -> str | None:
+    return lucene_phrase(q)
+
+
+def _lucene_infix(q: str) -> str | None:
+    return lucene_infix(q, ESCO_LOCATE.min_wildcard_term)
+
+
+def _exact_pref_cypher(labels: list[str]) -> str:
+    return queries_for(ESCO_LOCATE).exact_pref(labels)
+
+
+_SCAN_CONTAINS = queries_for(ESCO_LOCATE).scan_contains
+_FULLTEXT_CONTAINS = queries_for(ESCO_LOCATE).fulltext_contains
+
+
+def _embed_query(text: str) -> list[float] | None:
+    """The suite's meaning-search hook; tests replace it to avoid the model."""
+    return embed_query(text)
+
 
 def _record_to_node(rec: dict[str, Any]) -> Node:
-    labels = list(rec.get("labels") or [])
-    kind = rec.get("kind") or (labels[0] if labels else "Node")
-    return Node(
-        id=rec["id"],
-        kind=str(kind),
-        label=rec.get("pref_label") or "",
-        source="esco",
-        source_id=rec.get("source_id") or rec.get("uri") or rec["id"],
-        properties={
-            k: v
-            for k, v in rec.items()
-            if k
-            not in {
-                "id",
-                "pref_label",
-                "source",
-                "source_id",
-                "labels",
-                "kind",
-            }
-            and v is not None
-        },
+    return record_to_node(ESCO_LOCATE, rec)
+
+
+def _locate_result(
+    rows: list[dict[str, Any]],
+    total: int,
+    confidence: float,
+    method: str,
+    evidence_suffix: str,
+    notes: list[str],
+    *,
+    ambiguous: bool = False,
+) -> ToolResult:
+    return locate_result(
+        ESCO_LOCATE, rows, total, confidence, method, evidence_suffix, notes, ambiguous=ambiguous
     )
 
 
@@ -116,197 +208,25 @@ class EscoSuite:
     def _session(self) -> Session:
         return self._driver.session(database=self._database)
 
+    @property
+    def suite_schema(self) -> SuiteSchema:
+        return SuiteSchema(
+            skill_rel_types=("HAS_SKILL",),
+            optional_rel_values=frozenset({"optional"}),
+            group_rel_type="CLASSIFIED_UNDER",
+            group_node_kinds=frozenset({"ISCOGroup", "isco group"}),
+        )
+
+    def _locator(self) -> Locator:
+        return Locator(ESCO_LOCATE, self._session, lambda q: _embed_query(q))
+
     def search_nodes(self, text: str, kind: str | None = None) -> ToolResult:
-        """Locate: resolve free text to ESCO nodes with confidence.
+        """Locate: free text to ESCO nodes with confidence (see ``suites._locate``)."""
+        return self._locator().search_nodes(text, kind)
 
-        Order: exact preferred label → exact alt label → case-insensitive
-        preferred → substring on pref/alts. Never invents hits (``not_found``).
-        ``kind`` optionally restricts labels (see ``KIND_ALIASES`` in config).
-        """
-        q = (text or "").strip()
-        if not q:
-            return ToolResult(warnings=["empty_query"])
-
-        labels = [
-            LABEL_OCCUPATION,
-            LABEL_SKILL,
-            LABEL_ISCO_GROUP,
-            LABEL_SKILL_GROUP,
-        ]
-        if kind:
-            normalized_kind = kind.lower().replace(" ", "_")
-            mapped = KIND_ALIASES.get(normalized_kind)
-            if mapped is None:
-                return ToolResult(warnings=[f"unknown_kind:{kind}"])
-            labels = [mapped]
-
-        with self._session() as session:
-            # 1) exact preferredLabel (case-sensitive)
-            exact_pref = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND n.pref_label = $q
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
-            )
-            if exact_pref:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(r),
-                        confidence=CONF_EXACT_PREF,
-                        method="exact_pref",
-                    )
-                    for r in exact_pref
-                ]
-                return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    evidence=[f"esco:search:exact_pref:{q}"],
-                )
-
-            # 2) exact alt_label (list membership)
-            exact_alt = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND n.alt_labels IS NOT NULL
-                  AND $q IN n.alt_labels
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
-            )
-            if exact_alt:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(r),
-                        confidence=CONF_EXACT_ALT,
-                        method="exact_alt",
-                    )
-                    for r in exact_alt
-                ]
-                return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    evidence=[f"esco:search:exact_alt:{q}"],
-                )
-
-            # 3) case-insensitive unique pref match
-            casefold = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND toLower(n.pref_label) = toLower($q)
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
-            )
-            if len(casefold) == 1:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(casefold[0]),
-                        confidence=CONF_CASEFOLD_UNIQUE,
-                        method="casefold_pref",
-                    )
-                ]
-                return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    evidence=[f"esco:search:casefold_pref:{q}"],
-                )
-            if len(casefold) > 1:
-                cands = [
-                    Candidate(
-                        node=_record_to_node(r),
-                        confidence=CONF_CASEFOLD_AMBIGUOUS,
-                        method="casefold_pref_ambiguous",
-                    )
-                    for r in casefold
-                ]
-                return ToolResult(
-                    candidates=cands,
-                    nodes=[c.node for c in cands],
-                    warnings=["ambiguous"],
-                    evidence=[f"esco:search:casefold_pref:{q}"],
-                )
-
-            # 4) CONTAINS on pref_label or alt_labels (case-insensitive)
-            contains = self._query_match(
-                session,
-                labels,
-                """
-                MATCH (n:EscoNode)
-                WHERE n.source = $source
-                  AND any(l IN labels(n) WHERE l IN $labels)
-                  AND (
-                    toLower(n.pref_label) CONTAINS toLower($q)
-                    OR any(a IN coalesce(n.alt_labels, [])
-                           WHERE toLower(a) CONTAINS toLower($q))
-                  )
-                RETURN n.id AS id, n.pref_label AS pref_label, n.source AS source,
-                       n.source_id AS source_id, n.uri AS uri, n.kind AS kind,
-                       n.code AS code, n.description AS description,
-                       n.alt_labels AS alt_labels, labels(n) AS labels
-                ORDER BY size(n.pref_label), n.id
-                LIMIT 25
-                """,
-                {"labels": labels, "q": q, "source": SOURCE},
-            )
-            if not contains:
-                return ToolResult(
-                    warnings=["not_found"],
-                    evidence=[f"esco:search:not_found:{q}"],
-                )
-
-            cands = [
-                Candidate(
-                    node=_record_to_node(r),
-                    confidence=CONF_CONTAINS,
-                    method="contains",
-                )
-                for r in contains
-            ]
-            warnings = ["ambiguous"] if len(cands) > 1 else []
-            return ToolResult(
-                candidates=cands,
-                nodes=[c.node for c in cands],
-                warnings=warnings,
-                evidence=[f"esco:search:contains:{q}"],
-            )
-
-    @staticmethod
-    def _query_match(
-        session: Session,
-        _labels: list[str],
-        cypher: str,
-        params: dict[str, Any],
-    ) -> list[dict[str, Any]]:
-        return [dict(r) for r in session.run(cypher, **params)]
+    def search_group(self, text: str, group: str) -> ToolResult:
+        """Occupations matching ``text`` inside one ISCO group from ``meta.groups``."""
+        return self._locator().search_group(text, group)
 
     def get_neighbors(
         self,

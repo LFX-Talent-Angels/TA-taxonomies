@@ -24,6 +24,11 @@ dev = [
 esco-xlsx = [
   "openpyxl>=3.1",
 ]
+# Semantic embedding for hybrid search (Tier 5). Optional: suites fall back to
+# keyword-only when this group is not installed (graceful degradation).
+embed = [
+  "sentence-transformers>=2.7",
+]
 
 [project.urls]
 Homepage = "https://github.com/LFX-Talent-Angels"

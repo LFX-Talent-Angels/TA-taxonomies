@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches: [main, dev]
+  # Every pull request, whatever its base. Sprint work lands as stacked PRs
+  # (each based on the previous branch); filtering on main/dev meant only the
+  # bottom of a stack was ever checked.
   pull_request:
-    branches: [main, dev]
 
 jobs:
   test:

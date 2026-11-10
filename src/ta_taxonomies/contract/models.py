@@ -108,7 +108,14 @@ class ScoredPath(BaseModel):
 
 
 class PruningStats(BaseModel):
-    """Counts from bounded path enumeration without exposing discarded paths."""
+    """Counts from a bounded result without exposing what was discarded.
+
+    Used by any tool that caps what it returns: ``enumerate_paths`` for pruned
+    routes, ``search_nodes`` for matches beyond the result limit. ``considered``
+    is what the tool found, ``returned`` what the caller got. A capped answer
+    that does not say it was capped reads as a complete one, which is the
+    failure this exists to prevent.
+    """
 
     considered: int = Field(..., ge=0)
     returned: int = Field(..., ge=0)
@@ -174,7 +181,7 @@ class ToolResult(BaseModel):
     )
     pruning: PruningStats | None = Field(
         default=None,
-        description="Counts from bounded path enumeration",
+        description="Counts from a bounded result (pruned paths, truncated matches)",
     )
     warnings: list[str] = Field(default_factory=list)
     evidence: list[str] = Field(

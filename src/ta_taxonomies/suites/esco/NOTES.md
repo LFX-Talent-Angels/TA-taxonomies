@@ -83,6 +83,88 @@ Identity rules: every node has `source = "esco"` and `source_id` = concept URI.
 
 ---
 
+## Locate performance: indexes and what they cost
+
+`search_nodes` resolves free text in four tiers (exact preferred label → exact
+alias → case-insensitive preferred → substring). All four used to start from
+`MATCH (n:EscoNode)` and narrow with `any(l IN labels(n) …)`. From the umbrella
+label the planner cannot reach the per-label `pref_label` index, so **every
+tier scanned all 21k nodes** — including the exact-match tier, where the index
+already existed and sat unused.
+
+```
+before:  NodeByLabelScan  rows=21198  dbHits=21199
+after:   NodeIndexSeek    rows=1      dbHits=2      RANGE INDEX n:Occupation(pref_label)
+```
+
+Indexes created by `apply_schema` (all `IF NOT EXISTS`):
+
+| Index | Serves | Notes |
+|-------|--------|-------|
+| `esco_<label>_pref` (RANGE) | exact preferred label | needs a **concrete** label in the MATCH |
+| `esco_node_text` (FULLTEXT) | alias membership, case-insensitive label, substring | `standard-no-stop-words` over `pref_label` + `alt_labels` |
+
+Why `standard-no-stop-words`: the default `standard` analyzer drops English
+stop words, which would make an exact label such as *"one to one
+communication"* unfindable through the index while the old scan found it.
+
+Why the full text tiers still re-apply their original predicate in Cypher: the
+index is used to **retrieve** candidates, never to score them. Lucene relevance
+is not comparable between queries, so it is not mapped onto the confidence
+scale in `config.py` — those numbers describe *how* a match was made and stay
+exactly as they were. See `tests/suites/esco/test_search_confidence_parity.py`,
+which freezes them against the fixture.
+
+Two deliberate opt-outs, both "never slower than before, never different":
+
+- A query term shorter than `MIN_WILDCARD_TERM` (3) makes the infix wildcard
+  expand over most of the term dictionary, so those queries take the scan path.
+- A graph loaded before this index existed answers from the scan and warns
+  `fulltext_index_missing` rather than failing.
+
+`search_nodes` now also reports truncation. A result capped at `SEARCH_LIMIT`
+(25) carries `pruning` (`considered` / `returned` / `pruned`), `meta.matches`,
+and a `truncated` warning — previously a query with 2,893 matches and one with
+25 looked identical to the caller.
+
+### Measuring it
+
+`tests/perf/` builds a deterministic synthetic graph at release scale (21,198
+nodes / 161,186 relationships — no ESCO text is committed) and measures against
+it. It needs a **throwaway** Neo4j, because it wipes the graph:
+
+```bash
+docker run -d --name ta-neo4j-perf -p 7689:7687 \
+    -e NEO4J_AUTH=neo4j/perf-dev neo4j:5-community
+
+TA_PERF_NEO4J_URI=bolt://localhost:7689 \
+TA_PERF_NEO4J_PASSWORD=perf-dev pytest tests/perf -q
+
+# full before/after table over the frozen 30-query set
+PYTHONPATH=src:tests/perf python tests/perf/locate_bench.py \
+    --uri bolt://localhost:7689 --password perf-dev
+```
+
+The regression test asserts *relatively* (indexed path vs. the scan it
+replaced, same process, same graph) and *structurally* (`NodeIndexSeek`, never
+`NodeByLabelScan`), because wall-clock thresholds are meaningless on a shared
+machine.
+
+Measured on that graph, 30-query set, paired A/B in one process:
+
+| | before | after |
+|---|---|---|
+| median of per-query medians | 30.3 ms | 4.8 ms (6.3×) |
+| mean | 54.6 ms | 9.1 ms (6.0×) |
+| slowest query | 249.5 ms | 62.6 ms |
+| queries truncated at 25 | 8 | 8 |
+| truncation reported | 0 | 8 |
+| method + confidence + candidate set | — | identical for all 30 |
+
+The full-text index costs ~0.87 MB on that graph (the range indexes are ~51 MB).
+
+---
+
 ## Expected full-load size (English package)
 
 After a successful `--mode full` load you should see approximately:

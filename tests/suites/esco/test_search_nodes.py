@@ -94,3 +94,37 @@ def test_search_unknown_kind_returns_warning(loaded_suite: EscoSuite) -> None:
 
     assert result.candidates == []
     assert result.warnings == ["unknown_kind:fruit"]
+
+
+def test_contains_keeps_title_matches_ahead_of_alias_only_matches(
+    loaded_suite: EscoSuite,
+) -> None:
+    """Live repro: short titles that matched only through an alias filled the
+    25-row cut, so "engineer" lost most "... engineer" titles."""
+    noise = [
+        {"id": f"esco:occupation:zorbler-{i:02d}", "pref": f"zj{i:02d}", "alt": f"zorbler {i}"}
+        for i in range(30)
+    ]
+    title = {"id": "esco:occupation:zorbler-title", "pref": "senior zorbler technician", "alt": ""}
+    with loaded_suite._session() as session:
+        session.run(
+            """
+            UNWIND $rows AS r
+            CREATE (n:EscoNode:Occupation {id: r.id, pref_label: r.pref, source: 'esco',
+                    source_id: r.id, kind: 'Occupation',
+                    alt_labels: CASE r.alt WHEN '' THEN [] ELSE [r.alt] END})
+            """,
+            rows=[*noise, title],
+        )
+        session.run("CALL db.index.fulltext.awaitEventuallyConsistentIndexRefresh()")
+    try:
+        result = loaded_suite.search_nodes("zorbler", kind="occupation")
+        labels = [candidate.node.label for candidate in result.candidates]
+        assert labels[0] == "senior zorbler technician"
+        assert "truncated" in result.warnings
+    finally:
+        with loaded_suite._session() as session:
+            session.run(
+                "MATCH (n:EscoNode) WHERE n.id STARTS WITH $prefix DETACH DELETE n",
+                prefix="esco:occupation:zorbler-",
+            )

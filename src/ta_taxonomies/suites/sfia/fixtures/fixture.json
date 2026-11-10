@@ -1,0 +1,111 @@
+{
+  "meta": {
+    "suite": "sfia",
+    "framework": "SFIA 9",
+    "purpose": "Sprint 1 slice for contract tests; real SFIA 9 codes and level sets, five skills",
+    "source_url": "https://sfia-online.org/en/sfia-9/sfia-views/full-framework-view/?path=/glance",
+    "attribution": "SFIA 9, (c) SFIA Foundation (https://sfia-online.org). Structure only.",
+    "note": "Structure only: codes, names, slugs, level numbers. No SFIA descriptive text (licensing). Pointer, not payload; full structure under data/sfia/ (gitignored)."
+  },
+  "categories": [
+    {
+      "name": "Development and implementation",
+      "slug": "development-and-implementation"
+    },
+    {
+      "name": "Strategy and architecture",
+      "slug": "strategy-and-architecture"
+    }
+  ],
+  "subcategories": [
+    {
+      "category": "Development and implementation",
+      "name": "Systems development",
+      "slug": "systems-development"
+    },
+    {
+      "category": "Strategy and architecture",
+      "name": "Strategy and planning",
+      "slug": "strategy-and-planning"
+    }
+  ],
+  "skills": [
+    {
+      "code": "ITSP",
+      "name": "Strategic planning",
+      "slug": "strategic-planning",
+      "category": "Strategy and architecture",
+      "category_slug": "strategy-and-architecture",
+      "subcategory": "Strategy and planning",
+      "subcategory_slug": "strategy-and-planning",
+      "levels": [
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "code": "ISCO",
+      "name": "Information systems coordination",
+      "slug": "information-systems-coordination",
+      "category": "Strategy and architecture",
+      "category_slug": "strategy-and-architecture",
+      "subcategory": "Strategy and planning",
+      "subcategory_slug": "strategy-and-planning",
+      "levels": [
+        6,
+        7
+      ]
+    },
+    {
+      "code": "IRMG",
+      "name": "Information management",
+      "slug": "information-management",
+      "category": "Strategy and architecture",
+      "category_slug": "strategy-and-architecture",
+      "subcategory": "Strategy and planning",
+      "subcategory_slug": "strategy-and-planning",
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "code": "PROG",
+      "name": "Programming/software development",
+      "slug": "programming-software-development",
+      "category": "Development and implementation",
+      "category_slug": "development-and-implementation",
+      "subcategory": "Systems development",
+      "subcategory_slug": "systems-development",
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "code": "TEST",
+      "name": "Functional testing",
+      "slug": "functional-testing",
+      "category": "Development and implementation",
+      "category_slug": "development-and-implementation",
+      "subcategory": "Systems development",
+      "subcategory_slug": "systems-development",
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  ]
+}
