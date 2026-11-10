@@ -119,3 +119,24 @@ def test_substitution_is_a_route(suite: JobtechSuite) -> None:
 def test_bad_input(suite: JobtechSuite) -> None:
     assert suite.search_nodes("bagare", kind="task").warnings == ["unknown_kind:task"]
     assert suite.get_neighbors("jobtech:occupation:nope").warnings == ["node_not_found"]
+
+
+BAKER = "http://data.europa.eu/esco/occupation/1aadb308-432a-4d01-b54b-b4f7f76dd419"
+
+
+def test_esco_match_reaches_the_swedish_record(suite: JobtechSuite) -> None:
+    # ESCO "baker" (found in English) -> JobTech's own exact match -> Bagare/Konditor.
+    result = suite.search_by_esco([BAKER])
+    assert [(c.method, c.node.label) for c in result.candidates] == [
+        ("esco_exact_match", "Bagare/Konditor")
+    ]
+    assert result.candidates[0].confidence == 0.65
+    assert result.evidence == [f"jobtech:esco_match:{BAKER}"]
+
+
+def test_esco_match_guards(suite: JobtechSuite) -> None:
+    assert suite.search_by_esco(["http://data.europa.eu/esco/occupation/nope"]).warnings == [
+        "not_found"
+    ]
+    assert suite.search_by_esco(["x' OR 1=1"]).warnings == ["empty_query"]
+    assert suite.search_by_esco([BAKER], kind="task").warnings == ["unknown_kind:task"]
