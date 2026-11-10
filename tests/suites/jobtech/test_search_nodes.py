@@ -84,11 +84,36 @@ def test_false_friend_chef_never_finds_the_cook(suite: JobtechSuite) -> None:
     assert "Kock à la carte" not in labels
 
 
-def test_compound_words_hide_their_parts(suite: JobtechSuite) -> None:
-    # Known limit (Swedish compounds): "utvecklare" does not start a word in
-    # "Mjukvaruutvecklare", so it is not found by words.
-    labels = [c.node.label for c in suite.search_nodes("utvecklare").candidates]
-    assert "Mjukvaruutvecklare" not in labels
+def test_a_part_of_a_compound_is_offered(suite: JobtechSuite) -> None:
+    # Swedish compounds: "utvecklare" is not a word start in "Mjukvaruutvecklare",
+    # so the compound tier finds it, always as a list to choose from.
+    result = suite.search_nodes("utvecklare", kind="occupation")
+    labels = {c.node.label for c in result.candidates}
+    assert {"Mjukvaruutvecklare", "Systemutvecklare/Programmerare"} <= labels
+    assert "ambiguous" in result.warnings
+    assert "compound_part" in result.warnings
+    assert {c.method for c in result.candidates} == {"contains"}
+
+
+def test_compound_titles_join_word_start_titles(suite: JobtechSuite) -> None:
+    # "assistent" starts a word in two titles and sits inside "Elevassistent".
+    labels = [c.node.label for c in suite.search_nodes("assistent", kind="occupation").candidates]
+    assert labels[:2] == ["AD-assistent", "Assistent i församlingsarbete"] or set(labels[:2]) == {
+        "AD-assistent",
+        "Assistent i församlingsarbete",
+    }
+    assert "Elevassistent" in labels[2:]
+
+
+def test_short_fragments_never_match_inside_words(suite: JobtechSuite) -> None:
+    assert "not_found" in suite.search_nodes("utv", kind="occupation").warnings
+
+
+def test_a_compound_part_never_becomes_one_answer(suite: JobtechSuite) -> None:
+    # "morska" only appears inside "Barnmorska": still a list of one, not a bind.
+    result = suite.search_nodes("morska", kind="occupation")
+    assert [c.node.label for c in result.candidates] == ["Barnmorska"]
+    assert "ambiguous" in result.warnings
 
 
 def test_codes(suite: JobtechSuite) -> None:
@@ -140,3 +165,9 @@ def test_esco_match_guards(suite: JobtechSuite) -> None:
     ]
     assert suite.search_by_esco(["x' OR 1=1"]).warnings == ["empty_query"]
     assert suite.search_by_esco([BAKER], kind="task").warnings == ["unknown_kind:task"]
+
+
+def test_an_ssyk_code_is_found_whatever_kind_is_asked(suite: JobtechSuite) -> None:
+    for text in ("7612", "SSYK 7612"):
+        result = suite.search_nodes(text, kind="occupation")
+        assert [c.node.id for c in result.candidates] == ["jobtech:ssyk:7612"], text

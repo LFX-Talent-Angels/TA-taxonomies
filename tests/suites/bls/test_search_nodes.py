@@ -141,3 +141,24 @@ def test_score_paths_is_a_declared_stub(suite: BlsSuite) -> None:
     result = suite.score_paths([], PolicyRef(name="anything", version="1"))
     assert result.warnings[0] == "score_paths_not_implemented"
     assert result.scored_paths == []
+
+
+def test_the_branching_cap_never_cuts_the_edge_to_the_target(
+    suite: BlsSuite, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Live: a BLS skill links ~800 occupations, so a cap of 25 cut the target
+    # off at the shared skill ("no_path" for jobs sharing 12 skills).
+    monkeypatch.setattr("ta_taxonomies.suites.bls.tools.MAX_BRANCHING", 1)
+    result = suite.enumerate_paths(
+        "bls:occupation:15-1252", "bls:occupation:29-1141", max_depth=2, max_paths=5
+    )
+    assert result.paths, result.warnings
+    assert all(p.node_ids[-1] == "bls:occupation:29-1141" for p in result.paths)
+
+
+def test_a_code_is_found_whatever_kind_is_asked(suite: BlsSuite) -> None:
+    # The chat planner asks for an occupation; "15-1250" is a broad group.
+    result = suite.search_nodes("SOC 15-1250", kind="occupation")
+    assert [(c.method, c.node.id) for c in result.candidates] == [
+        ("exact_code", "bls:soc-group:15-1250")
+    ]

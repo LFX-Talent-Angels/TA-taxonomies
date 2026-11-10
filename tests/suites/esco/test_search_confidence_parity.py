@@ -74,7 +74,8 @@ PARITY: list[tuple[str, str | None, str | None, float | None, int, list[str]]] =
     ("ict security administrator", None, "casefold_pref", CONF_CASEFOLD_UNIQUE, 1, []),
     # partial text stays at the loose tier, and says it is ambiguous
     ("data scien", "occupation", "contains", CONF_CONTAINS, 1, []),
-    ("ciso", None, "contains", CONF_CONTAINS, 1, []),
+    # an alias in any case is an alias hit (merged with word-start titles)
+    ("ciso", None, "exact_alt", CONF_EXACT_ALT, 1, []),
     ("developer", "occupation", "contains", CONF_CONTAINS, 2, ["ambiguous"]),
     ("data", None, "contains", CONF_CONTAINS, 11, ["ambiguous"]),
     ("web", None, "contains", CONF_CONTAINS, 6, ["ambiguous"]),
@@ -114,7 +115,9 @@ def test_confidence_is_unchanged(
     result = loaded_suite.search_nodes(query, kind=kind)
 
     assert len(result.candidates) == count
-    assert sorted(result.warnings) == warnings
+    # The fixture DB has no ESCO vectors; with the query model installed the
+    # meaning tier says so. That note is the environment, not the parity.
+    assert sorted(w for w in result.warnings if w != "vector_index_missing") == warnings
     if method is None:
         assert result.candidates == []
         return

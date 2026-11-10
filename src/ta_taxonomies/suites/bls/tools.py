@@ -109,6 +109,9 @@ BLS_LOCATE = LocateConfig(
     ),
     # "15-1252" and the O*NET form "15-1252.00" both name SOC 15-1252.
     codes_for=codes_in_query,
+    # The shared cut-off (0.74) holds for BLS, measured 2026-11-04: gibberish
+    # tops out at 0.65, paraphrases score 0.74-0.94 ("someone who fixes cars"
+    # -> Automotive Technicians 0.84).
     search_limit=SEARCH_LIMIT,
     scan_cap=SEARCH_SCAN_CAP,
     min_wildcard_term=MIN_WILDCARD_TERM,
@@ -348,8 +351,13 @@ class BlsSuite:
             next_frontier: list[Path] = []
             for path in frontier:
                 rows = by_node.get(path.node_ids[-1], [])
-                pruned += max(0, len(rows) - MAX_BRANCHING)
-                for row in rows[:MAX_BRANCHING]:
+                # The cap trims hubs (a BLS skill links ~800 occupations), but
+                # an edge that reaches the target is never the one cut.
+                kept = rows[:MAX_BRANCHING] + [
+                    row for row in rows[MAX_BRANCHING:] if row["neighbor_id"] == to_id
+                ]
+                pruned += len(rows) - len(kept)
+                for row in kept:
                     neighbor_id = row["neighbor_id"]
                     if neighbor_id in path.node_ids:
                         pruned += 1

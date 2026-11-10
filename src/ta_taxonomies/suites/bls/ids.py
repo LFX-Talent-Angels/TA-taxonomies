@@ -87,9 +87,13 @@ def training_id(name: str) -> str:
     return f"{SOURCE}:training:{slugify(name)}"
 
 
+#: "SOC 15-1252", "soc code 15-1252", "SOC: 15-1252" name the code too.
+_SOC_PREFIX = re.compile(r"^(?:o\*?net[- ]?)?soc(?:\s+code)?\s*[:#]?\s*", re.IGNORECASE)
+
+
 def codes_in_query(text: str) -> list[str]:
-    """SOC codes a search query names: ``15-1252`` or ``15-1252.00`` → ``15-1252``."""
-    q = text.strip()
+    """SOC codes a search query names: ``15-1252``, ``15-1252.00`` or ``SOC 15-1252``."""
+    q = _SOC_PREFIX.sub("", text.strip(), count=1)
     if SOC_CODE.fullmatch(q):
         return [q]
     match = ONET_SOC_CODE.fullmatch(q)

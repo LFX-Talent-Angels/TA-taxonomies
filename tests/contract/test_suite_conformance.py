@@ -315,9 +315,24 @@ def test_broad_query_matches_only_at_word_starts(loaded: tuple[SuiteCase, Any]) 
     _check_candidates(case, result)
     assert len(result.candidates) >= 2
     assert "ambiguous" in result.warnings
+    compound = case.config.compound_min_len
     for candidate in result.candidates:
         names = [candidate.node.label, *(candidate.node.properties.get("alt_labels") or [])]
-        assert any(_starts_a_word(case.broad_query, name) for name in names), candidate.node.label
+        if any(_starts_a_word(case.broad_query, name) for name in names):
+            continue
+        # The one exception: a suite that opts in to compound words (Swedish)
+        # may also match inside a word, for a long enough query, and says so.
+        assert compound is not None and len(case.broad_query) >= compound, candidate.node.label
+        assert "compound_part" in result.warnings
+        assert any(case.broad_query.casefold() in name.casefold() for name in names)
+
+
+def test_only_compound_languages_match_inside_words() -> None:
+    # Matching inside a word is opt-in (compound_min_len) and never for short
+    # fragments: "swe" must not find "Answering" in any suite.
+    for case in CASES:
+        min_len = case.config.compound_min_len
+        assert min_len is None or (case.name == "jobtech" and min_len >= 5), case.name
 
 
 @live

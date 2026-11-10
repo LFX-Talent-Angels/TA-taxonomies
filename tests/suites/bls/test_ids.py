@@ -66,5 +66,7 @@ def test_codes_in_query() -> None:
     # An O*NET-SOC code names the same SOC occupation.
     assert codes_in_query("15-1252.00") == ["15-1252"]
     assert codes_in_query(" 15-1252 ") == ["15-1252"]
+    for named in ("SOC 15-1252", "soc code 15-1252", "SOC: 15-1252", "O*NET-SOC 15-1252.00"):
+        assert codes_in_query(named) == ["15-1252"], named
     for not_a_code in ("software developers", "15-125", "15-1252.0", "15-1252x", ""):
         assert codes_in_query(not_a_code) == []
