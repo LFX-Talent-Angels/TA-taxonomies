@@ -75,9 +75,16 @@ def _load_bls() -> object:
     return run_load(mode="fixture", wipe=True)
 
 
+def _load_jobtech() -> object:
+    from ta_taxonomies.suites.jobtech.load import run_load
+
+    return run_load(mode="fixture", wipe=True)
+
+
 def _cases() -> list[SuiteCase]:
     from ta_taxonomies.suites.bls.tools import BLS_LOCATE, BlsSuite
     from ta_taxonomies.suites.esco.tools import ESCO_LOCATE, EscoSuite
+    from ta_taxonomies.suites.jobtech.tools import JOBTECH_LOCATE, JobtechSuite
     from ta_taxonomies.suites.onet.tools import ONET_LOCATE, OnetSuite
 
     return [
@@ -114,6 +121,20 @@ def _cases() -> list[SuiteCase]:
             # Physician Assistants (SOC 29), Nursing and Medical Assistants (SOC 31).
             group_query="assistants",
             sample_code=("15-1252", "Software Developers"),
+        ),
+        SuiteCase(
+            name="jobtech",
+            config=JOBTECH_LOCATE,
+            suite_class=JobtechSuite,
+            load_fixture=_load_jobtech,
+            exact_title="Barnmorska",
+            # Swedish compounds ("Mjukvaruutvecklare") hide most shared words;
+            # "assistent" starts a word in two fixture titles.
+            broad_query="assistent",
+            sample_group_code="2",
+            # "Assistent i församlingsarbete" (SSYK 3) and "AD-assistent" (SSYK 4).
+            group_query="assistent",
+            sample_code=("XugJ_6hw_wVV", "Bagare/Konditor"),
         ),
         # Add your suite here.
     ]

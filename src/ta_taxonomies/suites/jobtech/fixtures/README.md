@@ -20,6 +20,6 @@ committed as published.
 
 What the conformance test uses:
 - exact title "Barnmorska"
-- broad query "utvecklare"
+- broad query "assistent" (not "utvecklare": "Mjukvaruutvecklare" is one compound word)
 - group query "assistent" (SSYK majors 3 and 4)
 - code `2222` (the Barnmorska unit group)
