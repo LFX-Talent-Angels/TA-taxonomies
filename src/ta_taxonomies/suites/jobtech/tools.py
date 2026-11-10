@@ -118,6 +118,9 @@ JOBTECH_LOCATE = LocateConfig(
     # Swedish writes compounds as one word: "utvecklare" must reach
     # "Mjukvaruutvecklare", "lärare" must reach "Grundskollärare".
     compound_min_len=5,
+    # SSYK repeats a name across levels ("Officerare" is 01, 011 and 0110), and
+    # 47 occupations share a group's name.
+    group_label=LABEL_SSYK_GROUP,
     # The shared model is English and these labels are Swedish. Measured on
     # the v31 graph (2026-11-04): gibberish reaches 0.756 ("zzqxv plonkwurst"
     # -> a plastics skill) and English words land on junk ("baker" -> Kantning,
