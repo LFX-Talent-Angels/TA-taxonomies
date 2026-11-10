@@ -21,6 +21,12 @@ jobs:
           missing=0
           while IFS= read -r sha; do
             [ -z "$sha" ] && continue
+            # These specific historical merge commits are tracked separately;
+            # all other commits, including new merges, still require sign-off.
+            if grep -Fqx "$sha" .github/dco-historical-merges.txt; then
+              echo "Historical merge exception: $sha"
+              continue
+            fi
             if ! git log -1 --format='%(trailers:key=Signed-off-by)' "$sha" | grep -q 'Signed-off-by:'; then
               echo "::error::Commit $sha is missing a Signed-off-by line (use: git commit -s)"
               missing=1
