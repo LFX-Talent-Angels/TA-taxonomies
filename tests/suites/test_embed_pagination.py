@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from ta_taxonomies.suites.bls import embed as bls_embed
 from ta_taxonomies.suites.esco import embed as esco_embed
 from ta_taxonomies.suites.onet import embed as onet_embed
 from ta_taxonomies.suites.sfia import embed as sfia_embed
@@ -83,7 +84,7 @@ def _fake_sentence_transformers(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "sentence_transformers", mod)
 
 
-@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed])
+@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed, bls_embed])
 @pytest.mark.parametrize("force", [False, True])
 def test_every_node_is_embedded(module: Any, force: bool) -> None:
     n = module.BATCH_SIZE * 3 + 7
@@ -95,7 +96,7 @@ def test_every_node_is_embedded(module: Any, force: bool) -> None:
     assert all(v is not None for v in store.values())
 
 
-@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed])
+@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed, bls_embed])
 def test_rerun_fills_only_the_gaps(module: Any) -> None:
     store: dict[str, list[float] | None] = {
         f"id-{i:06d}": ([1.0] if i % 2 else None) for i in range(module.BATCH_SIZE * 2)
@@ -158,3 +159,23 @@ def test_vector_search_has_a_relevance_floor(module_name: str) -> None:
     config = {"esco": ESCO_LOCATE, "onet": ONET_LOCATE}[module_name]
     assert 0.7 < config.vector_min_score < 0.8
     assert "score >= $min_score" in queries_for(config).vector
+
+
+def test_bls_skips_education_and_training() -> None:
+    """Category names like "Bachelor's degree" are found exactly by keyword."""
+    store: dict[str, list[float] | None] = {
+        "bls:occupation:15-1252": None,
+        "bls:education:bachelor-s-degree": None,
+        "bls:training:apprenticeship": None,
+    }
+    labels = {
+        "bls:occupation:15-1252": "Occupation",
+        "bls:education:bachelor-s-degree": "EducationLevel",
+        "bls:training:apprenticeship": "TrainingLevel",
+    }
+
+    updated = bls_embed.build_embeddings(_FakeDriver(store, labels), force=True)
+
+    assert updated == 1
+    assert store["bls:education:bachelor-s-degree"] is None
+    assert store["bls:training:apprenticeship"] is None
