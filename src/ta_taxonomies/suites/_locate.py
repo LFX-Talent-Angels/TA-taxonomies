@@ -107,6 +107,10 @@ class LocateConfig:
     #: long or longer also matches inside words (compounds: "utvecklare" in
     #: "Mjukvaruutvecklare"). Always offered as a list, never one answer.
     compound_min_len: int | None = None
+    #: Opt-in: the group label whose rows are dropped from one result when an
+    #: occupation there has the same name, or a more specific group does
+    #: (BLS "Registered Nurses" is both; JobTech "Officerare" is three codes).
+    group_label: str | None = None
     vector_k: int = 25
     #: Neo4j cosine score is (1 + cos) / 2. Measured with all-MiniLM-L6-v2 over
     #: the full graphs (2026-09-30): gibberish tops out at 0.732 (ESCO) / 0.703
@@ -400,6 +404,32 @@ def record_to_node(config: LocateConfig, rec: dict[str, Any]) -> Node:
     )
 
 
+def drop_shadowed_groups(config: LocateConfig, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """``rows`` without groups named like an occupation or a more specific group there."""
+    group = config.group_label
+    if group is None:
+        return rows
+
+    def is_group(row: dict[str, Any]) -> bool:
+        return group in (row.get("labels") or [])
+
+    def name(row: dict[str, Any]) -> str:
+        return str(row.get("pref_label") or "").casefold()
+
+    occupations = {name(r) for r in rows if config.occupation_label in (r.get("labels") or [])}
+    most_specific: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if is_group(row):
+            kept = most_specific.get(name(row))
+            if kept is None or len(str(row.get("code") or "")) > len(str(kept.get("code") or "")):
+                most_specific[name(row)] = row
+    return [
+        r
+        for r in rows
+        if not is_group(r) or (name(r) not in occupations and most_specific[name(r)] is r)
+    ]
+
+
 def locate_result(
     config: LocateConfig,
     rows: list[dict[str, Any]],
@@ -410,12 +440,18 @@ def locate_result(
     notes: list[str],
     *,
     ambiguous: bool = False,
+    ambiguous_if_many: bool = False,
 ) -> ToolResult:
     """A Locate result that says how much of the match set it is showing.
 
     ``pruning`` carries the counts; ``truncated`` is the flag an agent can
     branch on without reading them.
     """
+    kept = drop_shadowed_groups(config, rows)
+    total -= len(rows) - len(kept)
+    rows = kept
+    if ambiguous_if_many:
+        ambiguous = total > 1
     candidates = [
         Candidate(node=record_to_node(config, row), confidence=confidence, method=method)
         for row in rows
@@ -464,11 +500,14 @@ def merged_result(
         (contains_rows, conf.contains, "contains"),
         (meaning_rows or [], conf.hybrid, "hybrid_rrf"),
     )
+    every = list({row["id"]: row for rows, _, _ in tiers for row in rows}.values())
+    kept_ids = {row["id"] for row in drop_shadowed_groups(config, every)}
+    total -= len(every) - len(kept_ids)
     candidates: list[Candidate] = []
     seen: set[str] = set()
     for rows, confidence, method in tiers:
         for row in rows:
-            if row["id"] in seen:
+            if row["id"] in seen or row["id"] not in kept_ids:
                 continue
             seen.add(row["id"])
             candidates.append(
@@ -560,7 +599,7 @@ class Locator:
                         "exact_code",
                         f"exact_code:{q}",
                         notes,
-                        ambiguous=len(rows) > 1,
+                        ambiguous_if_many=True,
                     )
 
             # 1) exact preferred label
@@ -653,7 +692,7 @@ class Locator:
                     "contains",
                     f"contains:{q}",
                     notes,
-                    ambiguous=total > 1,
+                    ambiguous_if_many=True,
                 )
                 return self.with_groups(session, found, group_codes)
 
