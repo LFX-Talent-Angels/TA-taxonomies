@@ -8,7 +8,6 @@ from ta_taxonomies.suites.bls.ids import (
     education_id,
     group_id,
     occupation_id,
-    parent_codes,
     skill_id,
     slugify,
     soc_code,
@@ -48,11 +47,6 @@ def test_bad_codes_are_refused(bad: object) -> None:
 )
 def test_soc_level_is_in_the_digits(code: str, level: str) -> None:
     assert soc_level(code) == level
-
-
-def test_parent_codes() -> None:
-    assert parent_codes("15-1252") == ("15-1250", "15-1200", "15-0000")
-    assert parent_codes("29-1161") == ("29-1160", "29-1100", "29-0000")
 
 
 def test_category_ids_are_slugs() -> None:
