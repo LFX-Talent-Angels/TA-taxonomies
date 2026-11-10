@@ -86,6 +86,7 @@ python -m ta_taxonomies.suites.esco.embed
 python -m ta_taxonomies.suites.onet.embed
 python -m ta_taxonomies.suites.sfia.embed
 python -m ta_taxonomies.suites.bls.embed
+python -m ta_taxonomies.suites.jobtech.embed
 ```
 
 `--mode fixture` is for CI only; it wipes **that suite** and must not be aimed
