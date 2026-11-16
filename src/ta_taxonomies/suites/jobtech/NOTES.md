@@ -13,13 +13,13 @@ ESCO. Labels are **Swedish**.
 Bulk JSON from https://data.jobtechdev.se/taxonomy/version/31/query/ (no key).
 The direct essential/optional skills of an occupation are not in any bulk file,
 so they come from the public GraphQL API
+(saved as `data/jobtech/raw/occupation-essential-optional-skills.json`)
 (`https://taxonomy.api.jobtechdev.se/v1/taxonomy/graphql`, `version: "31"`).
 
 | File (`query/<name>/<name>.json`) | SHA-256 (retrieved 2026-11-04) |
 |------|------|
 | `concepts-and-common-relations` | `634fd9d848a172747e54e3e487160a912ae6c0fcb8219c50998767c8c9aacbcc` |
 | `substitutability-relations-between-occupations` | `8761f938505ab9f276b8054d235c9a574bf2da1ff56c3761d9ce836f6fc93c60` |
-| `ssyk-level-4-with-related-isco-level-4-groups` | `aea2431fe5a5ca27b9d1a37c748ba6857c4d5a43f775a7bd9542751d313d82cc` |
 
 Attribution:
 
@@ -63,8 +63,13 @@ CC0 needs no attribution, but we credit the source anyway.
    presents a group skill as essential. The unit group also carries its own
    `HAS_SKILL` edges (`relation_type: "group"`).
 3. **Substitutability:** `(A)-[:SUBSTITUTES {substitutability_pct}]->(B)`
-   means someone in A can do B's job to that degree. This is a natural
-   Pathfinder step ("Elevassistent → Skolvärd, 75%").
+   when JobTech lists B under A's `substitutes`. Its `substituted_by` list is the
+   exact inverse (checked: 4,394 pairs both ways). The percentages are 25 or 75.
+   **Reading: "a person in A can do B's job to that degree".** This is inferred
+   from the data, because the API docs don't define it. A basic nurse (Sjuksköterska,
+   grundutbildad) substitutes a geriatric nurse at 75% and a children's nurse at
+   25%, which only fits that reading. Chat answers "what can A move to?" with A's
+   outgoing edges.
 4. **ESCO matches are data, not identity.** Each occupation and skill stores
    `esco_exact`, `esco_close`, `esco_broad` and `esco_narrow` (lists of ESCO
    URIs). Nothing links to an ESCO node, and suites never import each other.
@@ -74,11 +79,24 @@ CC0 needs no attribution, but we credit the source anyway.
    - an occupation's `code` is its concept id, so a pasted id finds it
    - an SSYK group's `code` is its SSYK code
    - occupations also carry `ssyk_code` (their unit group) and `isco_codes`
+     (from the ISCO concepts' ESCO URIs, `…/isco/C7512` → `7512`)
 
    Broad searches report **SSYK major groups** (the first digit).
 6. **Full-text analyzer:** `standard-no-stop-words`, not `swedish`. Locate's
    contains tier sends wildcard terms, which Lucene does not stem, so a stemmed
    index would miss them.
+
+## Search
+
+- **Meaning search** (embedded 2026-11-04, 9,518 nodes) requires a score of **0.88**,
+  not the shared 0.74. The model is English and the labels are Swedish:
+  - gibberish reached 0.756
+  - English words landed on junk ("baker" → Kantning, 0.75)
+  - Swedish near-matches score 0.90+ ("sjukskoterska" → Sjuksköterska)
+- **Compound words:** `compound_min_len=5`. "utvecklare" also finds
+  *Mjukvaruutvecklare*, after the word-start titles, flagged `compound_part`.
+- **English questions** reach JobTech through its own ESCO matches (TA-agents
+  `assistant/crosswalk.py`), never through meaning search.
 
 ## Known limits
 
