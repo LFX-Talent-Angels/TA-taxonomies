@@ -53,7 +53,19 @@ def headline_id(cid: Any) -> str:
     return f"{SOURCE}:skill-headline:{concept_id(cid)}"
 
 
+#: "SSYK 7612", "ssyk-kod 7612", "SSYK: 7612" name the code too. In chat a bare
+#: number is a pick from the list, so the scheme's name is how users say "code".
+_SSYK_PREFIX = re.compile(r"^ssyk(?:[- ]?(?:2012|kod|code))?\s*[:#]?\s*", re.IGNORECASE)
+
+
 def codes_in_query(text: str) -> list[str]:
-    """Codes a search names: an SSYK code ("7612") or a concept id ("5qT8_z9d_8rw")."""
-    q = text.strip()
-    return [q] if SSYK_CODE.fullmatch(q) or CONCEPT_ID.fullmatch(q) else []
+    """Codes a search names: an SSYK code ("7612", "SSYK 7612") or a concept id.
+
+    A bare one- or two-digit number is a list pick or a count, not a code;
+    "SSYK 7" still names the major group.
+    """
+    stripped = text.strip()
+    q = _SSYK_PREFIX.sub("", stripped, count=1)
+    if SSYK_CODE.fullmatch(q) and (q != stripped or len(q) >= 3):
+        return [q]
+    return [q] if CONCEPT_ID.fullmatch(q) else []

@@ -16,6 +16,7 @@ import pytest
 
 from ta_taxonomies.suites.bls import embed as bls_embed
 from ta_taxonomies.suites.esco import embed as esco_embed
+from ta_taxonomies.suites.jobtech import embed as jobtech_embed
 from ta_taxonomies.suites.onet import embed as onet_embed
 from ta_taxonomies.suites.sfia import embed as sfia_embed
 
@@ -84,7 +85,7 @@ def _fake_sentence_transformers(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "sentence_transformers", mod)
 
 
-@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed, bls_embed])
+@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed, bls_embed, jobtech_embed])
 @pytest.mark.parametrize("force", [False, True])
 def test_every_node_is_embedded(module: Any, force: bool) -> None:
     n = module.BATCH_SIZE * 3 + 7
@@ -96,7 +97,7 @@ def test_every_node_is_embedded(module: Any, force: bool) -> None:
     assert all(v is not None for v in store.values())
 
 
-@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed, bls_embed])
+@pytest.mark.parametrize("module", [esco_embed, onet_embed, sfia_embed, bls_embed, jobtech_embed])
 def test_rerun_fills_only_the_gaps(module: Any) -> None:
     store: dict[str, list[float] | None] = {
         f"id-{i:06d}": ([1.0] if i % 2 else None) for i in range(module.BATCH_SIZE * 2)
