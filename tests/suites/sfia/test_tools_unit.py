@@ -341,7 +341,7 @@ def test_score_paths_uses_typed_contract_even_while_policy_is_deferred() -> None
 
 class _MissingVectorIndexSession:
     def run(self, query: str, **parameters: Any) -> None:
-        # The wording Neo4j 5 uses; SFIA has no embedding job yet.
+        # The wording Neo4j 5 uses when `sfia.embed` has not been run.
         raise RuntimeError(
             "Failed to invoke procedure `db.index.vector.queryNodes`: Caused by: "
             "java.lang.IllegalArgumentException: There is no such vector schema index: "

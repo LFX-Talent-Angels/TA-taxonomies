@@ -66,6 +66,16 @@ python -m ta_taxonomies.suites.esco.load --mode full
 
 # O*NET 31.0 text dump under data/onet/raw  (see suites/onet/README.md)
 python -m ta_taxonomies.suites.onet.load --mode full
+
+# SFIA 9 structure (see suites/sfia/README.md)
+python -m ta_taxonomies.suites.sfia.fetch --out data/sfia/sfia9_structure.json
+python -m ta_taxonomies.suites.sfia.load --mode full
+
+# Then embed each suite's labels for meaning-based search (needs the [embed]
+# extra). Idempotent; rerun after any bulk re-load.
+python -m ta_taxonomies.suites.esco.embed
+python -m ta_taxonomies.suites.onet.embed
+python -m ta_taxonomies.suites.sfia.embed
 ```
 
 `--mode fixture` is for CI only; it wipes **that suite** and must not be aimed
