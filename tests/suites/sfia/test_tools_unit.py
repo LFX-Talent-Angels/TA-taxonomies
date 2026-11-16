@@ -337,3 +337,28 @@ def test_score_paths_uses_typed_contract_even_while_policy_is_deferred() -> None
     assert result.paths == [path]
     assert result.warnings[0] == "score_paths_not_implemented"
     assert result.meta["policy"] == {"name": "sfia-level-distance", "version": "1"}
+
+
+class _MissingVectorIndexSession:
+    def run(self, query: str, **parameters: Any) -> None:
+        # The wording Neo4j 5 uses; SFIA has no embedding job yet.
+        raise RuntimeError(
+            "Failed to invoke procedure `db.index.vector.queryNodes`: Caused by: "
+            "java.lang.IllegalArgumentException: There is no such vector schema index: "
+            "sfia_label_embedding"
+        )
+
+
+def test_missing_vector_index_falls_back_with_a_note() -> None:
+    locator = Locator(SFIA_LOCATE, session=lambda: None, embed=lambda _q: None)  # type: ignore[arg-type,return-value]
+    notes: list[str] = []
+
+    rows = locator.match_vector(
+        _MissingVectorIndexSession(),  # type: ignore[arg-type]
+        ["SfiaSkill"],
+        [0.0],
+        notes,
+    )
+
+    assert rows == []
+    assert notes == ["vector_index_missing"]
