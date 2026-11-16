@@ -83,6 +83,11 @@ What every suite gets from the engine, and must not reimplement:
 | 4 | `contains` | the query **starts a word** in a label or alias ("swe" is not inside "Answering"); title matches rank before alias-only ones | 0.70 |
 | 5 | `hybrid_rrf` | only when 1–4 found nothing: keyword list + vector list, fused by rank | 0.75 |
 
+- **Compound languages (opt-in).** A suite whose language writes compounds as
+  one word (JobTech, Swedish) sets `compound_min_len`: a one-word query that
+  long or longer also matches inside words ("utvecklare" in
+  "Mjukvaruutvecklare"), after the word-start titles, flagged
+  `compound_part` and always offered as a list. No other suite sets it.
 - **One confidence scale.** Confidence says how a match was made. Never put a
   Lucene or cosine score in it. The conformance test checks the scale.
 - **An acronym alone is a whole word**: "AI" does not match "aircraft".

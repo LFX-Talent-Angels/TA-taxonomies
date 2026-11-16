@@ -135,6 +135,41 @@ def relation_type_for(score: float) -> str | None:
     return None
 
 
+_ES_PLURAL = ("ches", "shes", "sses", "xes")
+
+
+def singular_title(title: str) -> str | None:
+    """The singular of a plain plural SOC title ("Registered Nurses" -> "Registered Nurse").
+
+    BLS titles are plural and users type the singular. Titles that list
+    several jobs ("Chefs and Head Cooks", "Lawyers, Judges, ...") are left
+    alone: no single singular names them.
+    """
+    title = title.removesuffix(", General")
+    if "," in title or "--" in title or " and " in title or "/" in title:
+        return None
+    # "Supervisors of Gambling Services Workers": the noun before "of" is plural.
+    noun_phrase, of, rest = title.partition(" of ")
+    head, _, last = noun_phrase.rpartition(" ")
+    word = _singular_word(last)
+    if word is None:
+        return None
+    return f"{head} {word}".strip() + (f"{of}{rest}" if of else "")
+
+
+def _singular_word(word: str) -> str | None:
+    lower = word.lower()
+    if lower.endswith("ies") and len(lower) > 4:
+        return word[:-3] + "y"
+    if lower.endswith("wives"):
+        return word[:-3] + "fe"
+    if lower.endswith(_ES_PLURAL):
+        return word[:-2]
+    if lower.endswith("s") and not lower.endswith(("ss", "us", "is")):
+        return word[:-1]
+    return None
+
+
 def _node_row(
     *,
     node_id: str,
@@ -247,15 +282,20 @@ def normalize_document(doc: Mapping[str, Any]) -> dict[str, list[dict[str, Any]]
                     "wage_period": WAGE_PERIOD,
                 }
             )
+        title = str(o.get("title") or "")
+        alt_labels = [str(t) for t in o.get("alt_titles") or []]
+        singular = singular_title(title)
+        if singular and singular.casefold() not in {a.casefold() for a in alt_labels}:
+            alt_labels.append(singular)
         occupations.append(
             _node_row(
                 node_id=oid,
                 source_id=code,
                 kind=LABEL_OCCUPATION,
-                pref_label=str(o.get("title") or ""),
+                pref_label=title,
                 code=code,
                 description=str(o.get("definition") or ""),
-                alt_labels=[str(t) for t in o.get("alt_titles") or []],
+                alt_labels=alt_labels,
                 extra=extra,
             )
         )
