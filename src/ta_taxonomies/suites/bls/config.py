@@ -83,6 +83,30 @@ SCORE_RATINGS: tuple[tuple[float, str], ...] = (
     (0.0, "Not important"),
 )
 
+#: EP "typical education needed for entry" categories, lowest first. The
+#: position is the node's ``rank``. A value not listed here means BLS changed
+#: its categories, and the load stops rather than guess.
+EDUCATION_LEVELS: tuple[str, ...] = (
+    "No formal educational credential",
+    "High school diploma or equivalent",
+    "Some college, no degree",
+    "Postsecondary nondegree award",
+    "Associate's degree",
+    "Bachelor's degree",
+    "Master's degree",
+    "Doctoral or professional degree",
+)
+#: EP "typical on-the-job training" categories, shortest first. BLS's "None"
+#: (no training needed) gets no node and no edge.
+TRAINING_LEVELS: tuple[str, ...] = (
+    "Short-term on-the-job training",
+    "Moderate-term on-the-job training",
+    "Long-term on-the-job training",
+    "Apprenticeship",
+    "Internship/residency",
+)
+NO_TRAINING = "None"
+
 #: SOC 2018 major groups, keyed by the first two digits of a SOC code. Used to
 #: name the groups of a broad search (public US federal classification). The
 #: graph also holds them as SOCGroup nodes; this copy saves a query.
