@@ -111,7 +111,12 @@ class LocateConfig:
     #: occupation there has the same name, or a more specific group does
     #: (BLS "Registered Nurses" is both; JobTech "Officerare" is three codes).
     group_label: str | None = None
-    vector_k: int = 25
+    #: Nearest nodes fetched before the kind filter; the answer is still cut to
+    #: ``search_limit``. A suite's one index holds every kind, so a small pool
+    #: is crowded out by the commonest one: at 25, O*NET's tasks left 15 of 42
+    #: above-cut-off occupations for job-title queries (2026-11-10, a tagging
+    #: run on all five suites). 200 kept every one, at the same 2-5 ms.
+    vector_k: int = 200
     #: Neo4j cosine score is (1 + cos) / 2. Measured with all-MiniLM-L6-v2 over
     #: the full graphs (2026-09-30): gibberish tops out at 0.732 (ESCO) / 0.703
     #: (O*NET); natural-language job descriptions start at 0.739 / 0.742.
