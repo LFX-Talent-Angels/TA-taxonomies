@@ -42,7 +42,9 @@ def test_codes_in_query() -> None:
         assert codes_in_query(named) == ["7612"], named
     assert codes_in_query("SSYK bagare") == []
     assert codes_in_query(" 5qT8_z9d_8rw ") == ["5qT8_z9d_8rw"]
-    for text in ("bagare", "76123", "5qT8_z9d_8r", ""):
+    assert codes_in_query("761") == ["761"]
+    assert codes_in_query("SSYK 7") == ["7"]
+    for text in ("bagare", "76123", "5qT8_z9d_8r", "", "7", "12"):
         assert codes_in_query(text) == []
 
 

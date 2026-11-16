@@ -109,6 +109,8 @@ BLS_LOCATE = LocateConfig(
     ),
     # "15-1252" and the O*NET form "15-1252.00" both name SOC 15-1252.
     codes_for=codes_in_query,
+    # 251 SOC groups share their exact name with an occupation.
+    group_label=LABEL_SOC_GROUP,
     # The shared cut-off (0.74) holds for BLS, measured 2026-11-04: gibberish
     # tops out at 0.65, paraphrases score 0.74-0.94 ("someone who fixes cars"
     # -> Automotive Technicians 0.84).

@@ -59,6 +59,13 @@ _SSYK_PREFIX = re.compile(r"^ssyk(?:[- ]?(?:2012|kod|code))?\s*[:#]?\s*", re.IGN
 
 
 def codes_in_query(text: str) -> list[str]:
-    """Codes a search names: an SSYK code ("7612", "SSYK 7612") or a concept id."""
-    q = _SSYK_PREFIX.sub("", text.strip(), count=1)
-    return [q] if SSYK_CODE.fullmatch(q) or CONCEPT_ID.fullmatch(q) else []
+    """Codes a search names: an SSYK code ("7612", "SSYK 7612") or a concept id.
+
+    A bare one- or two-digit number is a list pick or a count, not a code;
+    "SSYK 7" still names the major group.
+    """
+    stripped = text.strip()
+    q = _SSYK_PREFIX.sub("", stripped, count=1)
+    if SSYK_CODE.fullmatch(q) and (q != stripped or len(q) >= 3):
+        return [q]
+    return [q] if CONCEPT_ID.fullmatch(q) else []
