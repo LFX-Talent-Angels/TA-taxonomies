@@ -13,7 +13,15 @@ from typing import Any
 
 from neo4j import Driver, Session
 
-from ta_taxonomies.contract.models import Edge, Node, Path, PolicyRef, PruningStats, ToolResult
+from ta_taxonomies.contract.models import (
+    Candidate,
+    Edge,
+    Node,
+    Path,
+    PolicyRef,
+    PruningStats,
+    ToolResult,
+)
 from ta_taxonomies.contract.schema import SuiteSchema
 from ta_taxonomies.suites._locate import (
     Confidences,
@@ -27,9 +35,11 @@ from ta_taxonomies.suites.jobtech.config import (
     CONF_CASEFOLD_AMBIGUOUS,
     CONF_CASEFOLD_UNIQUE,
     CONF_CONTAINS,
+    CONF_ESCO_MATCH,
     CONF_EXACT_ALT,
     CONF_EXACT_PREF,
     CONF_HYBRID,
+    ESCO_MATCH_KINDS,
     FULLTEXT_INDEX,
     KIND_ALIASES,
     LABEL_JOBTECH_NODE,
@@ -105,6 +115,18 @@ JOBTECH_LOCATE = LocateConfig(
     ),
     # SSYK codes ("7612") and JobTech concept ids ("XugJ_6hw_wVV").
     codes_for=codes_in_query,
+    # Swedish writes compounds as one word: "utvecklare" must reach
+    # "Mjukvaruutvecklare", "lärare" must reach "Grundskollärare".
+    compound_min_len=5,
+    # SSYK repeats a name across levels ("Officerare" is 01, 011 and 0110), and
+    # 47 occupations share a group's name.
+    group_label=LABEL_SSYK_GROUP,
+    # The shared model is English and these labels are Swedish. Measured on
+    # the v31 graph (2026-11-04): gibberish reaches 0.756 ("zzqxv plonkwurst"
+    # -> a plastics skill) and English words land on junk ("baker" -> Kantning,
+    # 0.75), while Swedish near-matches score 0.90+ ("sjuksköterska" 0.94).
+    # English questions reach JobTech through its ESCO matches instead.
+    vector_min_score=0.88,
     search_limit=SEARCH_LIMIT,
     scan_cap=SEARCH_SCAN_CAP,
     min_wildcard_term=MIN_WILDCARD_TERM,
@@ -189,6 +211,64 @@ class JobtechSuite:
     def search_group(self, text: str, group: str) -> ToolResult:
         """Occupations matching ``text`` inside one SSYK major group from ``meta.groups``."""
         return self._locator().search_group(text, group)
+
+    def search_by_esco(self, uris: list[str], kind: str = "occupation") -> ToolResult:
+        """JobTech nodes that JobTech itself matches to these ESCO URIs.
+
+        Strongest match first (exact, close, broad, narrow). This is how an
+        English question can reach a Swedish record: find the ESCO record in
+        English, then follow JobTech's published match. The candidates' method
+        names the match (``esco_exact_match``) so callers can say so.
+        """
+        label = KIND_ALIASES.get(kind.casefold().strip())
+        if label not in (LABEL_OCCUPATION, LABEL_SKILL):
+            return ToolResult(warnings=[f"unknown_kind:{kind}"])
+        uris = [u for u in dict.fromkeys(uris) if isinstance(u, str) and u.startswith("http")]
+        if not uris:
+            return ToolResult(warnings=["empty_query"])
+        with self._session() as session:
+            rows = [
+                dict(r)
+                for r in session.run(
+                    f"""
+                    MATCH (n:{label}:{LABEL_JOBTECH_NODE})
+                    WHERE n.source = $source
+                      AND any(u IN $uris WHERE u IN coalesce(n.esco_exact, [])
+                              OR u IN coalesce(n.esco_close, [])
+                              OR u IN coalesce(n.esco_broad, [])
+                              OR u IN coalesce(n.esco_narrow, []))
+                    RETURN {_fields("n")}
+                    """,
+                    uris=uris,
+                    source=SOURCE,
+                )
+            ]
+        wanted = set(uris)
+        found: list[tuple[int, str, Candidate]] = []
+        for row in rows:
+            node = _record_to_node(row)
+            for rank, match in enumerate(ESCO_MATCH_KINDS):
+                if wanted & set(row.get(f"esco_{match}") or []):
+                    candidate = Candidate(
+                        node=node,
+                        confidence=CONF_ESCO_MATCH[match],
+                        method=f"esco_{match}_match",
+                    )
+                    found.append((rank, node.label, candidate))
+                    break
+        found.sort(key=lambda item: (item[0], item[1]))
+        candidates = [c for _r, _l, c in found][:SEARCH_LIMIT]
+        warnings: list[str] = []
+        if not candidates:
+            warnings.append("not_found")
+        elif len(candidates) > 1:
+            warnings.append("ambiguous")
+        return ToolResult(
+            nodes=[c.node for c in candidates],
+            candidates=candidates,
+            warnings=warnings,
+            evidence=[f"jobtech:esco_match:{uri}" for uri in uris],
+        )
 
     def get_neighbors(self, node_id: str, rel_types: list[str] | None = None) -> ToolResult:
         allowed = TRAVERSABLE_RELS
@@ -348,8 +428,13 @@ class JobtechSuite:
             next_frontier: list[Path] = []
             for path in frontier:
                 rows = by_node.get(path.node_ids[-1], [])
-                pruned += max(0, len(rows) - MAX_BRANCHING)
-                for row in rows[:MAX_BRANCHING]:
+                # The cap trims hubs (a BLS skill links ~800 occupations), but
+                # an edge that reaches the target is never the one cut.
+                kept = rows[:MAX_BRANCHING] + [
+                    row for row in rows[MAX_BRANCHING:] if row["neighbor_id"] == to_id
+                ]
+                pruned += len(rows) - len(kept)
+                for row in kept:
                     neighbor_id = row["neighbor_id"]
                     if neighbor_id in path.node_ids:
                         pruned += 1
