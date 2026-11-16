@@ -103,7 +103,20 @@ class LocateConfig:
     scan_cap: int = 5_000
     #: Shorter terms skip the full-text index (a wildcard that wide costs more).
     min_wildcard_term: int = 3
-    vector_k: int = 25
+    #: Opt-in: when word-start matching finds nothing, a one-word query this
+    #: long or longer also matches inside words (compounds: "utvecklare" in
+    #: "Mjukvaruutvecklare"). Always offered as a list, never one answer.
+    compound_min_len: int | None = None
+    #: Opt-in: the group label whose rows are dropped from one result when an
+    #: occupation there has the same name, or a more specific group does
+    #: (BLS "Registered Nurses" is both; JobTech "Officerare" is three codes).
+    group_label: str | None = None
+    #: Nearest nodes fetched before the kind filter; the answer is still cut to
+    #: ``search_limit``. A suite's one index holds every kind, so a small pool
+    #: is crowded out by the commonest one: at 25, O*NET's tasks left 15 of 42
+    #: above-cut-off occupations for job-title queries (2026-11-10, a tagging
+    #: run on all five suites). 200 kept every one, at the same 2-5 ms.
+    vector_k: int = 200
     #: Neo4j cosine score is (1 + cos) / 2. Measured with all-MiniLM-L6-v2 over
     #: the full graphs (2026-09-30): gibberish tops out at 0.732 (ESCO) / 0.703
     #: (O*NET); natural-language job descriptions start at 0.739 / 0.742.
@@ -260,8 +273,14 @@ class LocateQueries:
         alias_body = f"""
 WHERE n.source = $source
   AND any(x IN labels(n) WHERE x IN $labels)
-  AND ($q IN coalesce(n.alt_labels, []) OR toLower(n.pref_label) = toLower($q))
-WITH n, ($q IN coalesce(n.alt_labels, [])) AS is_alt
+  AND (
+    any(a IN coalesce(n.alt_labels, []) WHERE toLower(a) = toLower($q))
+    OR toLower(n.pref_label) = toLower($q)
+  )
+// An alias in any case ("software engineer" for BLS's "Software Engineer") is
+// an alias hit: merged with the word-start titles, never an early answer, so
+// O*NET's alias "Baker" on Chefs and Head Cooks cannot hide "Bakers".
+WITH n, any(a IN coalesce(n.alt_labels, []) WHERE toLower(a) = toLower($q)) AS is_alt
 ORDER BY size(n.pref_label), n.id
 LIMIT $scan_cap
 WITH collect({{node: {self.node_map}, is_alt: is_alt}}) AS rows
@@ -296,6 +315,25 @@ RETURN size(rows) AS total, rows[0..$limit] AS top, group_codes
         self.scan_alias_or_casefold = scan_head + alias_body
         self.fulltext_contains = fulltext_head + contains_body
         self.scan_contains = scan_head + contains_body
+        # Compound part (opt-in, ``compound_min_len``): the query inside a
+        # word, for languages that write compounds as one word ("utvecklare"
+        # in "Mjukvaruutvecklare").
+        compound_body = f"""
+WHERE n.source = $source
+  AND any(x IN labels(n) WHERE x IN $labels)
+  AND (
+    toLower(n.pref_label) CONTAINS $part
+    OR any(a IN coalesce(n.alt_labels, []) WHERE toLower(a) CONTAINS $part)
+  )
+WITH n, CASE WHEN toLower(n.pref_label) CONTAINS $part THEN 0 ELSE 1 END AS alias_only
+ORDER BY alias_only, size(n.pref_label), n.id
+LIMIT $scan_cap
+WITH collect({self.node_map}) AS rows,
+     collect(CASE WHEN alias_only = 0 THEN {code} END) AS group_codes
+RETURN size(rows) AS total, rows[0..$limit] AS top, group_codes
+"""
+        self.fulltext_compound = fulltext_head + compound_body
+        self.scan_compound = scan_head + compound_body
         # The Lucene score only orders this list for the fusion; it never
         # becomes a confidence.
         self.fulltext_keywords = f"""
@@ -371,6 +409,32 @@ def record_to_node(config: LocateConfig, rec: dict[str, Any]) -> Node:
     )
 
 
+def drop_shadowed_groups(config: LocateConfig, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """``rows`` without groups named like an occupation or a more specific group there."""
+    group = config.group_label
+    if group is None:
+        return rows
+
+    def is_group(row: dict[str, Any]) -> bool:
+        return group in (row.get("labels") or [])
+
+    def name(row: dict[str, Any]) -> str:
+        return str(row.get("pref_label") or "").casefold()
+
+    occupations = {name(r) for r in rows if config.occupation_label in (r.get("labels") or [])}
+    most_specific: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if is_group(row):
+            kept = most_specific.get(name(row))
+            if kept is None or len(str(row.get("code") or "")) > len(str(kept.get("code") or "")):
+                most_specific[name(row)] = row
+    return [
+        r
+        for r in rows
+        if not is_group(r) or (name(r) not in occupations and most_specific[name(r)] is r)
+    ]
+
+
 def locate_result(
     config: LocateConfig,
     rows: list[dict[str, Any]],
@@ -381,12 +445,18 @@ def locate_result(
     notes: list[str],
     *,
     ambiguous: bool = False,
+    ambiguous_if_many: bool = False,
 ) -> ToolResult:
     """A Locate result that says how much of the match set it is showing.
 
     ``pruning`` carries the counts; ``truncated`` is the flag an agent can
     branch on without reading them.
     """
+    kept = drop_shadowed_groups(config, rows)
+    total -= len(rows) - len(kept)
+    rows = kept
+    if ambiguous_if_many:
+        ambiguous = total > 1
     candidates = [
         Candidate(node=record_to_node(config, row), confidence=confidence, method=method)
         for row in rows
@@ -435,11 +505,14 @@ def merged_result(
         (contains_rows, conf.contains, "contains"),
         (meaning_rows or [], conf.hybrid, "hybrid_rrf"),
     )
+    every = list({row["id"]: row for rows, _, _ in tiers for row in rows}.values())
+    kept_ids = {row["id"] for row in drop_shadowed_groups(config, every)}
+    total -= len(every) - len(kept_ids)
     candidates: list[Candidate] = []
     seen: set[str] = set()
     for rows, confidence, method in tiers:
         for row in rows:
-            if row["id"] in seen:
+            if row["id"] in seen or row["id"] not in kept_ids:
                 continue
             seen.add(row["id"])
             candidates.append(
@@ -517,6 +590,11 @@ class Locator:
             codes = self.config.codes_for(q) if self.config.codes_for else []
             if codes:
                 rows = self.match_code(session, labels, codes)
+                if not rows:
+                    # A code names one record whatever kind was asked for: the
+                    # planner asks for an occupation, but "SSYK 7612" and
+                    # "SOC 15-1250" are groups. Never let the kind hide it.
+                    rows = self.match_code(session, sorted(self.config.searchable_labels), codes)
                 if rows:
                     return locate_result(
                         self.config,
@@ -526,7 +604,7 @@ class Locator:
                         "exact_code",
                         f"exact_code:{q}",
                         notes,
-                        ambiguous=len(rows) > 1,
+                        ambiguous_if_many=True,
                     )
 
             # 1) exact preferred label
@@ -572,6 +650,19 @@ class Locator:
             # whose alias is the query ("nanny" → "nurse") cannot block the
             # titles that contain it ("registered nurse").
             total, rows, group_codes = self.match_contains(session, labels, q, notes)
+            if rows and self.config.compound_min_len is not None:
+                # Compound languages: "utvecklare" starts a word in
+                # "Backend-utvecklare" but sits inside "Mjukvaruutvecklare";
+                # both are answers. Word-start titles stay first.
+                c_total, c_rows, c_codes = self.match_compound(session, labels, q, notes)
+                seen = {row["id"] for row in rows}
+                extra = [row for row in c_rows if row["id"] not in seen]
+                if extra:
+                    if "compound_part" not in notes:
+                        notes.append("compound_part")
+                    total += max(0, c_total - (len(c_rows) - len(extra)))
+                    rows = [*rows, *extra][: self.config.search_limit]
+                    group_codes = [*group_codes, *c_codes]
             alt_ids = {row["id"] for row in alt_rows}
             if alt_rows:
                 total = len(alt_rows) + sum(1 for row in rows if row["id"] not in alt_ids)
@@ -606,7 +697,23 @@ class Locator:
                     "contains",
                     f"contains:{q}",
                     notes,
-                    ambiguous=total > 1,
+                    ambiguous_if_many=True,
+                )
+                return self.with_groups(session, found, group_codes)
+
+            # 4b) a part of a compound word, for suites that opt in.
+            total, rows, group_codes = self.match_compound(session, labels, q, notes)
+            if rows:
+                found = locate_result(
+                    self.config,
+                    rows,
+                    total,
+                    conf.contains,
+                    "contains",
+                    f"compound:{q}",
+                    [*notes, "compound_part"],
+                    # A part of a word is a lead, never "the" answer.
+                    ambiguous=True,
                 )
                 return self.with_groups(session, found, group_codes)
 
@@ -774,6 +881,36 @@ class Locator:
             )
         if record is None:
             record = session.run(self.q.scan_contains, **params).single()
+        if record is None:
+            return 0, [], []
+        codes = [str(code) for code in (record.get("group_codes") or []) if code]
+        return int(record["total"]), [dict(row) for row in record["top"]], codes
+
+    def match_compound(
+        self, session: Session, labels: list[str], q: str, notes: list[str]
+    ) -> tuple[int, list[dict[str, Any]], list[str]]:
+        """``q`` inside a word of a title or alias, when the suite opts in."""
+        min_len = self.config.compound_min_len
+        part = q.casefold()
+        if min_len is None or len(part) < min_len or not part.isalpha():
+            return 0, [], []
+        params: dict[str, Any] = {
+            "part": part,
+            "labels": labels,
+            "source": self.config.source,
+            "limit": self.config.search_limit,
+            "scan_cap": self.config.scan_cap,
+        }
+        record = self.run_fulltext(
+            session,
+            self.q.fulltext_compound,
+            notes,
+            lucene=f"*{part}*",
+            index=self.config.fulltext_index,
+            **params,
+        )
+        if record is None:
+            record = session.run(self.q.scan_compound, **params).single()
         if record is None:
             return 0, [], []
         codes = [str(code) for code in (record.get("group_codes") or []) if code]
