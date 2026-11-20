@@ -19,11 +19,10 @@ jobs:
           set -euo pipefail
           range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
           missing=0
-          # Merge commits (e.g. made by GitHub's merge button) carry no authored
-          # content, so they are not checked; every other commit needs sign-off.
           while IFS= read -r sha; do
             [ -z "$sha" ] && continue
-            # Historical merge commits that were already on the branch.
+            # These specific historical merge commits are tracked separately;
+            # all other commits, including new merges, still require sign-off.
             if grep -Fqx "$sha" .github/dco-historical-merges.txt; then
               echo "Historical merge exception: $sha"
               continue
@@ -32,7 +31,7 @@ jobs:
               echo "::error::Commit $sha is missing a Signed-off-by line (use: git commit -s)"
               missing=1
             fi
-          done < <(git rev-list --no-merges "$range")
+          done < <(git rev-list "$range")
           if [ "$missing" -ne 0 ]; then
             echo "One or more commits are not DCO signed off. See CONTRIBUTING.md."
             exit 1
