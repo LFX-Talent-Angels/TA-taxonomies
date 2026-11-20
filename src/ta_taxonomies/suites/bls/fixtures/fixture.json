@@ -1,0 +1,1846 @@
+{
+ "meta": {
+  "soc_version": "SOC 2018",
+  "projection_cycle": "2025-2035",
+  "wage_period": "May 2025",
+  "files": {
+   "soc_structure_2018.xlsx": "ade08af40923266f3a854842e888ca3e93c15b26a147c20a2b12a61f4c4f4077",
+   "soc_2018_definitions.xlsx": "f8b9ca7cccea78e30abfc9b96ab8a9dd2632cc8c8b57ee9b38a9b871e8fe2a89",
+   "soc_2018_direct_match_title_file.xlsx": "f465e9a3de3146b6fcb7ad6e221156031dc57967c683cc5647f59d2144dbc8a5",
+   "occupation.xlsx": "08ee182f992d972593e64559ce467bad75967d2228f11ad5e2f86d4ec0ee6c00",
+   "public-skills-data.xlsx": "3e95a389425e6280a9d2152f3a2b8191317465785e75a2ffa75b554eda8ceb73",
+   "ep_skill_onet_element_crosswalk.xlsx": "9e29498cb9d0cb5574331ae5616dd17da6fca96d18e0aef9ee16ead4361ad16a"
+  },
+  "unmatched_projection_codes": [],
+  "fixture": "subset of bls_document.json; see fixtures/README.md"
+ },
+ "groups": [
+  {
+   "code": "11-0000",
+   "title": "Management Occupations",
+   "level": "major"
+  },
+  {
+   "code": "11-1000",
+   "title": "Top Executives",
+   "level": "minor",
+   "parent": "11-0000"
+  },
+  {
+   "code": "11-1030",
+   "title": "Legislators",
+   "level": "broad",
+   "parent": "11-1000"
+  },
+  {
+   "code": "15-0000",
+   "title": "Computer and Mathematical Occupations",
+   "level": "major"
+  },
+  {
+   "code": "15-1200",
+   "title": "Computer Occupations",
+   "level": "minor",
+   "parent": "15-0000"
+  },
+  {
+   "code": "15-1250",
+   "title": "Software and Web Developers, Programmers, and Testers",
+   "level": "broad",
+   "parent": "15-1200"
+  },
+  {
+   "code": "15-2000",
+   "title": "Mathematical Science Occupations",
+   "level": "minor",
+   "parent": "15-0000"
+  },
+  {
+   "code": "15-2050",
+   "title": "Data Scientists",
+   "level": "broad",
+   "parent": "15-2000"
+  },
+  {
+   "code": "29-0000",
+   "title": "Healthcare Practitioners and Technical Occupations",
+   "level": "major"
+  },
+  {
+   "code": "29-1000",
+   "title": "Healthcare Diagnosing or Treating Practitioners",
+   "level": "minor",
+   "parent": "29-0000"
+  },
+  {
+   "code": "29-1070",
+   "title": "Physician Assistants",
+   "level": "broad",
+   "parent": "29-1000"
+  },
+  {
+   "code": "29-1140",
+   "title": "Registered Nurses",
+   "level": "broad",
+   "parent": "29-1000"
+  },
+  {
+   "code": "29-1160",
+   "title": "Nurse Midwives",
+   "level": "broad",
+   "parent": "29-1000"
+  },
+  {
+   "code": "29-1170",
+   "title": "Nurse Practitioners",
+   "level": "broad",
+   "parent": "29-1000"
+  },
+  {
+   "code": "31-0000",
+   "title": "Healthcare Support Occupations",
+   "level": "major"
+  },
+  {
+   "code": "31-1100",
+   "title": "Home Health and Personal Care Aides; and Nursing Assistants, Orderlies, and Psychiatric Aides",
+   "level": "minor",
+   "parent": "31-0000"
+  },
+  {
+   "code": "31-1120",
+   "title": "Home Health and Personal Care Aides",
+   "level": "broad",
+   "parent": "31-1100"
+  },
+  {
+   "code": "31-1130",
+   "title": "Nursing Assistants, Orderlies, and Psychiatric Aides",
+   "level": "broad",
+   "parent": "31-1100"
+  },
+  {
+   "code": "31-9000",
+   "title": "Other Healthcare Support Occupations",
+   "level": "minor",
+   "parent": "31-0000"
+  },
+  {
+   "code": "31-9090",
+   "title": "Miscellaneous Healthcare Support Occupations",
+   "level": "broad",
+   "parent": "31-9000"
+  },
+  {
+   "code": "51-0000",
+   "title": "Production Occupations",
+   "level": "major"
+  },
+  {
+   "code": "51-3000",
+   "title": "Food Processing Workers",
+   "level": "minor",
+   "parent": "51-0000"
+  },
+  {
+   "code": "51-3010",
+   "title": "Bakers",
+   "level": "broad",
+   "parent": "51-3000"
+  }
+ ],
+ "occupations": [
+  {
+   "code": "11-1031",
+   "group": "11-1030",
+   "title": "Legislators",
+   "definition": "Develop, introduce, or enact laws and statutes at the local, tribal, state, or federal level. Includes only workers in elected positions.",
+   "alt_titles": [
+    "City Alderman",
+    "City Council Member",
+    "Congressional Representative",
+    "Councilor",
+    "Legislator",
+    "Member of Congress",
+    "Selectman",
+    "Senator",
+    "Tribal Council Member"
+   ],
+   "projection": null,
+   "skills": [],
+   "onet_soc_codes": []
+  },
+  {
+   "code": "15-1251",
+   "group": "15-1250",
+   "title": "Computer Programmers",
+   "definition": "Create, modify, and test the code and scripts that allow computer applications to run. Work from specifications drawn up by software and web developers or other individuals. May develop and write computer programs to store, locate, and retrieve specific documents, data, and information.",
+   "alt_titles": [
+    "Applications Programmer",
+    "Computer Language Coder",
+    "Computer Programmer",
+    "IT Programmer",
+    "Junior Software Developer",
+    "Mainframe Programmer",
+    "Systems Programmer"
+   ],
+   "projection": {
+    "code": "15-1251",
+    "employment_2025": 110800,
+    "employment_2035": 102700,
+    "employment_change": -8100,
+    "employment_change_pct": -7.3,
+    "openings_annual": 4400,
+    "median_wage_annual": 100390.0,
+    "entry_education": "Bachelor's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/computer-and-information-technology/computer-programmers.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.9
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 4.7
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 3.2
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.9
+    },
+    {
+     "name": "Customer service",
+     "score": 2.3
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.7
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.2
+    },
+    {
+     "name": "Interpersonal",
+     "score": 3.0
+    },
+    {
+     "name": "Leadership",
+     "score": 2.9
+    },
+    {
+     "name": "Mathematics",
+     "score": 3.2
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.4
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 1.2
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.4
+    },
+    {
+     "name": "Project management",
+     "score": 2.5
+    },
+    {
+     "name": "Science",
+     "score": 1.8
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.2
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.5
+    }
+   ],
+   "onet_soc_codes": [
+    "15-1251.00"
+   ]
+  },
+  {
+   "code": "15-1252",
+   "group": "15-1250",
+   "title": "Software Developers",
+   "definition": "Research, design, and develop computer and network software or specialized utility programs. Analyze user needs and develop software solutions, applying principles and techniques of computer science, engineering, and mathematical analysis. Update software or enhance existing software capabilities. May work with computer hardware engineers to integrate hardware and software systems, and develop specifications and performance requirements. May maintain databases within an application area, working individually or coordinating database development as part of a team.",
+   "alt_titles": [
+    "Application Integration Engineer",
+    "Applications Developer",
+    "Computer Applications Developer",
+    "Computer Applications Engineer",
+    "Computer Systems Engineer",
+    "Computer Systems Software Architect",
+    "Computer Systems Software Engineer",
+    "Embedded Systems Software Developer",
+    "Enterprise Systems Engineer",
+    "Mobile Applications Developer",
+    "Software Applications Architect",
+    "Software Applications Designer",
+    "Software Applications Engineer",
+    "Software Engineer",
+    "Software Systems Engineer",
+    "Systems Software Designer",
+    "Systems Software Developer",
+    "Systems Software Specialist"
+   ],
+   "projection": {
+    "code": "15-1252",
+    "employment_2025": 1717800,
+    "employment_2035": 1892600,
+    "employment_change": 174700,
+    "employment_change_pct": 10.2,
+    "openings_annual": 95300,
+    "median_wage_annual": 135980.0,
+    "entry_education": "Bachelor's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.8
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 4.3
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 3.1
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.8
+    },
+    {
+     "name": "Customer service",
+     "score": 1.9
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.6
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.0
+    },
+    {
+     "name": "Interpersonal",
+     "score": 3.1
+    },
+    {
+     "name": "Leadership",
+     "score": 2.6
+    },
+    {
+     "name": "Mathematics",
+     "score": 2.9
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.7
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 1.2
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.4
+    },
+    {
+     "name": "Project management",
+     "score": 2.6
+    },
+    {
+     "name": "Science",
+     "score": 1.4
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.0
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.5
+    }
+   ],
+   "onet_soc_codes": [
+    "15-1252.00"
+   ]
+  },
+  {
+   "code": "15-1253",
+   "group": "15-1250",
+   "title": "Software Quality Assurance Analysts and Testers",
+   "definition": "Develop and execute software tests to identify software problems and their causes. Test system modifications to prepare for implementation. Document software and application defects using a bug tracking system and report defects to software or web developers. Create and maintain databases of known defects. May participate in software design reviews to provide input on functional requirements, operational characteristics, product designs, and schedules.",
+   "alt_titles": [
+    "Applications Tester",
+    "Software Quality Assurance Technician",
+    "Software Quality Control Specialist",
+    "Software Quality Engineer",
+    "Software Test Engineer"
+   ],
+   "projection": {
+    "code": "15-1253",
+    "employment_2025": 187600,
+    "employment_2035": 198200,
+    "employment_change": 10600,
+    "employment_change_pct": 5.7,
+    "openings_annual": 10700,
+    "median_wage_annual": 104300.0,
+    "entry_education": "Bachelor's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.9
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 4.4
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.9
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.8
+    },
+    {
+     "name": "Customer service",
+     "score": 2.3
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.8
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.1
+    },
+    {
+     "name": "Interpersonal",
+     "score": 3.0
+    },
+    {
+     "name": "Leadership",
+     "score": 3.1
+    },
+    {
+     "name": "Mathematics",
+     "score": 2.8
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.6
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 1.2
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.5
+    },
+    {
+     "name": "Project management",
+     "score": 2.5
+    },
+    {
+     "name": "Science",
+     "score": 1.6
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.3
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.8
+    }
+   ],
+   "onet_soc_codes": [
+    "15-1253.00"
+   ]
+  },
+  {
+   "code": "15-1254",
+   "group": "15-1250",
+   "title": "Web Developers",
+   "definition": "Develop and implement websites, web applications, application databases, and interactive web interfaces. Evaluate code to ensure that it is properly structured, meets industry standards, and is compatible with browsers and devices. Optimize website performance, scalability, and server-side code and processes. May develop website infrastructure and integrate websites with other computer applications. Excludes “Special Effects Artists and Animators” (27-1014).",
+   "alt_titles": [
+    "Intranet Developer",
+    "Web Applications Developer",
+    "Web Architect",
+    "Web Content Developer",
+    "Web Developer"
+   ],
+   "projection": {
+    "code": "15-1254",
+    "employment_2025": 87400,
+    "employment_2035": 90600,
+    "employment_change": 3300,
+    "employment_change_pct": 3.8,
+    "openings_annual": 5300,
+    "median_wage_annual": 92650.0,
+    "entry_education": "Bachelor's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/computer-and-information-technology/web-developers.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.8
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 4.3
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 3.4
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.7
+    },
+    {
+     "name": "Customer service",
+     "score": 2.5
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.7
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.5
+    },
+    {
+     "name": "Interpersonal",
+     "score": 2.7
+    },
+    {
+     "name": "Leadership",
+     "score": 2.8
+    },
+    {
+     "name": "Mathematics",
+     "score": 3.0
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.5
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 1.2
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.6
+    },
+    {
+     "name": "Project management",
+     "score": 2.7
+    },
+    {
+     "name": "Science",
+     "score": 1.3
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.2
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.4
+    }
+   ],
+   "onet_soc_codes": [
+    "15-1254.00"
+   ]
+  },
+  {
+   "code": "15-1255",
+   "group": "15-1250",
+   "title": "Web and Digital Interface Designers",
+   "definition": "Design digital user interfaces or websites. Develop and test layouts, interfaces, functionality, and navigation menus to ensure compatibility and usability across browsers or devices. May use web framework applications as well as client-side code and processes. May evaluate web design following web and accessibility standards, and may analyze web use metrics and optimize websites for marketability and search engine ranking. May design and test interfaces that facilitate the human-computer interaction and maximize the usability of digital devices, websites, and software with a focus on aesthetics and design. May create graphics used in websites and manage website content and links. Excludes “Special Effects Artists and Animators” (27-1014) and “Graphic Designers” (27-1024).",
+   "alt_titles": [
+    "Digital Designer",
+    "Graphic Web Designer",
+    "Web Content Specialist"
+   ],
+   "projection": {
+    "code": "15-1255",
+    "employment_2025": 132700,
+    "employment_2035": 140800,
+    "employment_change": 8000,
+    "employment_change_pct": 6.0,
+    "openings_annual": 8300,
+    "median_wage_annual": 104000.0,
+    "entry_education": "Bachelor's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/computer-and-information-technology/web-developers.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.8
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 4.3
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 3.4
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.7
+    },
+    {
+     "name": "Customer service",
+     "score": 2.5
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.7
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.5
+    },
+    {
+     "name": "Interpersonal",
+     "score": 2.7
+    },
+    {
+     "name": "Leadership",
+     "score": 2.8
+    },
+    {
+     "name": "Mathematics",
+     "score": 3.0
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.5
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 1.2
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.6
+    },
+    {
+     "name": "Project management",
+     "score": 2.7
+    },
+    {
+     "name": "Science",
+     "score": 1.3
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.2
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.4
+    }
+   ],
+   "onet_soc_codes": [
+    "15-1254.00"
+   ]
+  },
+  {
+   "code": "15-2051",
+   "group": "15-2050",
+   "title": "Data Scientists",
+   "definition": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and visualization software. Apply data mining, data modeling, natural language processing, and machine learning to extract and analyze information from large structured and unstructured datasets. Visualize, interpret, and report data findings. May create dynamic data reports. Excludes “Statisticians” (15-2041), “Cartographers and Photogrammetrists” (17-1021), and “Health Information Technologists and Medical Registrars” (29-9021).",
+   "alt_titles": [
+    "Business Intelligence Developer",
+    "Data Analytics Specialist",
+    "Data Mining Analyst",
+    "Data Visualization Developer"
+   ],
+   "projection": {
+    "code": "15-2051",
+    "employment_2025": 275600,
+    "employment_2035": 371000,
+    "employment_change": 95400,
+    "employment_change_pct": 34.6,
+    "openings_annual": 24800,
+    "median_wage_annual": 120230.0,
+    "entry_education": "Bachelor's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/math/data-scientists.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.9
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 4.2
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.9
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.9
+    },
+    {
+     "name": "Customer service",
+     "score": 2.2
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.6
+    },
+    {
+     "name": "Fine motor",
+     "score": 1.6
+    },
+    {
+     "name": "Interpersonal",
+     "score": 2.8
+    },
+    {
+     "name": "Leadership",
+     "score": 3.0
+    },
+    {
+     "name": "Mathematics",
+     "score": 4.7
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.1
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 1.1
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.7
+    },
+    {
+     "name": "Project management",
+     "score": 2.4
+    },
+    {
+     "name": "Science",
+     "score": 2.3
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.4
+    },
+    {
+     "name": "Writing and reading",
+     "score": 4.1
+    }
+   ],
+   "onet_soc_codes": [
+    "15-2041.00"
+   ]
+  },
+  {
+   "code": "29-1071",
+   "group": "29-1070",
+   "title": "Physician Assistants",
+   "definition": "Provide healthcare services typically performed by a physician, under the supervision of a physician. Conduct complete physicals, provide treatment, and counsel patients. May, in some cases, prescribe medication. Must graduate from an accredited educational program for physician assistants. Excludes “Registered Nurses” (29-1141), “Nurse Anesthetists” (29-1151), “Nurse Midwives” (29-1161), “Nurse Practitioners” (29-1171), “Emergency Medical Technicians” (29-2042), “Paramedics” (29-2043), “Surgical Assistants” (29-9093), and “Medical Assistants” (31-9092).",
+   "alt_titles": [
+    "Anesthesiologist Assistant",
+    "Certified Physician's Assistant",
+    "Family Practice Physician Assistant",
+    "Orthopaedic Physician Assistant",
+    "Orthopedic Physician Assistant",
+    "Pediatric Physician Assistant",
+    "Radiology Practitioner Assistant"
+   ],
+   "projection": {
+    "code": "29-1071",
+    "employment_2025": 168900,
+    "employment_2035": 204600,
+    "employment_change": 35700,
+    "employment_change_pct": 21.1,
+    "openings_annual": 11500,
+    "median_wage_annual": 135880.0,
+    "entry_education": "Master's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/healthcare/physician-assistants.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 4.5
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 3.9
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.6
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.9
+    },
+    {
+     "name": "Customer service",
+     "score": 3.7
+    },
+    {
+     "name": "Detail oriented",
+     "score": 4.3
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.4
+    },
+    {
+     "name": "Interpersonal",
+     "score": 4.4
+    },
+    {
+     "name": "Leadership",
+     "score": 3.4
+    },
+    {
+     "name": "Mathematics",
+     "score": 3.1
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.4
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 2.3
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 4.3
+    },
+    {
+     "name": "Project management",
+     "score": 2.8
+    },
+    {
+     "name": "Science",
+     "score": 3.6
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.7
+    },
+    {
+     "name": "Writing and reading",
+     "score": 4.1
+    }
+   ],
+   "onet_soc_codes": [
+    "29-1071.00"
+   ]
+  },
+  {
+   "code": "29-1141",
+   "group": "29-1140",
+   "title": "Registered Nurses",
+   "definition": "Assess patient health problems and needs, develop and implement nursing care plans, and maintain medical records. Administer nursing care to ill, injured, convalescent, or disabled patients. May advise patients on health maintenance and disease prevention or provide case management. Licensing or registration required. Includes Clinical Nurse Specialists. Excludes “Nurse Anesthetists” (29-1151), “Nurse Midwives” (29-1161), and “Nurse Practitioners” (29-1171).",
+   "alt_titles": [
+    "CCU Nurse",
+    "Clinical Nurse Specialist",
+    "CNS",
+    "Community Health Nurse",
+    "Coronary Care Unit Nurse",
+    "Emergency Room RN",
+    "Endoscopy Registered Nurse",
+    "Hospice Registered Nurse",
+    "Obstetrical Nurse",
+    "Oncology Registered Nurse",
+    "PACU Nurse",
+    "Pediatric Registered Nurse",
+    "Post-Anesthesia Care Unit Nurse",
+    "Psychiatric Nurse",
+    "RN",
+    "Triage Registered Nurse"
+   ],
+   "projection": {
+    "code": "29-1141",
+    "employment_2025": 3465400,
+    "employment_2035": 3660100,
+    "employment_change": 194700,
+    "employment_change_pct": 5.6,
+    "openings_annual": 180800,
+    "median_wage_annual": 97550.0,
+    "entry_education": "Bachelor's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/healthcare/registered-nurses.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 4.2
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 3.6
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.8
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.6
+    },
+    {
+     "name": "Customer service",
+     "score": 3.8
+    },
+    {
+     "name": "Detail oriented",
+     "score": 4.0
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.7
+    },
+    {
+     "name": "Interpersonal",
+     "score": 4.3
+    },
+    {
+     "name": "Leadership",
+     "score": 3.8
+    },
+    {
+     "name": "Mathematics",
+     "score": 3.1
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.7
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 2.8
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.9
+    },
+    {
+     "name": "Project management",
+     "score": 2.7
+    },
+    {
+     "name": "Science",
+     "score": 2.5
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.5
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.9
+    }
+   ],
+   "onet_soc_codes": [
+    "29-1141.00"
+   ]
+  },
+  {
+   "code": "29-1161",
+   "group": "29-1160",
+   "title": "Nurse Midwives",
+   "definition": "Diagnose and coordinate all aspects of the birthing process, either independently or as part of a healthcare team. May provide well-woman gynecological care. Must have specialized, graduate nursing education.",
+   "alt_titles": [
+    "Certified Nurse Midwife",
+    "Certified Nurse Midwife (CNM)"
+   ],
+   "projection": {
+    "code": "29-1161",
+    "employment_2025": 8200,
+    "employment_2035": 9100,
+    "employment_change": 900,
+    "employment_change_pct": 11.5,
+    "openings_annual": 400,
+    "median_wage_annual": 134040.0,
+    "entry_education": "Master's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/healthcare/nurse-anesthetists-nurse-midwives-and-nurse-practitioners.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 4.5
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 3.6
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.8
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.7
+    },
+    {
+     "name": "Customer service",
+     "score": 3.8
+    },
+    {
+     "name": "Detail oriented",
+     "score": 4.3
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.7
+    },
+    {
+     "name": "Interpersonal",
+     "score": 4.5
+    },
+    {
+     "name": "Leadership",
+     "score": 3.6
+    },
+    {
+     "name": "Mathematics",
+     "score": 2.8
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.5
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 2.5
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 4.2
+    },
+    {
+     "name": "Project management",
+     "score": 2.8
+    },
+    {
+     "name": "Science",
+     "score": 2.9
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.6
+    },
+    {
+     "name": "Writing and reading",
+     "score": 4.0
+    }
+   ],
+   "onet_soc_codes": [
+    "29-1161.00"
+   ]
+  },
+  {
+   "code": "29-1171",
+   "group": "29-1170",
+   "title": "Nurse Practitioners",
+   "definition": "Diagnose and treat acute, episodic, or chronic illness, independently or as part of a healthcare team. May focus on health promotion and disease prevention. May order, perform, or interpret diagnostic tests such as lab work and x rays. May prescribe medication. Must be registered nurses who have specialized graduate education.",
+   "alt_titles": [
+    "Acute Care Nurse Practitioner",
+    "Adult Nurse Practitioner",
+    "Cardiology Nurse Practitioner",
+    "Certified Nurse Practitioner",
+    "Certified Pediatric Nurse Practitioner",
+    "Certified Registered Nurse Practitioner",
+    "Dermatology Nurse Practitioner",
+    "Electrophysiology Nurse Practitioner",
+    "Emergency Medicine Nurse Practitioner",
+    "Family Health Nurse Practitioner",
+    "Family Practice Nurse Practitioner",
+    "Gastroenterology Nurse Practitioner",
+    "Gerontological Nurse Practitioner",
+    "Internal Medicine Nurse Practitioner",
+    "Neurosurgical Nurse Practitioner",
+    "NP",
+    "Obstetrics-Gynecology Nurse Practitioner",
+    "Orthopedic Nurse Practitioner",
+    "Palliative Care Nurse Practitioner",
+    "Pediatric Nurse Practitioner",
+    "Surgical Nurse Practitioner"
+   ],
+   "projection": {
+    "code": "29-1171",
+    "employment_2025": 336300,
+    "employment_2035": 474100,
+    "employment_change": 137800,
+    "employment_change_pct": 41.0,
+    "openings_annual": 29400,
+    "median_wage_annual": 132300.0,
+    "entry_education": "Master's degree",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/healthcare/nurse-anesthetists-nurse-midwives-and-nurse-practitioners.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 4.4
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 3.7
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.8
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.9
+    },
+    {
+     "name": "Customer service",
+     "score": 3.7
+    },
+    {
+     "name": "Detail oriented",
+     "score": 4.2
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.5
+    },
+    {
+     "name": "Interpersonal",
+     "score": 4.2
+    },
+    {
+     "name": "Leadership",
+     "score": 3.6
+    },
+    {
+     "name": "Mathematics",
+     "score": 3.1
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.5
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 2.3
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 4.2
+    },
+    {
+     "name": "Project management",
+     "score": 2.7
+    },
+    {
+     "name": "Science",
+     "score": 3.3
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.7
+    },
+    {
+     "name": "Writing and reading",
+     "score": 4.1
+    }
+   ],
+   "onet_soc_codes": [
+    "29-1171.00"
+   ]
+  },
+  {
+   "code": "31-1121",
+   "group": "31-1120",
+   "title": "Home Health Aides",
+   "definition": "Monitor the health status of an individual with disabilities or illness, and address their health-related needs, such as changing bandages, dressing wounds, or administering medication. Work is performed under the direction of offsite or intermittent onsite licensed nursing staff. Provide assistance with routine healthcare tasks or activities of daily living, such as feeding, bathing, toileting, or ambulation. May also help with tasks such as preparing meals, doing light housekeeping, and doing laundry depending on the patient’s abilities.",
+   "alt_titles": [
+    "Home Health Attendant",
+    "Home Hospice Aide"
+   ],
+   "projection": {
+    "code": "31-1120",
+    "employment_2025": 4677100,
+    "employment_2035": 5524400,
+    "employment_change": 847300,
+    "employment_change_pct": 18.1,
+    "openings_annual": 760500,
+    "median_wage_annual": 35800.0,
+    "entry_education": "High school diploma or equivalent",
+    "work_experience": "None",
+    "job_training": "Short-term on-the-job training",
+    "ooh_url": "https://www.bls.gov/ooh/healthcare/home-health-aides-and-personal-care-aides.htm",
+    "aggregate": true
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.9
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 2.6
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.8
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 2.8
+    },
+    {
+     "name": "Customer service",
+     "score": 3.2
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.7
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.1
+    },
+    {
+     "name": "Interpersonal",
+     "score": 4.2
+    },
+    {
+     "name": "Leadership",
+     "score": 3.2
+    },
+    {
+     "name": "Mathematics",
+     "score": 2.1
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.8
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 2.8
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.3
+    },
+    {
+     "name": "Project management",
+     "score": 2.7
+    },
+    {
+     "name": "Science",
+     "score": 1.8
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.0
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.2
+    }
+   ],
+   "onet_soc_codes": [
+    "31-1121.00",
+    "31-1122.00"
+   ]
+  },
+  {
+   "code": "31-1131",
+   "group": "31-1130",
+   "title": "Nursing Assistants",
+   "definition": "Provide or assist with basic care or support under the direction of onsite licensed nursing staff. Perform duties such as monitoring of health status, feeding, bathing, dressing, grooming, toileting, or ambulation of patients in a health or nursing facility. May include medication administration and other health-related tasks. Includes nursing care attendants, nursing aides, and nursing attendants. Excludes “Home Health Aides” (31-1121), “Personal Care Aides” (31-1122), “Orderlies” (31-1132), and “Psychiatric Aides” (31-1133).",
+   "alt_titles": [
+    "C.N.A.",
+    "Certified Nurse Aide",
+    "Certified Nursing Assistant",
+    "Hospital Aide",
+    "Hospital Attendant",
+    "Nursing Aide",
+    "Nursing Attendant",
+    "Nursing Care Attendant"
+   ],
+   "projection": {
+    "code": "31-1131",
+    "employment_2025": 1505900,
+    "employment_2035": 1544900,
+    "employment_change": 39000,
+    "employment_change_pct": 2.6,
+    "openings_annual": 196200,
+    "median_wage_annual": 42260.0,
+    "entry_education": "Postsecondary nondegree award",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/healthcare/nursing-assistants.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 4.0
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 2.6
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.7
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 2.7
+    },
+    {
+     "name": "Customer service",
+     "score": 3.3
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.8
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.3
+    },
+    {
+     "name": "Interpersonal",
+     "score": 4.2
+    },
+    {
+     "name": "Leadership",
+     "score": 3.2
+    },
+    {
+     "name": "Mathematics",
+     "score": 2.2
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.7
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 3.1
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.1
+    },
+    {
+     "name": "Project management",
+     "score": 2.3
+    },
+    {
+     "name": "Science",
+     "score": 1.8
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.1
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.1
+    }
+   ],
+   "onet_soc_codes": [
+    "31-1131.00"
+   ]
+  },
+  {
+   "code": "31-9092",
+   "group": "31-9090",
+   "title": "Medical Assistants",
+   "definition": "Perform administrative and certain clinical duties under the direction of a physician. Administrative duties may include scheduling appointments, maintaining medical records, billing, and coding information for insurance purposes. Clinical duties may include taking and recording vital signs and medical histories, preparing patients for examination, drawing blood, and administering medications as directed by physician. Excludes “Physician Assistants” (29-1071).",
+   "alt_titles": [
+    "Autopsy Assistant",
+    "Certified Medical Assistant",
+    "Chiropractic Assistant",
+    "Clinical Medical Assistant",
+    "Morgue Attendant",
+    "Ocular Care Aide",
+    "Optometric Aide",
+    "Optometrist Assistant",
+    "Optometry Assistant",
+    "Orthopedic Cast Specialist",
+    "Podiatric Aide"
+   ],
+   "projection": {
+    "code": "31-9092",
+    "employment_2025": 833900,
+    "employment_2035": 941500,
+    "employment_change": 107600,
+    "employment_change_pct": 12.9,
+    "openings_annual": 109700,
+    "median_wage_annual": 45690.0,
+    "entry_education": "Postsecondary nondegree award",
+    "work_experience": "None",
+    "job_training": "None",
+    "ooh_url": "https://www.bls.gov/ooh/healthcare/medical-assistants.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 4.2
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 3.6
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.9
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 3.1
+    },
+    {
+     "name": "Customer service",
+     "score": 3.6
+    },
+    {
+     "name": "Detail oriented",
+     "score": 4.0
+    },
+    {
+     "name": "Fine motor",
+     "score": 2.4
+    },
+    {
+     "name": "Interpersonal",
+     "score": 4.0
+    },
+    {
+     "name": "Leadership",
+     "score": 3.2
+    },
+    {
+     "name": "Mathematics",
+     "score": 2.7
+    },
+    {
+     "name": "Mechanical",
+     "score": 2.1
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 2.3
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.3
+    },
+    {
+     "name": "Project management",
+     "score": 3.0
+    },
+    {
+     "name": "Science",
+     "score": 2.2
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 3.5
+    },
+    {
+     "name": "Writing and reading",
+     "score": 3.7
+    }
+   ],
+   "onet_soc_codes": [
+    "31-9092.00"
+   ]
+  },
+  {
+   "code": "51-3011",
+   "group": "51-3010",
+   "title": "Bakers",
+   "definition": "Mix and bake ingredients to produce breads, rolls, cookies, cakes, pies, pastries, or other baked goods. Pastry chefs in restaurants and hotels are included with “Chefs and Head Cooks” (35-1011).",
+   "alt_titles": [
+    "Bagel Maker",
+    "Bread Baker",
+    "Dough Maker",
+    "Pastry Baker",
+    "Pastry Finisher",
+    "Pie Baker",
+    "Pie Maker"
+   ],
+   "projection": {
+    "code": "51-3011",
+    "employment_2025": 262400,
+    "employment_2035": 276900,
+    "employment_change": 14500,
+    "employment_change_pct": 5.5,
+    "openings_annual": 36500,
+    "median_wage_annual": 37160.0,
+    "entry_education": "No formal educational credential",
+    "work_experience": "None",
+    "job_training": "Moderate-term on-the-job training",
+    "ooh_url": "https://www.bls.gov/ooh/production/bakers.htm",
+    "aggregate": false
+   },
+   "skills": [
+    {
+     "name": "Adaptability",
+     "score": 3.4
+    },
+    {
+     "name": "Computers and information technology",
+     "score": 2.2
+    },
+    {
+     "name": "Creativity and innovation",
+     "score": 2.6
+    },
+    {
+     "name": "Critical and analytical thinking",
+     "score": 2.6
+    },
+    {
+     "name": "Customer service",
+     "score": 2.7
+    },
+    {
+     "name": "Detail oriented",
+     "score": 3.6
+    },
+    {
+     "name": "Fine motor",
+     "score": 3.0
+    },
+    {
+     "name": "Interpersonal",
+     "score": 3.0
+    },
+    {
+     "name": "Leadership",
+     "score": 2.8
+    },
+    {
+     "name": "Mathematics",
+     "score": 2.5
+    },
+    {
+     "name": "Mechanical",
+     "score": 1.7
+    },
+    {
+     "name": "Physical strength and stamina",
+     "score": 2.4
+    },
+    {
+     "name": "Problem solving and decision making",
+     "score": 3.1
+    },
+    {
+     "name": "Project management",
+     "score": 2.3
+    },
+    {
+     "name": "Science",
+     "score": 1.7
+    },
+    {
+     "name": "Speaking and listening",
+     "score": 2.8
+    },
+    {
+     "name": "Writing and reading",
+     "score": 2.6
+    }
+   ],
+   "onet_soc_codes": [
+    "51-3011.00"
+   ]
+  }
+ ],
+ "skills": [
+  {
+   "ep_id": "1",
+   "name": "Adaptability",
+   "definition": "Adjusts behavior or work methods in response to new information or changing conditions; open to change and new information; maintains composure even with changing circumstances; actively learns and uses relevant knowledge to adapt to changes.",
+   "onet_elements": [
+    "1.C.4.a",
+    "1.C.4.b",
+    "1.C.4.c",
+    "2.A.2.b",
+    "4.A.2.b.3"
+   ]
+  },
+  {
+   "ep_id": "2",
+   "name": "Computers and information technology",
+   "definition": "Uses computers and related technology to accomplish work activities, including tasks such as sending emails, using the internet to find information, using word processor or spreadsheet applications, programming computers, designing websites, and managing computer networks.",
+   "onet_elements": [
+    "2.B.3.e",
+    "2.C.3.a",
+    "4.A.3.b.1",
+    "4.A.3.b.6",
+    "4.C.1.a.2.h"
+   ]
+  },
+  {
+   "ep_id": "3",
+   "name": "Creativity and innovation",
+   "definition": "Uses imagination to develop new insights in situations and applies innovative solutions to problems; designs, creates, and implements cutting-edge processes, ideas, or products, including artistic contributions.",
+   "onet_elements": [
+    "1.A.1.b.2",
+    "1.C.7.a",
+    "2.C.7.c",
+    "4.A.2.b.2"
+   ]
+  },
+  {
+   "ep_id": "4",
+   "name": "Critical and analytical thinking",
+   "definition": "Applies logic and reasoning to analyze information, identify strengths and weaknesses of various approaches and solutions to problems, and draw conclusions.",
+   "onet_elements": [
+    "1.A.1.b.4",
+    "1.A.1.b.5",
+    "1.C.7.b",
+    "2.A.2.a",
+    "2.B.3.a",
+    "2.B.4.g",
+    "4.A.2.a.4"
+   ]
+  },
+  {
+   "ep_id": "5",
+   "name": "Customer service",
+   "definition": "Works with external customers (for example, clients, patients, and consumers); tasks involve providing information and assistance to customers, dealing with difficult people or situations, and convincing others to buy goods or services.",
+   "onet_elements": [
+    "2.C.1.e",
+    "4.A.4.a.6",
+    "4.A.4.a.8",
+    "4.C.1.b.1.f",
+    "4.C.1.d.1",
+    "4.C.1.d.2"
+   ]
+  },
+  {
+   "ep_id": "6",
+   "name": "Detail oriented",
+   "definition": "Pays close attention to all the small particulars when working on a task or project.",
+   "onet_elements": [
+    "1.A.1.g.1",
+    "1.C.5.b",
+    "4.C.3.a.1",
+    "4.C.3.b.4"
+   ]
+  },
+  {
+   "ep_id": "7",
+   "name": "Fine motor",
+   "definition": "Coordinates the use of fingers, hands, and wrists to make precise movements.",
+   "onet_elements": [
+    "1.A.2.a.3",
+    "1.A.2.b.1",
+    "1.A.2.c.2",
+    "4.C.2.d.1.g"
+   ]
+  },
+  {
+   "ep_id": "8",
+   "name": "Interpersonal",
+   "definition": "Shows understanding, friendliness, courtesy, tact, empathy, concern, and politeness to others, leading to the development and support of effective relationships.",
+   "onet_elements": [
+    "1.C.3.b",
+    "1.C.3.c",
+    "2.B.1.a",
+    "2.B.1.f",
+    "4.A.4.a.4",
+    "4.A.4.a.5"
+   ]
+  },
+  {
+   "ep_id": "9",
+   "name": "Leadership",
+   "definition": "Influences and guides others to accomplish strategic plans by leading, mentoring, taking charge, building teams, and offering direction.",
+   "onet_elements": [
+    "1.C.2.b",
+    "2.B.5.d",
+    "4.A.4.b.1",
+    "4.A.4.b.2",
+    "4.A.4.b.3",
+    "4.A.4.b.4",
+    "4.A.4.b.5",
+    "4.C.1.c.2"
+   ]
+  },
+  {
+   "ep_id": "10",
+   "name": "Mathematics",
+   "definition": "Uses principles of mathematics rules and methods to express ideas and solve problems; tasks involve comprehending and accurately interpreting mathematical information, applying mathematical reasoning, and formulating a solution.",
+   "onet_elements": [
+    "1.A.1.c.1",
+    "1.A.1.c.2",
+    "2.A.1.e",
+    "2.C.4.a"
+   ]
+  },
+  {
+   "ep_id": "11",
+   "name": "Mechanical",
+   "definition": "Applies knowledge of machines, systems, and tools to complete tasks such as operating, monitoring, maintaining, troubleshooting, building, installing, and repairing mechanical or electrical devices and equipment.",
+   "onet_elements": [
+    "2.B.3.c",
+    "2.B.3.d",
+    "2.B.3.h",
+    "2.B.3.j",
+    "2.B.3.k",
+    "2.B.3.l",
+    "2.C.3.e",
+    "4.A.3.a.3",
+    "4.A.3.a.4",
+    "4.A.3.b.4",
+    "4.A.3.b.5"
+   ]
+  },
+  {
+   "ep_id": "12",
+   "name": "Physical strength and stamina",
+   "definition": "Uses the body to complete work-related duties, such as standing for long periods of time to help customers, exerting muscular force to lift heavy objects, and coordinating the movement of multiple limbs to entertain a crowd through dance or athletics.",
+   "onet_elements": [
+    "1.A.2.b.2",
+    "1.A.3.a.1",
+    "1.A.3.a.3",
+    "1.A.3.a.4",
+    "1.A.3.b.1",
+    "1.A.3.c.1",
+    "1.A.3.c.3",
+    "1.A.3.c.4",
+    "4.A.3.a.1",
+    "4.C.2.d.1.d",
+    "4.C.2.d.1.h"
+   ]
+  },
+  {
+   "ep_id": "13",
+   "name": "Problem solving and decision making",
+   "definition": "Identifies complex problems, determines accuracy and relevance of information, uses judgment to develop and evaluate options, and implements solutions.",
+   "onet_elements": [
+    "2.B.2.i",
+    "2.B.4.e",
+    "2.B.4.h",
+    "4.A.2.b.1",
+    "4.C.3.a.2.a",
+    "4.C.3.a.2.b",
+    "4.C.3.a.4"
+   ]
+  },
+  {
+   "ep_id": "14",
+   "name": "Project management",
+   "definition": "Applies knowledge, methods, and processes to achieve the objectives of a project; tasks involve developing, scheduling, coordinating, and managing resources, including monitoring costs, work, and contractor performance.",
+   "onet_elements": [
+    "2.B.5.b",
+    "2.B.5.c",
+    "4.A.2.b.5",
+    "4.A.2.b.6",
+    "4.A.4.c.3"
+   ]
+  },
+  {
+   "ep_id": "15",
+   "name": "Science",
+   "definition": "Uses principles of scientific rules and methods to express ideas and solve problems; tasks involve comprehending and accurately interpreting scientific information and formulating solutions to scientific problems.",
+   "onet_elements": [
+    "2.A.1.f",
+    "2.C.4.b",
+    "2.C.4.c",
+    "2.C.4.d"
+   ]
+  },
+  {
+   "ep_id": "16",
+   "name": "Speaking and listening",
+   "definition": "Communicates verbally to convey, exchange, and receive ideas and information.",
+   "onet_elements": [
+    "1.A.1.a.1",
+    "1.A.1.a.3",
+    "1.A.4.b.4",
+    "1.A.4.b.5",
+    "2.A.1.b",
+    "2.A.1.d",
+    "2.C.9.b",
+    "4.C.1.a.2.c"
+   ]
+  },
+  {
+   "ep_id": "17",
+   "name": "Writing and reading",
+   "definition": "Communicates in writing to convey, exchange, and receive ideas and information.",
+   "onet_elements": [
+    "1.A.1.a.2",
+    "1.A.1.a.4",
+    "2.A.1.a",
+    "2.A.1.c",
+    "4.A.4.a.1"
+   ]
+  }
+ ]
+}

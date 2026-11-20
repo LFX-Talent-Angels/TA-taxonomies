@@ -1,7 +1,9 @@
-"""O*NET suite (US DoL occupations, tasks, skills, work activities).
+"""O*NET suite (US DoL occupations, tasks, skills, software).
 
-Notes from the team's Sprint 1 slice: O*NET-SOC codes prefix to SOC; rich
-weighted edges (importance/level with sample sizes and CIs) — the first real
-input for score_paths; 57k+ lay job titles power the alias index for
-search_nodes. Skeleton.
+Pinned source is O*NET **31.0**. Load the graph (``load``) and query it
+(``OnetSuite``). See ``INVENTORY.md`` and ``NOTES.md``.
 """
+
+from ta_taxonomies.suites.onet.tools import OnetSuite
+
+__all__ = ["OnetSuite"]
